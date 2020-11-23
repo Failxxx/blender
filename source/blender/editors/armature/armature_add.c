@@ -391,13 +391,10 @@ static void updateDuplicateSubtarget(EditBone *dup_bone,
         /* does this constraint have a subtarget in
          * this armature?
          */
-        const bConstraintTypeInfo *cti = BKE_constraint_typeinfo_get(curcon);
         ListBase targets = {NULL, NULL};
         bConstraintTarget *ct;
 
-        if (cti && cti->get_constraint_targets) {
-          cti->get_constraint_targets(curcon, &targets);
-
+        if (BKE_constraint_targets_get(curcon, &targets)) {
           for (ct = targets.first; ct; ct = ct->next) {
             if ((ct->tar == ob) && (ct->subtarget[0])) {
               oldtarget = get_named_editbone(editbones, ct->subtarget);
@@ -425,9 +422,7 @@ static void updateDuplicateSubtarget(EditBone *dup_bone,
             }
           }
 
-          if (cti->flush_constraint_targets) {
-            cti->flush_constraint_targets(curcon, &targets, 0);
-          }
+          BKE_constraint_targets_flush(curcon, &targets, 0);
         }
       }
     }
@@ -443,7 +438,7 @@ static void updateDuplicateActionConstraintSettings(
   float mat[4][4];
 
   bConstraintOb cob = {.depsgraph = NULL, .scene = NULL, .ob = ob, .pchan = pchan};
-  BKE_constraint_custom_object_space_get(cob.space_obj_world_matrix, curcon);
+  BKE_constraint_custom_object_space_init(&cob, curcon);
 
   unit_m4(mat);
   bPoseChannel *target_pchan = BKE_pose_channel_find_name(ob->pose, act_con->subtarget);
@@ -599,7 +594,7 @@ static void updateDuplicateLocRotConstraintSettings(Object *ob,
   unit_m4(local_mat);
 
   bConstraintOb cob = {.depsgraph = NULL, .scene = NULL, .ob = ob, .pchan = pchan};
-  BKE_constraint_custom_object_space_get(cob.space_obj_world_matrix, curcon);
+  BKE_constraint_custom_object_space_init(&cob, curcon);
 
   BKE_constraint_mat_convertspace(
       ob, pchan, &cob, local_mat, curcon->ownspace, CONSTRAINT_SPACE_LOCAL, false);
@@ -654,7 +649,7 @@ static void updateDuplicateTransformConstraintSettings(Object *ob,
   float target_mat[4][4], own_mat[4][4], imat[4][4];
 
   bConstraintOb cob = {.depsgraph = NULL, .scene = NULL, .ob = ob, .pchan = pchan};
-  BKE_constraint_custom_object_space_get(cob.space_obj_world_matrix, curcon);
+  BKE_constraint_custom_object_space_init(&cob, curcon);
 
   unit_m4(own_mat);
   BKE_constraint_mat_convertspace(

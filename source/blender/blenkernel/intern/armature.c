@@ -2316,22 +2316,17 @@ static void pose_proxy_sync(Object *ob, Object *from, int layer_protected)
 
       /* constraints - set target ob pointer to own object */
       for (con = pchanw.constraints.first; con; con = con->next) {
-        const bConstraintTypeInfo *cti = BKE_constraint_typeinfo_get(con);
         ListBase targets = {NULL, NULL};
         bConstraintTarget *ct;
 
-        if (cti && cti->get_constraint_targets) {
-          cti->get_constraint_targets(con, &targets);
-
+        if (BKE_constraint_targets_get(con, &targets)) {
           for (ct = targets.first; ct; ct = ct->next) {
             if (ct->tar == from) {
               ct->tar = ob;
             }
           }
 
-          if (cti->flush_constraint_targets) {
-            cti->flush_constraint_targets(con, &targets, 0);
-          }
+          BKE_constraint_targets_flush(con, &targets, 0);
         }
       }
 

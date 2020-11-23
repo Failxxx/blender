@@ -337,6 +337,18 @@ void BKE_constraint_target_matrix_get(struct Depsgraph *depsgraph,
                                       void *ownerdata,
                                       float mat[4][4],
                                       float ctime);
+
+/**
+ * Retrieves the list of all constraint targets, including the custom space target.
+ * Must be followed by a call to BKE_constraint_targets_flush to free memory.
+ */
+int BKE_constraint_targets_get(struct bConstraint *con, struct ListBase *list);
+
+/**
+ * Copies data from the list produced by BKE_constraint_targets_get back and frees memory.
+ */
+void BKE_constraint_targets_flush(struct bConstraint *con, struct ListBase *list, bool no_copy);
+
 /**
  * Get the list of targets required for solving a constraint.
  */
@@ -345,7 +357,9 @@ void BKE_constraint_targets_for_solving_get(struct Depsgraph *depsgraph,
                                             struct bConstraintOb *ob,
                                             struct ListBase *targets,
                                             float ctime);
-void BKE_constraint_custom_object_space_get(float r_mat[4][4], struct bConstraint *con);
+
+void BKE_constraint_custom_object_space_init(struct bConstraintOb *cob, struct bConstraint *con);
+
 /**
  * This function is called whenever constraints need to be evaluated. Currently, all
  * constraints that can be evaluated are every time this gets run.

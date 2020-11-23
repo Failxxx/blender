@@ -1326,16 +1326,19 @@ static void OVERLAY_relationship_lines(OVERLAY_ExtraCallBuffers *cb,
       }
       else {
         const bConstraintTypeInfo *cti = BKE_constraint_typeinfo_get(curcon);
+        ListBase targets = {NULL, NULL};
 
-        if ((cti && cti->get_constraint_targets) && (curcon->ui_expand_flag & (1 << 0))) {
-          ListBase targets = {NULL, NULL};
+        if ((curcon->ui_expand_flag & (1 << 0)) && BKE_constraint_targets_get(curcon, &targets)) {
           bConstraintTarget *ct;
 
-          cti->get_constraint_targets(curcon, &targets);
+          BKE_constraint_custom_object_space_init(cob, curcon);
 
           for (ct = targets.first; ct; ct = ct->next) {
             /* calculate target's matrix */
-            if (cti->get_target_matrix) {
+            if (ct->flag & CONSTRAINT_TAR_CUSTOM_SPACE) {
+              copy_m4_m4(ct->matrix, cob->space_obj_world_matrix);
+            }
+            else if (cti->get_target_matrix) {
               cti->get_target_matrix(depsgraph, curcon, cob, ct, DEG_get_ctime(depsgraph));
             }
             else {
@@ -1344,9 +1347,7 @@ static void OVERLAY_relationship_lines(OVERLAY_ExtraCallBuffers *cb,
             OVERLAY_extra_line_dashed(cb, ct->matrix[3], ob->obmat[3], constraint_color);
           }
 
-          if (cti->flush_constraint_targets) {
-            cti->flush_constraint_targets(curcon, &targets, 1);
-          }
+          BKE_constraint_targets_flush(curcon, &targets, 1);
         }
       }
     }
