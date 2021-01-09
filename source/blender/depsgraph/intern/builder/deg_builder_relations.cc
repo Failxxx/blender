@@ -1872,6 +1872,27 @@ void DepsgraphRelationBuilder::build_rigidbody(Scene *scene)
     }
     FOREACH_COLLECTION_OBJECT_RECURSIVE_END;
   }
+  /* Constraints. */
+  if (rbw->constraints != nullptr) {
+    build_collection(nullptr, nullptr, rbw->constraints);
+    FOREACH_COLLECTION_OBJECT_RECURSIVE_BEGIN (rbw->constraints, object) {
+      if (object->rigidbody_constraint == nullptr) {
+        continue;
+      }
+      if (object->rigidbody_object != nullptr) {
+        /* Avoid duplicate relations for constraints attached to objects. */
+        continue;
+      }
+
+      /* Simulation uses object transformation after parenting and solving constraints. */
+      OperationKey object_transform_simulation_init_key(
+          &object->id, NodeType::TRANSFORM, OperationCode::TRANSFORM_SIMULATION_INIT);
+      add_relation(object_transform_simulation_init_key,
+                   rb_simulate_key,
+                   "Object Transform -> Rigidbody Sim Eval");
+    }
+    FOREACH_COLLECTION_OBJECT_RECURSIVE_END;
+  }
 }
 
 void DepsgraphRelationBuilder::build_particle_systems(Object *object)

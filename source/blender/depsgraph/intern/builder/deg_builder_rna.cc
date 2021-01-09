@@ -278,7 +278,16 @@ RNANodeIdentifier RNANodeQuery::construct_node_identifier(const PointerRNA *ptr,
            RNA_struct_is_a(ptr->type, &RNA_LatticePoint) ||
            RNA_struct_is_a(ptr->type, &RNA_MeshUVLoop) ||
            RNA_struct_is_a(ptr->type, &RNA_MeshLoopColor) ||
-           RNA_struct_is_a(ptr->type, &RNA_VertexGroupElement)) {
+           RNA_struct_is_a(ptr->type, &RNA_VertexGroupElement) ||
+           ELEM(ptr->type,
+                &RNA_CollisionSettings,
+                &RNA_SoftBodySettings,
+                &RNA_ClothSettings,
+                &RNA_ClothCollisionSettings,
+                &RNA_DynamicPaintSurface,
+                &RNA_DynamicPaintCanvasSettings,
+                &RNA_DynamicPaintBrushSettings) ||
+           (ELEM(ptr->type, &RNA_EffectorWeights) && GS(node_identifier.id->name) == ID_OB)) {
     /* When modifier is used as FROM operation this is likely referencing to
      * the property (for example, modifier's influence).
      * But when it's used as TO operation, this is geometry component. */
@@ -377,6 +386,20 @@ RNANodeIdentifier RNANodeQuery::construct_node_identifier(const PointerRNA *ptr,
   }
   else if (ELEM(ptr->type, &RNA_MeshVertex, &RNA_MeshEdge, &RNA_MeshLoop, &RNA_MeshPolygon)) {
     node_identifier.type = NodeType::GEOMETRY;
+    return node_identifier;
+  }
+  else if (GS(node_identifier.id->name) == ID_PA &&
+           ELEM(ptr->type, &RNA_EffectorWeights, &RNA_FieldSettings, &RNA_ParticleSettings)) {
+    node_identifier.type = NodeType::PARTICLE_SETTINGS;
+    return node_identifier;
+  }
+  else if (ELEM(ptr->type,
+                &RNA_EffectorWeights,
+                &RNA_RigidBodyWorld,
+                &RNA_FieldSettings,
+                &RNA_RigidBodyObject,
+                &RNA_RigidBodyConstraint)) {
+    node_identifier.type = NodeType::TRANSFORM;
     return node_identifier;
   }
   if (prop != nullptr) {
