@@ -428,6 +428,17 @@ static void rna_def_dopesheet(BlenderRNA *brna)
   RNA_def_property_ui_icon(prop, ICON_ERROR, 0);
   RNA_def_property_update(prop, NC_ANIMATION | ND_ANIMCHAN | NA_EDITED, NULL);
 
+  prop = RNA_def_property(srna, "show_cycle_errors", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "filterflag", ADS_FILTER_CYCLE_ERRORS);
+  RNA_def_property_ui_text(
+      prop,
+      "Cyclic Extrapolation Issues",
+      "Treat cyclic extrapolation issues as errors for the Only Show Errors option, detecting "
+      "cyclic curves with mismatch between the end keys, or curves that are non-cyclic or have "
+      "the wrong period in a cyclic action");
+  RNA_def_property_ui_icon(prop, ICON_RECOVER_LAST, 0);
+  RNA_def_property_update(prop, NC_ANIMATION | ND_ANIMCHAN | NA_EDITED, NULL);
+
   /* Object Collection Filtering Settings */
   prop = RNA_def_property(srna, "filter_collection", PROP_POINTER, PROP_NONE);
   RNA_def_property_pointer_sdna(prop, NULL, "filter_grp");

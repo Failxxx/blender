@@ -781,6 +781,8 @@ typedef enum eDopeSheet_FilterFlag {
   ADS_FILTER_INCL_HIDDEN = (1 << 26),
   /** show only F-Curves which are disabled/have errors - for debugging drivers */
   ADS_FILTER_ONLY_ERRORS = (1 << 28),
+  /** treat cyclic extrapolation issues as errors for the previous option */
+  ADS_FILTER_CYCLE_ERRORS = (1 << 29),
 
 #if 0
   /** combination filters (some only used at runtime) */

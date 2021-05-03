@@ -79,6 +79,12 @@ class DopesheetFilterPopoverBase:
         else:  # graph and dopesheet editors - F-Curves and drivers only
             col.prop(dopesheet, "show_only_errors", icon='NONE')
 
+            col.separator()
+
+            col2 = col.column(align=True)
+            col2.active = dopesheet.show_only_errors
+            col2.prop(dopesheet, "show_cycle_errors")
+
     # Name/Membership Filters
     # XXX: Perhaps these should just stay in the headers (exclusively)?
     @classmethod

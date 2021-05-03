@@ -430,7 +430,7 @@ typedef enum eFCU_Cycle_Type {
 /**
  * Checks if the F-Curve has a Cycles modifier, and returns the type of the cycle behavior.
  */
-eFCU_Cycle_Type BKE_fcurve_get_cycle_type(struct FCurve *fcu);
+eFCU_Cycle_Type BKE_fcurve_get_cycle_type(const struct FCurve *fcu);
 
 /**
  * Recompute bezier handles of all three given BezTriples, so that `bezt` can be inserted between

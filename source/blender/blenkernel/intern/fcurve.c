@@ -1176,7 +1176,7 @@ void fcurve_samples_to_keyframes(FCurve *fcu, const int start, const int end)
  * that the handles are correct.
  */
 
-eFCU_Cycle_Type BKE_fcurve_get_cycle_type(FCurve *fcu)
+eFCU_Cycle_Type BKE_fcurve_get_cycle_type(const FCurve *fcu)
 {
   FModifier *fcm = fcu->modifiers.first;
 

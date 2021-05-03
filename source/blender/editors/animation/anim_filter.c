@@ -79,6 +79,7 @@
 #include "BLI_alloca.h"
 #include "BLI_blenlib.h"
 #include "BLI_ghash.h"
+#include "BLI_math.h"
 #include "BLI_string.h"
 #include "BLI_utildefines.h"
 
@@ -1215,6 +1216,53 @@ static bool skip_fcurve_with_name(
   return true;
 }
 
+/* Check if the F-Curve doesn't cycle properly based on action settings. */
+static bool fcurve_has_cycle_errors(const FCurve *fcu, const bAction *act)
+{
+  /* Check if the curve is cyclic. */
+  const eFCU_Cycle_Type cycle_type = BKE_fcurve_get_cycle_type(fcu);
+
+  if (cycle_type == FCU_CYCLE_NONE) {
+    /* Curves in a cyclic action should be cyclic; in an ordinary action either way is fine. */
+    return BKE_action_is_cyclic(act);
+  }
+
+  /* Check if the curve has enough points. */
+  if (fcu->totvert < 2 || !fcu->bezt) {
+    return true;
+  }
+
+  const BezTriple *first = &fcu->bezt[0], *last = &fcu->bezt[fcu->totvert - 1];
+
+  if (BKE_action_is_cyclic(act)) {
+    /* Check that it has a nonzero period length. */
+    const float curve_period = last->vec[1][0] - first->vec[1][0];
+
+    if (curve_period < 0.1f) {
+      return true;
+    }
+
+    /* Check that the action period is divisible by the curve period. */
+    const float action_period = act->frame_end - act->frame_start;
+    const float gap = action_period - roundf(action_period / curve_period) * curve_period;
+
+    if (fabsf(gap) > 1e-3f) {
+      return true;
+    }
+  }
+
+  /* In case of a perfect cycle, check that the start and end values match. */
+  if (cycle_type == FCU_CYCLE_PERFECT) {
+    const float magnitude = max_fff(fabsf(first->vec[1][1]), fabsf(last->vec[1][1]), 0.01f);
+
+    if (fabsf(first->vec[1][1] - last->vec[1][1]) > magnitude * 1e-4f) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Check if F-Curve has errors and/or is disabled
  *
@@ -1261,6 +1309,7 @@ static FCurve *animfilter_fcurve_next(bDopeSheet *ads,
                                       FCurve *first,
                                       eAnim_ChannelType channel_type,
                                       int filter_mode,
+                                      bAction *act,
                                       void *owner,
                                       ID *owner_id)
 {
@@ -1312,7 +1361,9 @@ static FCurve *animfilter_fcurve_next(bDopeSheet *ads,
             /* error-based filtering... */
             if ((ads) && (ads->filterflag & ADS_FILTER_ONLY_ERRORS)) {
               /* skip if no errors... */
-              if (fcurve_has_errors(fcu) == false) {
+              if (fcurve_has_errors(fcu) == false &&
+                  !((ads->filterflag & ADS_FILTER_CYCLE_ERRORS) &&
+                    fcurve_has_cycle_errors(fcu, act))) {
                 continue;
               }
             }
@@ -1334,6 +1385,7 @@ static size_t animfilter_fcurves(ListBase *anim_data,
                                  FCurve *first,
                                  eAnim_ChannelType fcurve_type,
                                  int filter_mode,
+                                 bAction *act,
                                  void *owner,
                                  ID *owner_id,
                                  ID *fcurve_owner_id)
@@ -1354,7 +1406,7 @@ static size_t animfilter_fcurves(ListBase *anim_data,
    *    Back to step 2 :)
    */
   for (fcu = first;
-       ((fcu = animfilter_fcurve_next(ads, fcu, fcurve_type, filter_mode, owner, owner_id)));
+       ((fcu = animfilter_fcurve_next(ads, fcu, fcurve_type, filter_mode, act, owner, owner_id)));
        fcu = fcu->next) {
     if (UNLIKELY(fcurve_type == ANIMTYPE_NLACURVE)) {
       /* NLA Control Curve - Basically the same as normal F-Curves,
@@ -1429,11 +1481,18 @@ static size_t animfilter_act_group(bAnimContext *ac,
         if (!(filter_mode & ANIMFILTER_FOREDIT) || EDITABLE_AGRP(agrp)) {
           /* get first F-Curve which can be used here */
           FCurve *first_fcu = animfilter_fcurve_next(
-              ads, agrp->channels.first, ANIMTYPE_FCURVE, filter_mode, agrp, owner_id);
+              ads, agrp->channels.first, ANIMTYPE_FCURVE, filter_mode, act, agrp, owner_id);
 
           /* filter list, starting from this F-Curve */
-          tmp_items += animfilter_fcurves(
-              &tmp_data, ads, first_fcu, ANIMTYPE_FCURVE, filter_mode, agrp, owner_id, &act->id);
+          tmp_items += animfilter_fcurves(&tmp_data,
+                                          ads,
+                                          first_fcu,
+                                          ANIMTYPE_FCURVE,
+                                          filter_mode,
+                                          act,
+                                          agrp,
+                                          owner_id,
+                                          &act->id);
         }
       }
     }
@@ -1498,7 +1557,7 @@ static size_t animfilter_action(bAnimContext *ac,
   if (!(filter_mode & ANIMFILTER_ACTGROUPED)) {
     FCurve *firstfcu = (lastchan) ? (lastchan->next) : (act->curves.first);
     items += animfilter_fcurves(
-        anim_data, ads, firstfcu, ANIMTYPE_FCURVE, filter_mode, NULL, owner_id, &act->id);
+        anim_data, ads, firstfcu, ANIMTYPE_FCURVE, filter_mode, act, NULL, owner_id, &act->id);
   }
 
   /* return the number of items added to the list */
@@ -1631,6 +1690,7 @@ static size_t animfilter_nla_controls(
                                         strip->fcurves.first,
                                         ANIMTYPE_NLACURVE,
                                         filter_mode,
+                                        NULL,
                                         strip,
                                         owner_id,
                                         owner_id);
@@ -1687,8 +1747,15 @@ static size_t animfilter_block_data(
           items += animfilter_nla(ac, anim_data, ads, adt, filter_mode, id);
         },
         { /* Drivers */
-          items += animfilter_fcurves(
-              anim_data, ads, adt->drivers.first, ANIMTYPE_FCURVE, filter_mode, NULL, id, id);
+          items += animfilter_fcurves(anim_data,
+                                      ads,
+                                      adt->drivers.first,
+                                      ANIMTYPE_FCURVE,
+                                      filter_mode,
+                                      NULL,
+                                      NULL,
+                                      id,
+                                      id);
         },
         { /* NLA Control Keyframes */
           items += animfilter_nla_controls(anim_data, ads, adt, filter_mode, id);
