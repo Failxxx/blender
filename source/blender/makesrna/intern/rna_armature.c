@@ -763,6 +763,15 @@ void rna_def_bone_curved_common(StructRNA *srna, bool is_posebone, bool is_editb
         prop, "Scale Easing", "Multiply the final easing values by the Scale In/Out Y factors");
     RNA_def_property_boolean_sdna(prop, NULL, "bbone_flag", BBONE_SCALE_EASING);
     RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
+
+    prop = RNA_def_property(srna, "use_unscaled_segments", PROP_BOOLEAN, PROP_NONE);
+    RNA_def_property_ui_text(prop,
+                             "Unscaled Segments (Legacy)",
+                             "Do not apply scaling necessary to fit segments to the curve length "
+                             "without gaps or overlap for compatibility with old files");
+    RNA_def_property_boolean_negative_sdna(prop, NULL, "bbone_flag", BBONE_SCALE_SEGMENTS);
+    RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
+    RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
   }
 
   /* Scale In/Out */

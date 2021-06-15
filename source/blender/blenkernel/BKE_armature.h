@@ -457,7 +457,7 @@ typedef struct BBoneSplineParameters {
   float length;
 
   /* Non-uniform scale correction. */
-  bool do_scale;
+  bool do_scale, do_scale_segments;
   float scale[3];
 
   /* Handle control bone data. */

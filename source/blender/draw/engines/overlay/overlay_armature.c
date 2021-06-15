@@ -1105,6 +1105,8 @@ static void ebone_spline_preview(EditBone *ebone, const float result_array[MAX_B
   param.segments = ebone->segments;
   param.length = ebone->length;
 
+  param.do_scale_segments = !!(ebone->bbone_flag & BBONE_SCALE_SEGMENTS);
+
   /* Get "next" and "prev" bones - these are used for handle calculations. */
   if (ebone->bbone_prev_type == BBONE_HANDLE_AUTO) {
     /* Use connected parent. */

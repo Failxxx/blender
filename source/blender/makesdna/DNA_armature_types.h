@@ -308,6 +308,8 @@ typedef enum eBone_BBoneFlag {
   BBONE_ADD_PARENT_END_ROLL = (1 << 0),
   /** Multiply B-Bone easing values with Scale Length. */
   BBONE_SCALE_EASING = (1 << 1),
+  /** Apply Y scale to B-Bone segments. */
+  BBONE_SCALE_SEGMENTS = (1 << 2),
 } eBone_BBoneFlag;
 
 /* bone->bbone_prev/next_flag */
