@@ -1538,7 +1538,8 @@ void blo_do_versions_300(FileData *fd, Library *UNUSED(lib), Main *bmain)
     }
 
     /* Initialize length-wise scale B-Bone settings. */
-    if (!DNA_struct_elem_find(fd->filesdna, "Bone", "int", "bbone_flag")) {
+    if (!DNA_struct_elem_find(fd->filesdna, "Bone", "int", "bbone_flag") ||
+        DNA_struct_elem_find(fd->filesdna, "Bone", "float", "scale_in_len")) {
       /* Update armature data and pose channels. */
       LISTBASE_FOREACH (bArmature *, arm, &bmain->armatures) {
         do_version_bones_bbone_len_scale(&arm->bonebase);
