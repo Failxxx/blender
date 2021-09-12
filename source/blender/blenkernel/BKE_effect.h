@@ -22,12 +22,15 @@
  * \ingroup bke
  */
 
+#include "DNA_color_types.h"
+
 #include "BLI_utildefines.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+enum eCurveMappingPreset;
 struct Collection;
 struct Depsgraph;
 struct ListBase;
@@ -112,6 +115,10 @@ typedef struct EffectorRelation {
 struct PartDeflect *BKE_partdeflect_new(int type);
 struct PartDeflect *BKE_partdeflect_copy(const struct PartDeflect *pd_src);
 void BKE_partdeflect_free(struct PartDeflect *pd);
+
+void BKE_partdeflect_falloff_curve_preset(struct PartDeflect *pd, eCurveMappingPreset preset);
+void BKE_partdeflect_radial_falloff_curve_preset(struct PartDeflect *pd,
+                                                 eCurveMappingPreset preset);
 
 /**
  * Create list of effector relations in the collection or entire scene.

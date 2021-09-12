@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 struct BodySpring;
+struct CurveMapping;
 
 /* pd->forcefield:  Effector Fields types */
 typedef enum ePFieldType {
@@ -78,6 +79,10 @@ typedef struct PartDeflect {
   short falloff;
   /** Point, plane or surface. */
   short shape;
+  /** Fall-off curve type */
+  short falloff_type, falloff_type_r;
+  /** Custom fall-off curves. */
+  struct CurveMapping *falloff_curve, *falloff_curve_r;
   /** Texture effector. */
   short tex_mode;
   /** For curve guide. */
@@ -95,8 +100,6 @@ typedef struct PartDeflect {
   float f_flow;
   /** How much force is reduced when acting parallel to a surface, e.g. cloth. */
   float f_wind_factor;
-
-  char _pad0[4];
 
   /** Noise size for noise effector, restlength for harmonic effector. */
   float f_size;
@@ -354,6 +357,9 @@ typedef struct SoftBody {
 #define PFIELD_CLOTH_USE_CULLING (1 << 19)
 /** Replace collision direction with collider normal. */
 #define PFIELD_CLOTH_USE_NORMAL (1 << 20)
+/** Additional falloff settings */
+#define PFIELD_TRUEPOWER (1 << 21)
+#define PFIELD_TRUEPOWERR (1 << 22)
 
 /* pd->falloff */
 #define PFIELD_FALL_SPHERE 0
@@ -366,6 +372,20 @@ typedef struct SoftBody {
 #define PFIELD_SHAPE_SURFACE 2
 #define PFIELD_SHAPE_POINTS 3
 #define PFIELD_SHAPE_LINE 4
+
+/* pd->falloff_type, pd->falloff_type_r */
+typedef enum eFieldCurvePreset {
+  PFIELD_CURVE_CONSTANT = 0,
+  PFIELD_CURVE_CUSTOM = 1,
+  PFIELD_CURVE_SMOOTH = 2,
+  PFIELD_CURVE_SPHERE = 3,
+  PFIELD_CURVE_ROOT = 4,
+  PFIELD_CURVE_SHARP = 5,
+  PFIELD_CURVE_LIN = 6,
+  PFIELD_CURVE_POW4 = 7,
+  PFIELD_CURVE_INVSQUARE = 8,
+  PFIELD_CURVE_SMOOTHER = 9,
+} eFieldCurvePreset;
 
 /* pd->tex_mode */
 #define PFIELD_TEX_RGB 0

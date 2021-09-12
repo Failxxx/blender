@@ -115,6 +115,7 @@ static const EnumPropertyItem empty_vortex_shape_items[] = {
 
 #  include "BKE_collection.h"
 #  include "BKE_context.h"
+#  include "BKE_effect.h"
 #  include "BKE_modifier.h"
 #  include "BKE_pointcache.h"
 
@@ -742,6 +743,28 @@ static char *rna_FieldSettings_path(PointerRNA *ptr)
     }
   }
   return NULL;
+}
+
+static void rna_FieldSettings_falloff_curve_type_set(PointerRNA *ptr, int value)
+{
+  PartDeflect *pd = (PartDeflect *)ptr->data;
+
+  pd->falloff_type = value;
+
+  if (value == PFIELD_CURVE_CUSTOM && !pd->falloff_curve) {
+    BKE_partdeflect_falloff_curve_preset(pd, CURVE_PRESET_LINE);
+  }
+}
+
+static void rna_FieldSettings_radial_falloff_curve_type_set(PointerRNA *ptr, int value)
+{
+  PartDeflect *pd = (PartDeflect *)ptr->data;
+
+  pd->falloff_type_r = value;
+
+  if (value == PFIELD_CURVE_CUSTOM && !pd->falloff_curve_r) {
+    BKE_partdeflect_radial_falloff_curve_preset(pd, CURVE_PRESET_LINE);
+  }
 }
 
 static void rna_EffectorWeight_update(Main *UNUSED(bmain), Scene *UNUSED(scene), PointerRNA *ptr)
@@ -1439,6 +1462,21 @@ static void rna_def_field(BlenderRNA *brna)
       {0, NULL, 0, NULL, NULL},
   };
 
+  static const EnumPropertyItem effector_falloff_curve_type_items[] = {
+      {PFIELD_CURVE_CUSTOM, "CUSTOM", ICON_RNDCURVE, "Custom", ""},
+      {0, "", 0, NULL, NULL},
+      {PFIELD_CURVE_CONSTANT, "CONSTANT", ICON_NOCURVE, "Constant", ""},
+      {PFIELD_CURVE_SMOOTH, "SMOOTH", ICON_SMOOTHCURVE, "Smooth", ""},
+      {PFIELD_CURVE_SMOOTHER, "SMOOTHER", ICON_SMOOTHCURVE, "Smoother", ""},
+      {PFIELD_CURVE_SPHERE, "SPHERE", ICON_SPHERECURVE, "Sphere", ""},
+      {PFIELD_CURVE_ROOT, "ROOT", ICON_ROOTCURVE, "Root", ""},
+      {PFIELD_CURVE_SHARP, "SHARP", ICON_SHARPCURVE, "Sharp", ""},
+      {PFIELD_CURVE_LIN, "LIN", ICON_LINCURVE, "Linear", ""},
+      {PFIELD_CURVE_POW4, "POW4", ICON_SHARPCURVE, "Sharper", ""},
+      {PFIELD_CURVE_INVSQUARE, "INVSQUARE", ICON_INVERSESQUARECURVE, "Inverse Square", ""},
+      {0, NULL, 0, NULL, NULL},
+  };
+
   static const EnumPropertyItem texture_items[] = {
       {PFIELD_TEX_RGB, "RGB", 0, "RGB", ""},
       {PFIELD_TEX_GRAD, "GRADIENT", 0, "Gradient", ""},
@@ -1581,6 +1619,20 @@ static void rna_def_field(BlenderRNA *brna)
       prop, "Falloff Power", "How quickly strength falls off with distance from the force field");
   RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
 
+  prop = RNA_def_property(srna, "falloff_curve_type", PROP_ENUM, PROP_NONE);
+  RNA_def_property_enum_sdna(prop, NULL, "falloff_type");
+  RNA_def_property_enum_items(prop, effector_falloff_curve_type_items);
+  RNA_def_property_enum_funcs(prop, NULL, "rna_FieldSettings_falloff_curve_type_set", NULL);
+  RNA_def_property_ui_text(prop,
+                           "Falloff Curve Type",
+                           "Applies an arbitrary falloff curve between min and max distance, "
+                           "which is multiplied with the power falloff if both are used");
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
+  prop = RNA_def_property(srna, "falloff_curve", PROP_POINTER, PROP_NONE);
+  RNA_def_property_ui_text(prop, "Falloff Curve", "Editable falloff curve");
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
   prop = RNA_def_property(srna, "distance_min", PROP_FLOAT, PROP_DISTANCE);
   RNA_def_property_float_sdna(prop, NULL, "mindist");
   RNA_def_property_range(prop, 0.0f, 1000.0f);
@@ -1592,6 +1644,21 @@ static void rna_def_field(BlenderRNA *brna)
   RNA_def_property_range(prop, 0.0f, FLT_MAX);
   RNA_def_property_ui_range(prop, 0.0f, 1000.0f, 1.0f, 3);
   RNA_def_property_ui_text(prop, "Maximum Distance", "Maximum distance for the field to work");
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
+  prop = RNA_def_property(srna, "radial_falloff_curve_type", PROP_ENUM, PROP_NONE);
+  RNA_def_property_enum_sdna(prop, NULL, "falloff_type_r");
+  RNA_def_property_enum_items(prop, effector_falloff_curve_type_items);
+  RNA_def_property_enum_funcs(prop, NULL, "rna_FieldSettings_radial_falloff_curve_type_set", NULL);
+  RNA_def_property_ui_text(prop,
+                           "Radial Falloff Curve Type",
+                           "Applies an arbitrary falloff curve between min and max distance, "
+                           "which is multiplied with the power falloff if both are used");
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
+  prop = RNA_def_property(srna, "radial_falloff_curve", PROP_POINTER, PROP_NONE);
+  RNA_def_property_pointer_sdna(prop, NULL, "falloff_curve_r");
+  RNA_def_property_ui_text(prop, "Falloff Curve", "Editable falloff curve");
   RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
 
   prop = RNA_def_property(srna, "radial_min", PROP_FLOAT, PROP_NONE);
@@ -1645,6 +1712,14 @@ static void rna_def_field(BlenderRNA *brna)
   RNA_def_property_ui_text(prop, "Use Max", "Use a maximum distance for the field to work");
   RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
 
+  prop = RNA_def_property(srna, "use_true_power", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "flag", PFIELD_TRUEPOWER);
+  RNA_def_property_ui_text(prop,
+                           "True Power Curve",
+                           "Use a true power curve falloff (r/min)^-power "
+                           "instead of (r-min+1)^-power");
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
   prop = RNA_def_property(srna, "use_radial_min", PROP_BOOLEAN, PROP_NONE);
   RNA_def_property_boolean_sdna(prop, NULL, "flag", PFIELD_USEMINR);
   RNA_def_property_ui_text(
@@ -1656,6 +1731,14 @@ static void rna_def_field(BlenderRNA *brna)
   RNA_def_property_boolean_sdna(prop, NULL, "flag", PFIELD_USEMAXR);
   RNA_def_property_ui_text(prop, "Use Max", "Use a maximum radial distance for the field to work");
   /* "Use a maximum angle for the field to work" */
+  RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
+
+  prop = RNA_def_property(srna, "use_radial_true_power", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "flag", PFIELD_TRUEPOWERR);
+  RNA_def_property_ui_text(prop,
+                           "True Power Curve",
+                           "Use a true power curve radial falloff (r/min)^-power "
+                           "instead of (r-min+1)^-power");
   RNA_def_property_update(prop, 0, "rna_FieldSettings_update");
 
   prop = RNA_def_property(srna, "use_object_coords", PROP_BOOLEAN, PROP_NONE);

@@ -253,6 +253,20 @@ static void write_boid_state(BlendWriter *writer, BoidState *state)
 #endif
 }
 
+void BKE_particle_partdeflect_blend_write(BlendWriter *writer, const PartDeflect *pd)
+{
+  BLO_write_struct(writer, PartDeflect, pd);
+
+  if (pd) {
+    if (pd->falloff_curve) {
+      BKE_curvemapping_blend_write(writer, pd->falloff_curve);
+    }
+    if (pd->falloff_curve_r) {
+      BKE_curvemapping_blend_write(writer, pd->falloff_curve_r);
+    }
+  }
+}
+
 static void particle_settings_blend_write(BlendWriter *writer, ID *id, const void *id_address)
 {
   ParticleSettings *part = (ParticleSettings *)id;
@@ -264,8 +278,8 @@ static void particle_settings_blend_write(BlendWriter *writer, ID *id, const voi
   if (part->adt) {
     BKE_animdata_blend_write(writer, part->adt);
   }
-  BLO_write_struct(writer, PartDeflect, part->pd);
-  BLO_write_struct(writer, PartDeflect, part->pd2);
+  BKE_particle_partdeflect_blend_write(writer, part->pd);
+  BKE_particle_partdeflect_blend_write(writer, part->pd2);
   BLO_write_struct(writer, EffectorWeights, part->effector_weights);
 
   if (part->clumpcurve) {
@@ -313,10 +327,20 @@ static void particle_settings_blend_write(BlendWriter *writer, ID *id, const voi
   }
 }
 
-void BKE_particle_partdeflect_blend_read_data(BlendDataReader *UNUSED(reader), PartDeflect *pd)
+void BKE_particle_partdeflect_blend_read_data(BlendDataReader *reader, PartDeflect *pd)
 {
   if (pd) {
     pd->rng = NULL;
+
+    BLO_read_data_address(reader, &pd->falloff_curve);
+    BLO_read_data_address(reader, &pd->falloff_curve_r);
+
+    if (pd->falloff_curve) {
+      BKE_curvemapping_blend_read(reader, pd->falloff_curve);
+    }
+    if (pd->falloff_curve_r) {
+      BKE_curvemapping_blend_read(reader, pd->falloff_curve_r);
+    }
   }
 }
 

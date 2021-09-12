@@ -248,20 +248,36 @@ class PHYSICS_PT_field_falloff_angular(PhysicButtonsPanel, Panel):
         col = flow.column()
         col.prop(field, "radial_falloff", text="Power")
 
-        col = flow.column()
-        col.prop(field, "use_radial_min", text="Use Min Angle")
-
-        sub = col.column()
+        col = layout.column(align=False, heading="Min Angle")
+        col.use_property_decorate = False
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(field, "use_radial_min", text="")
+        sub = sub.row(align=True)
         sub.active = field.use_radial_min
-        sub.prop(field, "radial_min", text="Min Angle")
+        sub.prop(field, "radial_min", text="")
+        row.prop_decorator(field, "radial_min")
 
-        col = flow.column()
-        col.prop(field, "use_radial_max", text="Use Max Angle")
+        col = layout.column()
+        col.active = field.use_radial_min and field.radial_min > 0
+        col.prop(field, "use_radial_true_power")
 
-        sub = col.column()
+        col = layout.column(align=False, heading="Max Angle")
+        col.use_property_decorate = False
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(field, "use_radial_max", text="")
+        sub = sub.row(align=True)
         sub.active = field.use_radial_max
-        sub.prop(field, "radial_max", text="Max Angle")
+        sub.prop(field, "radial_max", text="")
+        row.prop_decorator(field, "radial_max")
 
+        col = layout.column()
+        col.active = field.use_radial_max and field.radial_max > field.radial_min
+        col.prop(field, "radial_falloff_curve_type", text="Curve")
+
+        if field.radial_falloff_curve_type == 'CUSTOM':
+            col.template_curve_mapping(field, "radial_falloff_curve", type='NONE', brush=True)
 
 class PHYSICS_PT_field_falloff_radial(PhysicButtonsPanel, Panel):
     bl_label = "Radial"
@@ -287,19 +303,36 @@ class PHYSICS_PT_field_falloff_radial(PhysicButtonsPanel, Panel):
         col = flow.column()
         col.prop(field, "radial_falloff", text="Power")
 
-        col = flow.column()
-        col.prop(field, "use_radial_min", text="Use Minimum")
-
-        sub = col.column()
+        col = layout.column(align=False, heading="Min Distance")
+        col.use_property_decorate = False
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(field, "use_radial_min", text="")
+        sub = sub.row(align=True)
         sub.active = field.use_radial_min
-        sub.prop(field, "radial_min", text="Min Distance")
+        sub.prop(field, "radial_min", text="")
+        row.prop_decorator(field, "radial_min")
 
-        col = flow.column()
-        col.prop(field, "use_radial_max", text="Use Maximum")
+        col = layout.column()
+        col.active = field.use_radial_min and field.radial_min > 0
+        col.prop(field, "use_radial_true_power")
 
-        sub = col.column()
+        col = layout.column(align=False, heading="Max Distance")
+        col.use_property_decorate = False
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(field, "use_radial_max", text="")
+        sub = sub.row(align=True)
         sub.active = field.use_radial_max
-        sub.prop(field, "radial_max", text="Max Distance")
+        sub.prop(field, "radial_max", text="")
+        row.prop_decorator(field, "radial_max")
+
+        col = layout.column()
+        col.active = field.use_radial_max and field.radial_max > field.radial_min
+        col.prop(field, "radial_falloff_curve_type", text="Curve")
+
+        if field.radial_falloff_curve_type == 'CUSTOM':
+            col.template_curve_mapping(field, "radial_falloff_curve", type='NONE', brush=True)
 
 
 def collision_warning(layout):

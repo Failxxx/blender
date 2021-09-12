@@ -53,6 +53,7 @@
 #include "BKE_bvhutils.h"
 #include "BKE_collection.h"
 #include "BKE_collision.h"
+#include "BKE_colortools.h"
 #include "BKE_curve.h"
 #include "BKE_displist.h"
 #include "BKE_effect.h"
@@ -131,6 +132,12 @@ PartDeflect *BKE_partdeflect_copy(const struct PartDeflect *pd_src)
   if (pd_dst->rng != NULL) {
     pd_dst->rng = BLI_rng_copy(pd_dst->rng);
   }
+  if (pd_dst->falloff_curve != NULL) {
+    pd_dst->falloff_curve = BKE_curvemapping_copy(pd_dst->falloff_curve);
+  }
+  if (pd_dst->falloff_curve_r != NULL) {
+    pd_dst->falloff_curve_r = BKE_curvemapping_copy(pd_dst->falloff_curve_r);
+  }
   return pd_dst;
 }
 
@@ -142,7 +149,41 @@ void BKE_partdeflect_free(PartDeflect *pd)
   if (pd->rng) {
     BLI_rng_free(pd->rng);
   }
+  if (pd->falloff_curve) {
+    BKE_curvemapping_free(pd->falloff_curve);
+  }
+  if (pd->falloff_curve_r) {
+    BKE_curvemapping_free(pd->falloff_curve_r);
+  }
   MEM_freeN(pd);
+}
+
+static void init_falloff_curve(CurveMapping **p_curve, eCurveMappingPreset preset)
+{
+  CurveMapping *cumap = NULL;
+  CurveMap *cuma = NULL;
+
+  if (!*p_curve) {
+    *p_curve = BKE_curvemapping_add(1, 0, 0, 1, 1);
+  }
+
+  cumap = *p_curve;
+  cumap->flag &= ~CUMA_EXTEND_EXTRAPOLATE;
+  cumap->preset = preset;
+
+  cuma = cumap->cm;
+  BKE_curvemap_reset(cuma, &cumap->clipr, cumap->preset, CURVEMAP_SLOPE_NEGATIVE);
+  BKE_curvemapping_changed(cumap, false);
+}
+
+void BKE_partdeflect_falloff_curve_preset(PartDeflect *pd, eCurveMappingPreset preset)
+{
+  init_falloff_curve(&pd->falloff_curve, preset);
+}
+
+void BKE_partdeflect_radial_falloff_curve_preset(PartDeflect *pd, eCurveMappingPreset preset)
+{
+  init_falloff_curve(&pd->falloff_curve_r, preset);
 }
 
 /******************** EFFECTOR RELATIONS ***********************/
@@ -156,6 +197,13 @@ static void precalculate_effector(struct Depsgraph *depsgraph, EffectorCache *ef
   }
   else {
     BLI_rng_srandom(eff->pd->rng, eff->pd->seed + cfra);
+  }
+
+  if (eff->pd->falloff_curve) {
+    BKE_curvemapping_init(eff->pd->falloff_curve);
+  }
+  if (eff->pd->falloff_curve_r) {
+    BKE_curvemapping_init(eff->pd->falloff_curve_r);
   }
 
   if (eff->pd->forcefield == PFIELD_GUIDE && eff->ob->type == OB_CURVE) {
@@ -561,26 +609,101 @@ static float wind_func(struct RNG *rng, float strength)
   return ret;
 }
 
-/* maxdist: zero effect from this distance outwards (if usemax) */
-/* mindist: full effect up to this distance (if usemin) */
-/* power: falloff with formula 1/r^power */
-static float falloff_func(
-    float fac, int usemin, float mindist, int usemax, float maxdist, float power)
+/* Arbitrary falloff curve. */
+static float falloff_curve_strength(
+    float fac, float mindist, float maxdist, eFieldCurvePreset falloff_type, CurveMapping *curve)
 {
-  /* first quick checks */
-  if (usemax && fac > maxdist) {
-    return 0.0f;
-  }
+  float p = (maxdist - fac) / (maxdist - mindist);
 
-  if (usemin && fac < mindist) {
-    return 1.0f;
+  CLAMP(p, 0.0f, 1.0f);
+
+  switch (falloff_type) {
+    case PFIELD_CURVE_CUSTOM:
+      if (curve) {
+        return clamp_f(BKE_curvemapping_evaluateF(curve, 0, 1.0f - p), 0.0f, 1.0f);
+      }
+      else {
+        return 1.0f;
+      }
+    case PFIELD_CURVE_SHARP:
+      return p * p;
+    case PFIELD_CURVE_SMOOTH:
+      return 3.0f * p * p - 2.0f * p * p * p;
+    case PFIELD_CURVE_SMOOTHER:
+      return pow3f(p) * (p * (p * 6.0f - 15.0f) + 10.0f);
+    case PFIELD_CURVE_ROOT:
+      return sqrtf(p);
+    case PFIELD_CURVE_LIN:
+      return p;
+    case PFIELD_CURVE_SPHERE:
+      return sqrtf(2 * p - p * p);
+    case PFIELD_CURVE_POW4:
+      return p * p * p * p;
+    case PFIELD_CURVE_INVSQUARE:
+      return p * (2.0f - p);
+    case PFIELD_CURVE_CONSTANT:
+    default:
+      return 1.0f;
   }
+}
+
+/**
+ * maxdist: zero effect from this distance outwards (if usemax)
+ * mindist: full effect up to this distance (if usemin)
+ * power: falloff with formula 1/r^power
+ * true_exp: use a true exponential curve; requires mindist
+ * falloff_type: add an arbitrary falloff curve
+ * curve: a fully custom falloff curve
+ */
+static float falloff_func(float fac,
+                          int usemin,
+                          float mindist,
+                          int usemax,
+                          float maxdist,
+                          float power,
+                          int true_pow,
+                          eFieldCurvePreset falloff_type,
+                          CurveMapping *curve)
+{
+  float blend = 1.0f;
 
   if (!usemin) {
     mindist = 0.0;
   }
 
-  return pow((double)(1.0f + fac - mindist), (double)(-power));
+  if (falloff_type != PFIELD_CURVE_CONSTANT && usemax && maxdist > mindist) {
+    /* As a special case, custom curves use horizontal extrapolation from end points. */
+    if (LIKELY(falloff_type != PFIELD_CURVE_CUSTOM)) {
+      if (fac > maxdist) {
+        return 0.0f;
+      }
+
+      if (fac <= mindist) {
+        return 1.0f;
+      }
+    }
+
+    /* Evaluate the falloff curve. */
+    blend = falloff_curve_strength(fac, mindist, maxdist, falloff_type, curve);
+  }
+  else {
+    /* Without a non-trivial falloff curve, always check bounds. */
+    if (usemax && fac > maxdist) {
+      return 0.0f;
+    }
+
+    if (fac <= mindist) {
+      return 1.0f;
+    }
+  }
+
+  /* Apply the power falloff. */
+  if (true_pow && mindist > 0) {
+    return blend * (float)pow((double)(fac / mindist), (double)(-power));
+  }
+  else {
+    return blend * (float)pow((double)(1.0f + fac - mindist), (double)(-power));
+  }
 }
 
 static float falloff_func_dist(PartDeflect *pd, float fac)
@@ -590,7 +713,10 @@ static float falloff_func_dist(PartDeflect *pd, float fac)
                       pd->mindist,
                       pd->flag & PFIELD_USEMAX,
                       pd->maxdist,
-                      pd->f_power);
+                      pd->f_power,
+                      pd->flag & PFIELD_TRUEPOWER,
+                      pd->falloff_type,
+                      pd->falloff_curve);
 }
 
 static float falloff_func_rad(PartDeflect *pd, float fac)
@@ -600,7 +726,10 @@ static float falloff_func_rad(PartDeflect *pd, float fac)
                       pd->minrad,
                       pd->flag & PFIELD_USEMAXR,
                       pd->maxrad,
-                      pd->f_power_r);
+                      pd->f_power_r,
+                      pd->flag & PFIELD_TRUEPOWERR,
+                      pd->falloff_type_r,
+                      pd->falloff_curve_r);
 }
 
 float effector_falloff(EffectorCache *eff,

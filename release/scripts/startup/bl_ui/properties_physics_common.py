@@ -355,6 +355,10 @@ def basic_force_field_falloff_ui(self, field):
     sub.prop(field, "distance_min", text="")
     row.prop_decorator(field, "distance_min")
 
+    col = layout.column()
+    col.active = field.use_min_distance and field.distance_min > 0
+    col.prop(field, "use_true_power")
+
     col = layout.column(align=False, heading="Max Distance")
     col.use_property_decorate = False
     row = col.row(align=True)
@@ -364,6 +368,13 @@ def basic_force_field_falloff_ui(self, field):
     sub.active = field.use_max_distance
     sub.prop(field, "distance_max", text="")
     row.prop_decorator(field, "distance_max")
+
+    col = layout.column()
+    col.active = field.use_max_distance and field.distance_max > field.distance_min
+    col.prop(field, "falloff_curve_type", text="Curve")
+
+    if field.falloff_curve_type == 'CUSTOM':
+        col.template_curve_mapping(field, "falloff_curve", type='NONE', brush=True)
 
 
 classes = (
