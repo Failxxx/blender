@@ -1,5 +1,6 @@
 
 uniform float alpha = 0.4;
+uniform vec2 wireFadeDepth = vec2(0.0, 0.0);
 
 flat in vec3 finalStateColor;
 flat in vec3 finalBoneColor;
@@ -57,9 +58,12 @@ void main()
   float dither = (0.5 + dot(vec2(ivec2(gl_FragCoord.xy) & ivec2(1)), vec2(1.0, 2.0))) * 0.25;
   dither *= (1.0 / 255.0); /* Assume 8bit per color buffer. */
 
-  fragColor = vec4(fragColor.rgb + dither, alpha);
+  t /= ray_len;
+  float z = get_depth_from_view_z(ray_dir_view.z * t + ray_ori_view.z);
+
+  float z_alpha = wire_depth_alpha(z, wireFadeDepth);
+  fragColor = vec4(fragColor.rgb + dither, alpha * z_alpha);
   lineOutput = vec4(0.0);
 
-  t /= ray_len;
-  gl_FragDepth = get_depth_from_view_z(ray_dir_view.z * t + ray_ori_view.z);
+  gl_FragDepth = z;
 }

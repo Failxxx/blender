@@ -6561,6 +6561,12 @@ class VIEW3D_PT_overlay_bones(Panel):
         if VIEW3D_PT_overlay_bones.is_using_wireframe(context):
             col.prop(overlay, "bone_wire_alpha")
 
+            row = col.row()
+            row.prop(overlay, "bone_wire_use_fade_depth", text="")
+            sub = row.row()
+            sub.active = overlay.bone_wire_use_fade_depth
+            sub.prop(overlay, "bone_wire_fade_depth")
+
 
 class VIEW3D_PT_overlay_texture_paint(Panel):
     bl_space_type = 'VIEW_3D'

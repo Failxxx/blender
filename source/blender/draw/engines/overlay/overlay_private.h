@@ -149,6 +149,8 @@ typedef struct OVERLAY_ShadingData {
   /** Wireframe */
   float wire_step_param;
   float wire_opacity;
+  /** Armature */
+  float fade_depth_info[2];
   /** Edit Curve */
   float edit_curve_normal_length;
   /** Edit Mesh */
@@ -409,6 +411,7 @@ typedef struct OVERLAY_PrivateData {
     bool show_relations;
     bool do_pose_xray;
     bool do_pose_fade_geom;
+    bool do_wire_depth_fade;
   } armature;
   struct {
     bool in_front;

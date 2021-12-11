@@ -54,6 +54,7 @@
     .wireframe_opacity = 1.0f, \
     .xray_alpha_bone = 0.5f, \
     .bone_wire_alpha = 1.0f, \
+    .bone_wire_fade_depth = 1.0f, \
     .fade_alpha = 0.40f, \
     .texture_paint_mode_opacity = 1.0f, \
     .weight_paint_mode_opacity = 1.0f, \

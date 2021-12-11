@@ -1,5 +1,6 @@
 
 uniform float alpha = 0.6;
+uniform vec2 wireFadeDepth = vec2(0.0, 0.0);
 
 in vec4 finalColor;
 flat in int inverted;
@@ -15,6 +16,7 @@ void main()
   if ((inverted == 1) == gl_FrontFacing) {
     discard;
   }
-  fragColor = vec4(finalColor.rgb, alpha);
+  float z_alpha = wire_depth_alpha(gl_FragCoord.z, wireFadeDepth);
+  fragColor = vec4(finalColor.rgb, alpha * z_alpha);
   lineOutput = vec4(0.0);
 }
