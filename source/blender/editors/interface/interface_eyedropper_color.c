@@ -42,6 +42,8 @@
 #include "BKE_node.h"
 #include "BKE_screen.h"
 
+#include "NOD_composite.h"
+
 #include "RNA_access.h"
 
 #include "UI_interface.h"
@@ -252,8 +254,10 @@ static bool eyedropper_cryptomatte_sample_image_fl(const bNode *node,
   return success;
 }
 
-static bool eyedropper_cryptomatte_sample_fl(
-    bContext *C, Eyedropper *eye, int mx, int my, float r_col[3])
+static bool eyedropper_cryptomatte_sample_fl(bContext *C,
+                                             Eyedropper *eye,
+                                             const int m_xy[2],
+                                             float r_col[3])
 {
   bNode *node = eye->crypto_node;
   NodeCryptomatte *crypto = node ? ((NodeCryptomatte *)node->storage) : NULL;
@@ -263,32 +267,32 @@ static bool eyedropper_cryptomatte_sample_fl(
   }
 
   bScreen *screen = CTX_wm_screen(C);
-  ScrArea *sa = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, mx, my);
-  if (!sa || !ELEM(sa->spacetype, SPACE_IMAGE, SPACE_NODE, SPACE_CLIP)) {
+  ScrArea *area = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, m_xy);
+  if (!area || !ELEM(area->spacetype, SPACE_IMAGE, SPACE_NODE, SPACE_CLIP)) {
     return false;
   }
 
-  ARegion *region = BKE_area_find_region_xy(sa, RGN_TYPE_WINDOW, mx, my);
+  ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, m_xy);
   if (!region) {
     return false;
   }
 
-  int mval[2] = {mx - region->winrct.xmin, my - region->winrct.ymin};
+  int mval[2] = {m_xy[0] - region->winrct.xmin, m_xy[1] - region->winrct.ymin};
   float fpos[2] = {-1.0f, -1.0};
-  switch (sa->spacetype) {
+  switch (area->spacetype) {
     case SPACE_IMAGE: {
-      SpaceImage *sima = sa->spacedata.first;
+      SpaceImage *sima = area->spacedata.first;
       ED_space_image_get_position(sima, region, mval, fpos);
       break;
     }
     case SPACE_NODE: {
       Main *bmain = CTX_data_main(C);
-      SpaceNode *snode = sa->spacedata.first;
+      SpaceNode *snode = area->spacedata.first;
       ED_space_node_get_position(bmain, snode, region, mval, fpos);
       break;
     }
     case SPACE_CLIP: {
-      SpaceClip *sc = sa->spacedata.first;
+      SpaceClip *sc = area->spacedata.first;
       ED_space_clip_get_position(sc, region, mval, fpos);
       break;
     }
@@ -322,7 +326,7 @@ static bool eyedropper_cryptomatte_sample_fl(
   return false;
 }
 
-void eyedropper_color_sample_fl(bContext *C, int mx, int my, float r_col[3])
+void eyedropper_color_sample_fl(bContext *C, const int m_xy[2], float r_col[3])
 {
   /* we could use some clever */
   Main *bmain = CTX_data_main(C);
@@ -330,14 +334,14 @@ void eyedropper_color_sample_fl(bContext *C, int mx, int my, float r_col[3])
   const char *display_device = CTX_data_scene(C)->display_settings.display_device;
   struct ColorManagedDisplay *display = IMB_colormanagement_display_get_named(display_device);
 
+  int mval[2];
   wmWindow *win;
   ScrArea *area;
-  int mval[2] = {mx, my};
-  datadropper_win_area_find(C, mval, mval, &win, &area);
+  datadropper_win_area_find(C, m_xy, mval, &win, &area);
 
   if (area) {
     if (area->spacetype == SPACE_IMAGE) {
-      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval[0], mval[1]);
+      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval);
       if (region) {
         SpaceImage *sima = area->spacedata.first;
         int region_mval[2] = {mval[0] - region->winrct.xmin, mval[1] - region->winrct.ymin};
@@ -348,7 +352,7 @@ void eyedropper_color_sample_fl(bContext *C, int mx, int my, float r_col[3])
       }
     }
     else if (area->spacetype == SPACE_NODE) {
-      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval[0], mval[1]);
+      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval);
       if (region) {
         SpaceNode *snode = area->spacedata.first;
         int region_mval[2] = {mval[0] - region->winrct.xmin, mval[1] - region->winrct.ymin};
@@ -359,7 +363,7 @@ void eyedropper_color_sample_fl(bContext *C, int mx, int my, float r_col[3])
       }
     }
     else if (area->spacetype == SPACE_CLIP) {
-      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval[0], mval[1]);
+      ARegion *region = BKE_area_find_region_xy(area, RGN_TYPE_WINDOW, mval);
       if (region) {
         SpaceClip *sc = area->spacedata.first;
         int region_mval[2] = {mval[0] - region->winrct.xmin, mval[1] - region->winrct.ymin};
@@ -404,17 +408,17 @@ static void eyedropper_color_set(bContext *C, Eyedropper *eye, const float col[3
   RNA_property_update(C, &eye->ptr, eye->prop);
 }
 
-static void eyedropper_color_sample(bContext *C, Eyedropper *eye, int mx, int my)
+static void eyedropper_color_sample(bContext *C, Eyedropper *eye, const int m_xy[2])
 {
   /* Accumulate color. */
   float col[3];
   if (eye->crypto_node) {
-    if (!eyedropper_cryptomatte_sample_fl(C, eye, mx, my, col)) {
+    if (!eyedropper_cryptomatte_sample_fl(C, eye, m_xy, col)) {
       return;
     }
   }
   else {
-    eyedropper_color_sample_fl(C, mx, my, col);
+    eyedropper_color_sample_fl(C, m_xy, col);
   }
 
   if (!eye->crypto_node) {
@@ -437,13 +441,13 @@ static void eyedropper_color_sample(bContext *C, Eyedropper *eye, int mx, int my
   eyedropper_color_set(C, eye, accum_col);
 }
 
-static void eyedropper_color_sample_text_update(bContext *C, Eyedropper *eye, int mx, int my)
+static void eyedropper_color_sample_text_update(bContext *C, Eyedropper *eye, const int m_xy[2])
 {
   float col[3];
   eye->sample_text[0] = '\0';
 
   if (eye->cryptomatte_session) {
-    if (eyedropper_cryptomatte_sample_fl(C, eye, mx, my, col)) {
+    if (eyedropper_cryptomatte_sample_fl(C, eye, m_xy, col)) {
       BKE_cryptomatte_find_name(
           eye->cryptomatte_session, col[0], eye->sample_text, sizeof(eye->sample_text));
       eye->sample_text[sizeof(eye->sample_text) - 1] = '\0';
@@ -474,7 +478,7 @@ static int eyedropper_modal(bContext *C, wmOperator *op, const wmEvent *event)
       case EYE_MODAL_SAMPLE_CONFIRM: {
         const bool is_undo = eye->is_undo;
         if (eye->accum_tot == 0) {
-          eyedropper_color_sample(C, eye, event->xy[0], event->xy[1]);
+          eyedropper_color_sample(C, eye, event->xy);
         }
         eyedropper_exit(C, op);
         /* Could support finished & undo-skip. */
@@ -483,23 +487,23 @@ static int eyedropper_modal(bContext *C, wmOperator *op, const wmEvent *event)
       case EYE_MODAL_SAMPLE_BEGIN:
         /* enable accum and make first sample */
         eye->accum_start = true;
-        eyedropper_color_sample(C, eye, event->xy[0], event->xy[1]);
+        eyedropper_color_sample(C, eye, event->xy);
         break;
       case EYE_MODAL_SAMPLE_RESET:
         eye->accum_tot = 0;
         zero_v3(eye->accum_col);
-        eyedropper_color_sample(C, eye, event->xy[0], event->xy[1]);
+        eyedropper_color_sample(C, eye, event->xy);
         break;
     }
   }
   else if (ELEM(event->type, MOUSEMOVE, INBETWEEN_MOUSEMOVE)) {
     if (eye->accum_start) {
       /* button is pressed so keep sampling */
-      eyedropper_color_sample(C, eye, event->xy[0], event->xy[1]);
+      eyedropper_color_sample(C, eye, event->xy);
     }
 
     if (eye->draw_handle_sample_text) {
-      eyedropper_color_sample_text_update(C, eye, event->xy[0], event->xy[1]);
+      eyedropper_color_sample_text_update(C, eye, event->xy);
       ED_region_tag_redraw(CTX_wm_region(C));
     }
   }

@@ -127,7 +127,7 @@ bool bvhcache_has_tree(const BVHCache *bvh_cache, const BVHTree *tree)
 
 BVHCache *bvhcache_init()
 {
-  BVHCache *cache = (BVHCache *)MEM_callocN(sizeof(BVHCache), __func__);
+  BVHCache *cache = MEM_cnew<BVHCache>(__func__);
   BLI_mutex_init(&cache->mutex);
   return cache;
 }
@@ -1600,6 +1600,8 @@ BVHTree *BKE_bvhtree_from_mesh_get(struct BVHTreeFromMesh *data,
     free_bvhtree_from_mesh(data);
     memset(data, 0, sizeof(*data));
   }
+
+  data->vert_normals = BKE_mesh_vertex_normals_ensure(mesh);
 
   return tree;
 }

@@ -27,7 +27,8 @@ static void node_declare(NodeDeclarationBuilder &b)
 {
   b.add_output<decl::Int>(N_("Vertex Count"))
       .field_source()
-      .description(N_("Vertex count and edge count are equal"));
+      .description(N_("The number of vertices connected to this vertex with an edge, "
+                      "equal to the number of connected edges"));
   b.add_output<decl::Int>(N_("Face Count"))
       .field_source()
       .description(N_("Number of faces that contain the vertex"));
@@ -148,7 +149,7 @@ void register_node_type_geo_input_mesh_vertex_neighbors()
 
   static bNodeType ntype;
   geo_node_type_base(
-      &ntype, GEO_NODE_INPUT_MESH_VERTEX_NEIGHBORS, "Vertex Neighbors", NODE_CLASS_INPUT, 0);
+      &ntype, GEO_NODE_INPUT_MESH_VERTEX_NEIGHBORS, "Vertex Neighbors", NODE_CLASS_INPUT);
   ntype.declare = file_ns::node_declare;
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   nodeRegisterType(&ntype);

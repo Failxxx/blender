@@ -254,7 +254,7 @@ typedef struct OldNewMap {
   /* Array that stores the actual entries. */
   OldNew *entries;
   int nentries;
-  /* Hashmap that stores indices into the `entries` array. */
+  /* Hash-map that stores indices into the `entries` array. */
   int32_t *map;
 
   int capacity_exp;
@@ -2544,7 +2544,6 @@ static void lib_link_workspace_layout_restore(struct IDNameLib_Map *id_map,
         else if (sl->spacetype == SPACE_FILE) {
           SpaceFile *sfile = (SpaceFile *)sl;
           sfile->op = NULL;
-          sfile->previews_timer = NULL;
           sfile->tags = FILE_TAG_REBUILD_MAIN_FILES;
         }
         else if (sl->spacetype == SPACE_ACTION) {

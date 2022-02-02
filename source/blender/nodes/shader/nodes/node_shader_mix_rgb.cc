@@ -21,9 +21,9 @@
  * \ingroup shdnodes
  */
 
-#include "node_shader_util.h"
+#include "node_shader_util.hh"
 
-namespace blender::nodes {
+namespace blender::nodes::node_shader_mix_rgb_cc {
 
 static void sh_node_mix_rgb_declare(NodeDeclarationBuilder &b)
 {
@@ -32,34 +32,6 @@ static void sh_node_mix_rgb_declare(NodeDeclarationBuilder &b)
   b.add_input<decl::Color>(N_("Color1")).default_value({0.5f, 0.5f, 0.5f, 1.0f});
   b.add_input<decl::Color>(N_("Color2")).default_value({0.5f, 0.5f, 0.5f, 1.0f});
   b.add_output<decl::Color>(N_("Color"));
-};
-
-}  // namespace blender::nodes
-
-static void node_shader_exec_mix_rgb(void *UNUSED(data),
-                                     int UNUSED(thread),
-                                     bNode *node,
-                                     bNodeExecData *UNUSED(execdata),
-                                     bNodeStack **in,
-                                     bNodeStack **out)
-{
-  /* stack order in: fac, col1, col2 */
-  /* stack order out: col */
-  float col[3];
-  float fac;
-  float vec[3];
-
-  nodestack_get_vec(&fac, SOCK_FLOAT, in[0]);
-  CLAMP(fac, 0.0f, 1.0f);
-
-  nodestack_get_vec(col, SOCK_VECTOR, in[1]);
-  nodestack_get_vec(vec, SOCK_VECTOR, in[2]);
-
-  ramp_blend(node->custom1, col, fac, vec);
-  if (node->custom2 & SHD_MIXRGB_CLAMP) {
-    CLAMP3(col, 0.0f, 1.0f);
-  }
-  copy_v3_v3(out[0]->vec, col);
 }
 
 static const char *gpu_shader_get_name(int mode)
@@ -183,16 +155,19 @@ static void sh_node_mix_rgb_build_multi_function(blender::nodes::NodeMultiFuncti
   builder.construct_and_set_matching_fn<MixRGBFunction>(clamp, mix_type);
 }
 
+}  // namespace blender::nodes::node_shader_mix_rgb_cc
+
 void register_node_type_sh_mix_rgb()
 {
+  namespace file_ns = blender::nodes::node_shader_mix_rgb_cc;
+
   static bNodeType ntype;
 
-  sh_fn_node_type_base(&ntype, SH_NODE_MIX_RGB, "Mix", NODE_CLASS_OP_COLOR, 0);
-  ntype.declare = blender::nodes::sh_node_mix_rgb_declare;
+  sh_fn_node_type_base(&ntype, SH_NODE_MIX_RGB, "Mix", NODE_CLASS_OP_COLOR);
+  ntype.declare = file_ns::sh_node_mix_rgb_declare;
   ntype.labelfunc = node_blend_label;
-  node_type_exec(&ntype, nullptr, nullptr, node_shader_exec_mix_rgb);
-  node_type_gpu(&ntype, gpu_shader_mix_rgb);
-  ntype.build_multi_function = sh_node_mix_rgb_build_multi_function;
+  node_type_gpu(&ntype, file_ns::gpu_shader_mix_rgb);
+  ntype.build_multi_function = file_ns::sh_node_mix_rgb_build_multi_function;
 
   nodeRegisterType(&ntype);
 }

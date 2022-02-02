@@ -1128,8 +1128,7 @@ static int actionzone_modal(bContext *C, wmOperator *op, const wmEvent *event)
                  AREAMAP_FROM_SCREEN(screen), &screen_rect, event->xy[0], event->xy[1]) == NULL)) {
 
           /* What area are we now in? */
-          ScrArea *area = BKE_screen_find_area_xy(
-              screen, SPACE_TYPE_ANY, event->xy[0], event->xy[1]);
+          ScrArea *area = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, event->xy);
 
           if (area == sad->sa1) {
             /* Same area, so possible split. */
@@ -1173,7 +1172,7 @@ static int actionzone_modal(bContext *C, wmOperator *op, const wmEvent *event)
       /* gesture is large enough? */
       if (is_gesture) {
         /* second area, for join when (sa1 != sa2) */
-        sad->sa2 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, event->xy[0], event->xy[1]);
+        sad->sa2 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, event->xy);
         /* apply sends event */
         actionzone_apply(C, op, sad->az->type);
         actionzone_exit(op);
@@ -1241,12 +1240,16 @@ static ScrEdge *screen_area_edge_from_cursor(const bContext *C,
   int borderwidth = (4 * UI_DPI_FAC);
   ScrArea *sa1, *sa2;
   if (screen_geom_edge_is_horizontal(actedge)) {
-    sa1 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, cursor[0], cursor[1] + borderwidth);
-    sa2 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, cursor[0], cursor[1] - borderwidth);
+    sa1 = BKE_screen_find_area_xy(
+        screen, SPACE_TYPE_ANY, (const int[2]){cursor[0], cursor[1] + borderwidth});
+    sa2 = BKE_screen_find_area_xy(
+        screen, SPACE_TYPE_ANY, (const int[2]){cursor[0], cursor[1] - borderwidth});
   }
   else {
-    sa1 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, cursor[0] + borderwidth, cursor[1]);
-    sa2 = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, cursor[0] - borderwidth, cursor[1]);
+    sa1 = BKE_screen_find_area_xy(
+        screen, SPACE_TYPE_ANY, (const int[2]){cursor[0] + borderwidth, cursor[1]});
+    sa2 = BKE_screen_find_area_xy(
+        screen, SPACE_TYPE_ANY, (const int[2]){cursor[0] - borderwidth, cursor[1]});
   }
   bool isGlobal = ((sa1 && ED_area_is_global(sa1)) || (sa2 && ED_area_is_global(sa2)));
   if (!isGlobal) {
@@ -1334,8 +1337,7 @@ static int area_swap_modal(bContext *C, wmOperator *op, const wmEvent *event)
   switch (event->type) {
     case MOUSEMOVE:
       /* second area, for join */
-      sad->sa2 = BKE_screen_find_area_xy(
-          CTX_wm_screen(C), SPACE_TYPE_ANY, event->xy[0], event->xy[1]);
+      sad->sa2 = BKE_screen_find_area_xy(CTX_wm_screen(C), SPACE_TYPE_ANY, event->xy);
       break;
     case LEFTMOUSE: /* release LMB */
       if (event->val == KM_RELEASE) {
@@ -2081,15 +2083,31 @@ typedef struct sAreaSplitData {
 
 } sAreaSplitData;
 
+static bool area_split_allowed(const ScrArea *area, const eScreenAxis dir_axis)
+{
+  if (!area || area->global) {
+    /* Must be a non-global area. */
+    return false;
+  }
+
+  if ((dir_axis == SCREEN_AXIS_V && area->winx <= 2 * AREAMINX) ||
+      (dir_axis == SCREEN_AXIS_H && area->winy <= 2 * ED_area_headersize())) {
+    /* Must be at least double minimum sizes to split into two. */
+    return false;
+  }
+
+  return true;
+}
+
 static void area_split_draw_cb(const struct wmWindow *UNUSED(win), void *userdata)
 {
   const wmOperator *op = userdata;
 
   sAreaSplitData *sd = op->customdata;
-  if (sd->sarea) {
-    const eScreenAxis dir_axis = RNA_enum_get(op->ptr, "direction");
-    float fac = RNA_float_get(op->ptr, "factor");
+  const eScreenAxis dir_axis = RNA_enum_get(op->ptr, "direction");
 
+  if (area_split_allowed(sd->sarea, dir_axis)) {
+    float fac = RNA_float_get(op->ptr, "factor");
     screen_draw_split_preview(sd->sarea, dir_axis, fac);
   }
 }
@@ -2118,18 +2136,6 @@ static bool area_split_init(bContext *C, wmOperator *op)
 
   /* required properties */
   const eScreenAxis dir_axis = RNA_enum_get(op->ptr, "direction");
-
-  /* minimal size */
-  if (dir_axis == SCREEN_AXIS_V) {
-    if (area->winx < 2 * AREAMINX) {
-      return false;
-    }
-  }
-  else {
-    if (area->winy < 2 * ED_area_headersize()) {
-      return false;
-    }
-  }
 
   /* custom data */
   sAreaSplitData *sd = (sAreaSplitData *)MEM_callocN(sizeof(sAreaSplitData), "op_area_split");
@@ -2186,6 +2192,10 @@ static bool area_split_apply(bContext *C, wmOperator *op)
 
   float fac = RNA_float_get(op->ptr, "factor");
   const eScreenAxis dir_axis = RNA_enum_get(op->ptr, "direction");
+
+  if (!area_split_allowed(sd->sarea, dir_axis)) {
+    return false;
+  }
 
   sd->narea = area_split(win, screen, sd->sarea, dir_axis, fac, false); /* false = no merge */
 
@@ -2252,9 +2262,15 @@ static void area_split_exit(bContext *C, wmOperator *op)
 
 static void area_split_preview_update_cursor(bContext *C, wmOperator *op)
 {
-  wmWindow *win = CTX_wm_window(C);
+  sAreaSplitData *sd = (sAreaSplitData *)op->customdata;
   const eScreenAxis dir_axis = RNA_enum_get(op->ptr, "direction");
-  WM_cursor_set(win, (dir_axis == SCREEN_AXIS_H) ? WM_CURSOR_H_SPLIT : WM_CURSOR_V_SPLIT);
+  if (area_split_allowed(sd->sarea, dir_axis)) {
+    WM_cursor_set(CTX_wm_window(C),
+                  (dir_axis == SCREEN_AXIS_H) ? WM_CURSOR_H_SPLIT : WM_CURSOR_V_SPLIT);
+  }
+  else {
+    WM_cursor_set(CTX_wm_window(C), WM_CURSOR_STOP);
+  }
 }
 
 /* UI callback, adds new handler */
@@ -2507,9 +2523,11 @@ static int area_split_modal(bContext *C, wmOperator *op, const wmEvent *event)
       if (sd->sarea) {
         ED_area_tag_redraw(sd->sarea);
       }
+
+      area_split_preview_update_cursor(C, op);
+
       /* area context not set */
-      sd->sarea = BKE_screen_find_area_xy(
-          CTX_wm_screen(C), SPACE_TYPE_ANY, event->xy[0], event->xy[1]);
+      sd->sarea = BKE_screen_find_area_xy(CTX_wm_screen(C), SPACE_TYPE_ANY, event->xy);
 
       if (sd->sarea) {
         ScrArea *area = sd->sarea;
@@ -2590,7 +2608,7 @@ typedef struct RegionMoveData {
   ARegion *region;
   ScrArea *area;
   int bigger, smaller, origval;
-  int origx, origy;
+  int orig_xy[2];
   int maxsize;
   AZEdge edge;
 
@@ -2698,8 +2716,7 @@ static int region_scale_invoke(bContext *C, wmOperator *op, const wmEvent *event
     }
     rmd->area = sad->sa1;
     rmd->edge = az->edge;
-    rmd->origx = event->xy[0];
-    rmd->origy = event->xy[1];
+    copy_v2_v2_int(rmd->orig_xy, event->xy);
     rmd->maxsize = area_max_regionsize(rmd->area, rmd->region, rmd->edge);
 
     /* if not set we do now, otherwise it uses type */
@@ -2786,7 +2803,7 @@ static int region_scale_modal(bContext *C, wmOperator *op, const wmEvent *event)
                            (BLI_rcti_size_x(&rmd->region->v2d.mask) + 1);
       const int snap_size_threshold = (U.widget_unit * 2) / aspect;
       if (ELEM(rmd->edge, AE_LEFT_TO_TOPRIGHT, AE_RIGHT_TO_TOPLEFT)) {
-        delta = event->xy[0] - rmd->origx;
+        delta = event->xy[0] - rmd->orig_xy[0];
         if (rmd->edge == AE_LEFT_TO_TOPRIGHT) {
           delta = -delta;
         }
@@ -2819,7 +2836,7 @@ static int region_scale_modal(bContext *C, wmOperator *op, const wmEvent *event)
         }
       }
       else {
-        delta = event->xy[1] - rmd->origy;
+        delta = event->xy[1] - rmd->orig_xy[1];
         if (rmd->edge == AE_BOTTOM_TO_TOPLEFT) {
           delta = -delta;
         }
@@ -2861,7 +2878,7 @@ static int region_scale_modal(bContext *C, wmOperator *op, const wmEvent *event)
     }
     case LEFTMOUSE:
       if (event->val == KM_RELEASE) {
-        if (len_manhattan_v2v2_int(event->xy, &rmd->origx) <= WM_EVENT_CURSOR_MOTION_THRESHOLD) {
+        if (len_manhattan_v2v2_int(event->xy, rmd->orig_xy) <= WM_EVENT_CURSOR_MOTION_THRESHOLD) {
           if (rmd->region->flag & RGN_FLAG_HIDDEN) {
             region_scale_toggle_hidden(C, rmd);
           }
@@ -3517,7 +3534,7 @@ static int area_join_modal(bContext *C, wmOperator *op, const wmEvent *event)
   switch (event->type) {
 
     case MOUSEMOVE: {
-      ScrArea *area = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, event->xy[0], event->xy[1]);
+      ScrArea *area = BKE_screen_find_area_xy(screen, SPACE_TYPE_ANY, event->xy);
       jd->dir = area_getorientation(jd->sa1, jd->sa2);
 
       if (area == jd->sa1) {

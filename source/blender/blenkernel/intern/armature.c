@@ -1356,9 +1356,12 @@ static void ease_handle_axis(const float deriv1[3], const float deriv2[3], float
 
   copy_v3_v3(r_axis, deriv1);
 
-  float len1 = len_squared_v3(deriv1), len2 = len_squared_v3(deriv2);
-  float ratio = len1 / len2;
-
+  const float len2 = len_squared_v3(deriv2);
+  if (UNLIKELY(len2 == 0.0f)) {
+    return;
+  }
+  const float len1 = len_squared_v3(deriv1);
+  const float ratio = len1 / len2;
   if (ratio < gap * gap) {
     madd_v3_v3fl(r_axis, deriv2, gap - sqrtf(ratio));
   }
@@ -2098,6 +2101,79 @@ void mat3_vec_to_roll(const float mat[3][3], const float vec[3], float *r_roll)
 
 void vec_roll_to_mat3_normalized(const float nor[3], const float roll, float r_mat[3][3])
 {
+  /**
+   * Given `v = (v.x, v.y, v.z)` our (normalized) bone vector, we want the rotation matrix M
+   * from the Y axis (so that `M * (0, 1, 0) = v`).
+   * - The rotation axis a lays on XZ plane, and it is orthonormal to v,
+   *   hence to the projection of v onto XZ plane.
+   * - `a = (v.z, 0, -v.x)`
+   *
+   * We know a is eigenvector of M (so M * a = a).
+   * Finally, we have w, such that M * w = (0, 1, 0)
+   * (i.e. the vector that will be aligned with Y axis once transformed).
+   * We know w is symmetric to v by the Y axis.
+   * - `w = (-v.x, v.y, -v.z)`
+   *
+   * Solving this, we get (x, y and z being the components of v):
+   * <pre>
+   *     ┌ (x^2 * y + z^2) / (x^2 + z^2),   x,   x * z * (y - 1) / (x^2 + z^2) ┐
+   * M = │  x * (y^2 - 1)  / (x^2 + z^2),   y,    z * (y^2 - 1)  / (x^2 + z^2) │
+   *     └ x * z * (y - 1) / (x^2 + z^2),   z,   (x^2 + z^2 * y) / (x^2 + z^2) ┘
+   * </pre>
+   *
+   * This is stable as long as v (the bone) is not too much aligned with +/-Y
+   * (i.e. x and z components are not too close to 0).
+   *
+   * Since v is normalized, we have `x^2 + y^2 + z^2 = 1`,
+   * hence `x^2 + z^2 = 1 - y^2 = (1 - y)(1 + y)`.
+   *
+   * This allows to simplifies M like this:
+   * <pre>
+   *     ┌ 1 - x^2 / (1 + y),   x,     -x * z / (1 + y) ┐
+   * M = │                -x,   y,                   -z │
+   *     └  -x * z / (1 + y),   z,    1 - z^2 / (1 + y) ┘
+   * </pre>
+   *
+   * Written this way, we see the case v = +Y is no more a singularity.
+   * The only one
+   * remaining is the bone being aligned with -Y.
+   *
+   * Let's handle
+   * the asymptotic behavior when bone vector is reaching the limit of y = -1.
+   * Each of the four corner elements can vary from -1 to 1,
+   * depending on the axis a chosen for doing the rotation.
+   * And the "rotation" here is in fact established by mirroring XZ plane by that given axis,
+   * then inversing the Y-axis.
+   * For sufficiently small x and z, and with y approaching -1,
+   * all elements but the four corner ones of M will degenerate.
+   * So let's now focus on these corner elements.
+   *
+   * We rewrite M so that it only contains its four corner elements,
+   * and combine the `1 / (1 + y)` factor:
+   * <pre>
+   *                    ┌ 1 + y - x^2,        -x * z ┐
+   * M* = 1 / (1 + y) * │                            │
+   *                    └      -x * z,   1 + y - z^2 ┘
+   * </pre>
+   *
+   * When y is close to -1, computing 1 / (1 + y) will cause severe numerical instability,
+   * so we use a different approach based on x and z as inputs.
+   * We know `y^2 = 1 - (x^2 + z^2)`, and `y < 0`, hence `y = -sqrt(1 - (x^2 + z^2))`.
+   *
+   * Since x and z are both close to 0, we apply the binomial expansion to the second order:
+   * `y = -sqrt(1 - (x^2 + z^2)) = -1 + (x^2 + z^2) / 2 + (x^2 + z^2)^2 / 8`, which allows
+   * eliminating the problematic `1` constant.
+   *
+   * A first order expansion allows simplifying to this, but second order is more precise:
+   * <pre>
+   *                        ┌  z^2 - x^2,  -2 * x * z ┐
+   * M* = 1 / (x^2 + z^2) * │                         │
+   *                        └ -2 * x * z,   x^2 - z^2 ┘
+   * </pre>
+   *
+   * P.S. In the end, this basically is a heavily optimized version of Damped Track +Y.
+   */
+
   const float SAFE_THRESHOLD = 6.1e-3f;     /* Theta above this value has good enough precision. */
   const float CRITICAL_THRESHOLD = 2.5e-4f; /* True singularity if XZ distance is below this. */
   const float THRESHOLD_SQUARED = CRITICAL_THRESHOLD * CRITICAL_THRESHOLD;

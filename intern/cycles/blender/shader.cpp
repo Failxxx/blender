@@ -689,6 +689,9 @@ static ShaderNode *add_node(Scene *scene,
   else if (b_node.is_a(&RNA_ShaderNodeHairInfo)) {
     node = graph->create_node<HairInfoNode>();
   }
+  else if (b_node.is_a(&RNA_ShaderNodePointInfo)) {
+    node = graph->create_node<PointInfoNode>();
+  }
   else if (b_node.is_a(&RNA_ShaderNodeVolumeInfo)) {
     node = graph->create_node<VolumeInfoNode>();
   }
@@ -776,7 +779,7 @@ static ShaderNode *add_node(Scene *scene,
       }
       else {
         ustring filename = ustring(
-            image_user_file_path(b_image_user, b_image, b_scene.frame_current(), true));
+            image_user_file_path(b_image_user, b_image, b_scene.frame_current()));
         image->set_filename(filename);
       }
     }
@@ -813,7 +816,7 @@ static ShaderNode *add_node(Scene *scene,
       }
       else {
         env->set_filename(
-            ustring(image_user_file_path(b_image_user, b_image, b_scene.frame_current(), false)));
+            ustring(image_user_file_path(b_image_user, b_image, b_scene.frame_current())));
       }
     }
     node = env;

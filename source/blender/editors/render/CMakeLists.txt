@@ -28,6 +28,7 @@ set(INC
   ../../imbuf
   ../../makesdna
   ../../makesrna
+  ../../nodes
   ../../render
   ../../sequencer
   ../../windowmanager
@@ -36,15 +37,15 @@ set(INC
 )
 
 set(SRC
-  render_internal.c
-  render_opengl.c
-  render_ops.c
-  render_preview.c
-  render_shading.c
-  render_update.c
-  render_view.c
+  render_internal.cc
+  render_opengl.cc
+  render_ops.cc
+  render_preview.cc
+  render_shading.cc
+  render_update.cc
+  render_view.cc
 
-  render_intern.h
+  render_intern.hh
 )
 
 set(LIB
@@ -64,10 +65,6 @@ if(WITH_FREESTYLE)
     ../../freestyle
   )
   add_definitions(-DWITH_FREESTYLE)
-endif()
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
 endif()
 
 blender_add_lib(bf_editor_render "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")

@@ -456,6 +456,7 @@ void graphedit_operatortypes(void)
 
   /* editing */
   WM_operatortype_append(GRAPH_OT_snap);
+  WM_operatortype_append(GRAPH_OT_equalize_handles);
   WM_operatortype_append(GRAPH_OT_mirror);
   WM_operatortype_append(GRAPH_OT_frame_jump);
   WM_operatortype_append(GRAPH_OT_snap_cursor_value);
@@ -470,6 +471,8 @@ void graphedit_operatortypes(void)
   WM_operatortype_append(GRAPH_OT_smooth);
   WM_operatortype_append(GRAPH_OT_clean);
   WM_operatortype_append(GRAPH_OT_decimate);
+  WM_operatortype_append(GRAPH_OT_blend_to_neighbor);
+  WM_operatortype_append(GRAPH_OT_breakdown);
   WM_operatortype_append(GRAPH_OT_euler_filter);
   WM_operatortype_append(GRAPH_OT_delete);
   WM_operatortype_append(GRAPH_OT_duplicate);

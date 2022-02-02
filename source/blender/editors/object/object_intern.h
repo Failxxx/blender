@@ -65,7 +65,6 @@ void OBJECT_OT_track_set(struct wmOperatorType *ot);
 void OBJECT_OT_track_clear(struct wmOperatorType *ot);
 void OBJECT_OT_make_local(struct wmOperatorType *ot);
 void OBJECT_OT_make_override_library(struct wmOperatorType *ot);
-void OBJECT_OT_convert_proxy_to_override(struct wmOperatorType *ot);
 void OBJECT_OT_make_single_user(struct wmOperatorType *ot);
 void OBJECT_OT_make_links_scene(struct wmOperatorType *ot);
 void OBJECT_OT_make_links_data(struct wmOperatorType *ot);
@@ -176,8 +175,8 @@ void COLLECTION_OT_objects_remove_active(struct wmOperatorType *ot);
 bool edit_modifier_poll_generic(struct bContext *C,
                                 struct StructRNA *rna_type,
                                 int obtype_flag,
-                                const bool is_editmode_allowed,
-                                const bool is_liboverride_allowed);
+                                bool is_editmode_allowed,
+                                bool is_liboverride_allowed);
 void edit_modifier_properties(struct wmOperatorType *ot);
 bool edit_modifier_invoke_properties(struct bContext *C, struct wmOperator *op);
 

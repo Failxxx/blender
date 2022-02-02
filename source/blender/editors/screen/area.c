@@ -1667,7 +1667,7 @@ static bool event_in_markers_region(const ARegion *region, const wmEvent *event)
 {
   rcti rect = region->winrct;
   rect.ymax = rect.ymin + UI_MARKER_MARGIN_Y;
-  return BLI_rcti_isect_pt(&rect, event->xy[0], event->xy[1]);
+  return BLI_rcti_isect_pt_v(&rect, event->xy);
 }
 
 /**
@@ -1680,7 +1680,7 @@ static void ed_default_handlers(
 
   /* NOTE: add-handler checks if it already exists. */
 
-  /* XXX it would be good to have boundbox checks for some of these... */
+  /* XXX: it would be good to have bound-box checks for some of these. */
   if (flag & ED_KEYMAP_UI) {
     wmKeyMap *keymap = WM_keymap_ensure(wm->defaultconf, "User Interface", 0, 0);
     WM_event_add_keymap_handler(handlers, keymap);

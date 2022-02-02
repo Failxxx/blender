@@ -82,6 +82,10 @@ typedef struct Mesh_Runtime {
   struct Mesh *mesh_eval;
   void *eval_mutex;
 
+  /* A separate mutex is needed for normal calculation, because sometimes
+   * the normals are needed while #eval_mutex is already locked. */
+  void *normals_mutex;
+
   /** Needed to ensure some thread-safety during render data pre-processing. */
   void *render_mutex;
 
@@ -127,6 +131,17 @@ typedef struct Mesh_Runtime {
    * in case there are differences in finalizing logic between types.
    */
   char wrapper_type_finalize;
+
+  /**
+   * Settings for lazily evaluating the subdivision on the CPU if needed. These are
+   * set in the modifier when GPU subdivision can be performed.
+   */
+  char subsurf_apply_render;
+  char subsurf_use_optimal_display;
+  char _pad[2];
+  int subsurf_resolution;
+
+  void *_pad2;
 
   /**
    * Used to mark when derived data needs to be recalculated for a certain layer.
@@ -356,7 +371,8 @@ typedef enum eMeshWrapperType {
   ME_WRAPPER_TYPE_MDATA = 0,
   /** Use edit-mesh data (#Mesh.edit_mesh, #Mesh_Runtime.edit_data). */
   ME_WRAPPER_TYPE_BMESH = 1,
-  /* ME_WRAPPER_TYPE_SUBD = 2, */ /* TODO */
+  /** Use subdivision mesh data (#Mesh_Runtime.mesh_eval). */
+  ME_WRAPPER_TYPE_SUBD = 2,
 } eMeshWrapperType;
 
 /** #Mesh.texflag */
@@ -412,6 +428,7 @@ enum {
   ME_CDFLAG_VERT_BWEIGHT = 1 << 0,
   ME_CDFLAG_EDGE_BWEIGHT = 1 << 1,
   ME_CDFLAG_EDGE_CREASE = 1 << 2,
+  ME_CDFLAG_VERT_CREASE = 1 << 3,
 };
 
 /** #Mesh.remesh_mode */

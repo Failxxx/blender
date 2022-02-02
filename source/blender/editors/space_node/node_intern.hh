@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "BLI_float2.hh"
+#include "BLI_math_vec_types.hh"
 #include "BLI_vector.hh"
 
 #include "BKE_node.h"
@@ -43,15 +43,17 @@ struct bNodeLink;
 struct bNodeSocket;
 struct wmGizmoGroupType;
 struct wmKeyConfig;
-namespace blender {
-struct float2;
-}
 struct wmWindow;
+
+/* Outside of blender namespace to avoid Python documentation build error with `ctypes`. */
+extern const char *node_context_dir[];
+
+namespace blender::ed::space_node {
 
 /** Temporary data used in node link drag modal operator. */
 struct bNodeLinkDrag {
   /** Links dragged by the operator. */
-  blender::Vector<bNodeLink *> links;
+  Vector<bNodeLink *> links;
   bool from_multi_input_socket;
   eNodeSocketInOut in_out;
 
@@ -85,7 +87,7 @@ struct SpaceNode_Runtime {
   float aspect;
 
   /** Mouse position for drawing socket-less links and adding nodes. */
-  blender::float2 cursor;
+  float2 cursor;
 
   /** For auto compositing. */
   bool recalc;
@@ -110,15 +112,15 @@ ENUM_OPERATORS(NodeResizeDirection, NODE_RESIZE_LEFT);
 /**
  * Transform between View2Ds in the tree path.
  */
-blender::float2 space_node_group_offset(const SpaceNode &snode);
+float2 space_node_group_offset(const SpaceNode &snode);
 
 float node_socket_calculate_height(const bNodeSocket &socket);
-blender::float2 node_link_calculate_multi_input_position(const blender::float2 &socket_position,
-                                                         int index,
-                                                         int total_inputs);
+float2 node_link_calculate_multi_input_position(const float2 &socket_position,
+                                                int index,
+                                                int total_inputs);
 
 int node_get_resize_cursor(NodeResizeDirection directions);
-NodeResizeDirection node_get_resize_direction(const bNode *node, const int x, const int y);
+NodeResizeDirection node_get_resize_direction(const bNode *node, int x, int y);
 /**
  * Usual convention here would be #node_socket_get_color(),
  * but that's already used (for setting a color property socket).
@@ -130,22 +132,26 @@ void node_socket_color_get(const bContext &C,
                            float r_color[4]);
 void node_draw_space(const bContext &C, ARegion &region);
 
-void node_set_cursor(wmWindow &win, SpaceNode &snode, const blender::float2 &cursor);
+/**
+ * Sort nodes by selection: unselected nodes first, then selected,
+ * then the active node at the very end. Relative order is kept intact.
+ */
+void node_sort(bNodeTree &ntree);
+
+void node_set_cursor(wmWindow &win, SpaceNode &snode, const float2 &cursor);
 /* DPI scaled coords */
-blender::float2 node_to_view(const bNode &node, const blender::float2 &co);
+float2 node_to_view(const bNode &node, const float2 &co);
 void node_to_updated_rect(const bNode &node, rctf &r_rect);
-blender::float2 node_from_view(const bNode &node, const blender::float2 &co);
+float2 node_from_view(const bNode &node, const float2 &co);
 
-void node_toolbar_register(ARegionType *art);
-
-void node_operatortypes(void);
+void node_operatortypes();
 void node_keymap(wmKeyConfig *keyconf);
 
 void node_deselect_all(SpaceNode &snode);
 void node_socket_select(bNode *node, bNodeSocket &sock);
-void node_socket_deselect(bNode *node, bNodeSocket &sock, const bool deselect_node);
-void node_deselect_all_input_sockets(SpaceNode &snode, const bool deselect_nodes);
-void node_deselect_all_output_sockets(SpaceNode &snode, const bool deselect_nodes);
+void node_socket_deselect(bNode *node, bNodeSocket &sock, bool deselect_node);
+void node_deselect_all_input_sockets(SpaceNode &snode, bool deselect_nodes);
+void node_deselect_all_output_sockets(SpaceNode &snode, bool deselect_nodes);
 void node_select_single(bContext &C, bNode &node);
 
 void NODE_OT_select(wmOperatorType *ot);
@@ -196,7 +202,7 @@ bool node_link_bezier_points(const View2D *v2d,
                              const SpaceNode *snode,
                              const bNodeLink &link,
                              float coord_array[][2],
-                             const int resol);
+                             int resol);
 /**
  * Return quadratic beziers points for a given nodelink and clip if v2d is not nullptr.
  */
@@ -208,6 +214,8 @@ void draw_nodespace_back_pix(const bContext &C,
                              ARegion &region,
                              SpaceNode &snode,
                              bNodeInstanceKey parent_key);
+
+void node_select_all(ListBase *lb, int action);
 
 /**
  * XXX Does some additional initialization on top of #nodeAddNode
@@ -234,7 +242,7 @@ void NODE_OT_group_edit(wmOperatorType *ot);
 void sort_multi_input_socket_links(SpaceNode &snode,
                                    bNode &node,
                                    bNodeLink *drag_link,
-                                   const blender::float2 *cursor);
+                                   const float2 *cursor);
 
 void NODE_OT_link(wmOperatorType *ot);
 void NODE_OT_link_make(wmOperatorType *ot);
@@ -264,7 +272,7 @@ int node_render_changed_exec(bContext *, wmOperator *);
 bool node_find_indicated_socket(SpaceNode &snode,
                                 bNode **nodep,
                                 bNodeSocket **sockp,
-                                const blender::float2 &cursor,
+                                const float2 &cursor,
                                 eNodeSocketInOut in_out);
 float node_link_dim_factor(const View2D &v2d, const bNodeLink &link);
 bool node_link_is_hidden_or_dimmed(const View2D &v2d, const bNodeLink &link);
@@ -320,8 +328,6 @@ void node_geometry_add_attribute_search_button(const bContext &C,
                                                PointerRNA &socket_ptr,
                                                uiLayout &layout);
 
-extern const char *node_context_dir[];
-
 /* Nodes draw without dpi - the view zoom is flexible. */
 #define HIDDEN_RAD (0.75f * U.widget_unit)
 #define BASIS_RAD (0.2f * U.widget_unit)
@@ -335,8 +341,6 @@ extern const char *node_context_dir[];
 #define NODE_MULTI_INPUT_LINK_GAP (0.25f * U.widget_unit)
 #define NODE_RESIZE_MARGIN (0.20f * U.widget_unit)
 #define NODE_LINK_RESOL 12
-
-namespace blender::ed::space_node {
 
 Vector<ui::ContextPathItem> context_path_for_space_node(const bContext &C);
 

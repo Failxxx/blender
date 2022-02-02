@@ -55,6 +55,7 @@ set(SRC
   ../include/ED_clip.h
   ../include/ED_curve.h
   ../include/ED_datafiles.h
+  ../include/ED_file_indexer.h
   ../include/ED_fileselect.h
   ../include/ED_geometry.h
   ../include/ED_gizmo_library.h
@@ -113,10 +114,6 @@ set(SRC
 set(LIB
 )
 
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
-endif()
 
 if(WITH_PYTHON)
   add_definitions(-DWITH_PYTHON)

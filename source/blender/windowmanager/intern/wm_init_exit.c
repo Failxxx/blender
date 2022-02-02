@@ -252,7 +252,7 @@ void WM_init(bContext *C, int argc, const char **argv)
   BKE_region_callback_free_gizmomap_set(wm_gizmomap_remove);
   BKE_region_callback_refresh_tag_gizmomap_set(WM_gizmomap_tag_refresh);
   BKE_library_callback_remap_editor_id_reference_set(WM_main_remap_editor_id_reference);
-  BKE_spacedata_callback_id_remap_set(ED_spacedata_id_remap);
+  BKE_spacedata_callback_id_remap_set(ED_spacedata_id_remap_single);
   DEG_editors_set_update_cb(ED_render_id_flush_update, ED_render_scene_update);
 
   ED_spacetypes_init();
@@ -562,6 +562,13 @@ void WM_exit_ex(bContext *C, const bool do_python)
 
   BKE_blender_free(); /* blender.c, does entire library and spacetypes */
                       //  BKE_material_copybuf_free();
+
+  /* Free the GPU subdivision data after the database to ensure that subdivision structs used by
+   * the modifiers were garbage collected. */
+  if (opengl_is_init) {
+    DRW_subdiv_free();
+  }
+
   ANIM_fcurves_copybuf_free();
   ANIM_drivers_copybuf_free();
   ANIM_driver_vars_copybuf_free();
@@ -587,9 +594,7 @@ void WM_exit_ex(bContext *C, const bool do_python)
     DRW_opengl_context_destroy();
   }
 
-#ifdef WITH_INTERNATIONAL
   BLT_lang_free();
-#endif
 
   ANIM_keyingset_infos_exit();
 

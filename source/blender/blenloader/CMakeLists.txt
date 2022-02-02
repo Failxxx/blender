@@ -26,6 +26,7 @@ set(INC
   ../blentranslation
   ../depsgraph
   ../draw
+  ../editors/include
   ../imbuf
   ../makesdna
   ../makesrna
@@ -83,10 +84,6 @@ set(LIB
 
 if(WITH_BUILDINFO)
   add_definitions(-DWITH_BUILDINFO)
-endif()
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
 endif()
 
 if(WITH_CODEC_FFMPEG)

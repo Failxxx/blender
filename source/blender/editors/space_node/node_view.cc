@@ -55,7 +55,7 @@
 
 #include "node_intern.hh" /* own include */
 
-using blender::StringRef;
+namespace blender::ed::space_node {
 
 /* -------------------------------------------------------------------- */
 /** \name View All Operator
@@ -255,7 +255,7 @@ static int snode_bg_viewmove_invoke(bContext *C, wmOperator *op, const wmEvent *
     return OPERATOR_CANCELLED;
   }
 
-  nvm = (NodeViewMove *)MEM_callocN(sizeof(NodeViewMove), "NodeViewMove struct");
+  nvm = MEM_cnew<NodeViewMove>("NodeViewMove struct");
   op->customdata = nvm;
   nvm->mvalo[0] = event->mval[0];
   nvm->mvalo[1] = event->mval[1];
@@ -444,6 +444,8 @@ static void sample_draw(const bContext *C, ARegion *region, void *arg_info)
   }
 }
 
+}  // namespace blender::ed::space_node
+
 bool ED_space_node_get_position(
     Main *bmain, SpaceNode *snode, struct ARegion *region, const int mval[2], float fpos[2])
 {
@@ -525,6 +527,8 @@ bool ED_space_node_color_sample(
 
   return ret;
 }
+
+namespace blender::ed::space_node {
 
 static void sample_apply(bContext *C, wmOperator *op, const wmEvent *event)
 {
@@ -643,7 +647,7 @@ static int sample_invoke(bContext *C, wmOperator *op, const wmEvent *event)
     return OPERATOR_CANCELLED;
   }
 
-  info = (ImageSampleInfo *)MEM_callocN(sizeof(ImageSampleInfo), "ImageSampleInfo");
+  info = MEM_cnew<ImageSampleInfo>("ImageSampleInfo");
   info->art = region->type;
   info->draw_handle = ED_region_draw_cb_activate(
       region->type, sample_draw, info, REGION_DRAW_POST_PIXEL);
@@ -783,3 +787,5 @@ void NODE_OT_geometry_node_view_legacy(wmOperatorType *ot)
 }
 
 /** \} */
+
+}  // namespace blender::ed::space_node

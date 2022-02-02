@@ -273,11 +273,13 @@ endif()
 
 if(UNIX AND NOT APPLE)
   option(WITH_SYSTEM_GLEW "Use GLEW OpenGL wrapper library provided by the operating system" OFF)
-  option(WITH_SYSTEM_GLES "Use OpenGL ES library provided by the operating system"           ON)
+  option(WITH_SYSTEM_GLEW "Use GLEW OpenGL wrapper library provided by the operating system" OFF)
+  option(WITH_SYSTEM_FREETYPE "Use the freetype library provided by the operating system" OFF)
 else()
   # not an option for other OS's
   set(WITH_SYSTEM_GLEW OFF)
   set(WITH_SYSTEM_GLES OFF)
+  set(WITH_SYSTEM_FREETYPE OFF)
 endif()
 
 
@@ -536,12 +538,14 @@ option(WITH_OPENGL              "When off limits visibility of the opengl header
 option(WITH_GLEW_ES             "Switches to experimental copy of GLEW that has support for OpenGL ES. (temporary option for development purposes)" OFF)
 option(WITH_GL_EGL              "Use the EGL OpenGL system library instead of the platform specific OpenGL system library (CGL, glX, or WGL)"       OFF)
 option(WITH_GL_PROFILE_ES20     "Support using OpenGL ES 2.0. (through either EGL or the AGL/WGL/XGL 'es20' profile)"                               OFF)
+option(WITH_GPU_SHADER_BUILDER  "Shader builder is a developer option enabling linting on GLSL during compilation"                                  OFF)
 
 mark_as_advanced(
   WITH_OPENGL
   WITH_GLEW_ES
   WITH_GL_EGL
   WITH_GL_PROFILE_ES20
+  WITH_GPU_SHADER_BUILDER
 )
 
 if(WIN32)
@@ -559,12 +563,18 @@ if(WIN32)
   set(CPACK_INSTALL_PREFIX ${CMAKE_GENERIC_PROGRAM_FILES}/${})
 endif()
 
-# Compiler toolchain
-if(CMAKE_COMPILER_IS_GNUCC)
-  option(WITH_LINKER_GOLD "Use ld.gold linker which is usually faster than ld.bfd" ON)
-  mark_as_advanced(WITH_LINKER_GOLD)
-  option(WITH_LINKER_LLD "Use ld.lld linker which is usually faster than ld.gold" OFF)
-  mark_as_advanced(WITH_LINKER_LLD)
+# Compiler tool-chain.
+if(UNIX AND NOT APPLE)
+  if(CMAKE_COMPILER_IS_GNUCC)
+    option(WITH_LINKER_GOLD "Use ld.gold linker which is usually faster than ld.bfd" ON)
+    mark_as_advanced(WITH_LINKER_GOLD)
+    option(WITH_LINKER_LLD "Use ld.lld linker which is usually faster than ld.gold" OFF)
+    mark_as_advanced(WITH_LINKER_LLD)
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+    option(WITH_LINKER_MOLD "Use ld.mold linker which is usually faster than ld.gold & ld.lld." OFF)
+    mark_as_advanced(WITH_LINKER_MOLD)
+  endif()
 endif()
 
 option(WITH_COMPILER_ASAN "Build and link against address sanitizer (only for Debug & RelWithDebInfo targets)." OFF)
@@ -675,7 +685,7 @@ if(WIN32 OR XCODE)
   option(IDE_GROUP_PROJECTS_IN_FOLDERS "Organize the projects according to source folder structure." ON)
   mark_as_advanced(IDE_GROUP_PROJECTS_IN_FOLDERS)
 
-  if (IDE_GROUP_PROJECTS_IN_FOLDERS)
+  if(IDE_GROUP_PROJECTS_IN_FOLDERS)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
   endif()
 endif()
@@ -700,8 +710,11 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Installation process.
-option(POSTINSTALL_SCRIPT "Run given CMake script after installation process" OFF)
+set(POSTINSTALL_SCRIPT "" CACHE FILEPATH "Run given CMake script after installation process")
 mark_as_advanced(POSTINSTALL_SCRIPT)
+
+set(POSTCONFIGURE_SCRIPT "" CACHE FILEPATH "Run given CMake script as the last step of CMake configuration")
+mark_as_advanced(POSTCONFIGURE_SCRIPT)
 
 # end option(...)
 
@@ -2065,4 +2078,9 @@ endif()
 
 if(0)
   print_all_vars()
+endif()
+
+# Should be the last step of configuration.
+if(POSTCONFIGURE_SCRIPT)
+  include(${POSTCONFIGURE_SCRIPT})
 endif()

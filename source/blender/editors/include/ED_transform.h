@@ -54,7 +54,8 @@ typedef enum {
   TFM_TILT,
   TFM_TRACKBALL,
   TFM_PUSHPULL,
-  TFM_CREASE,
+  TFM_EDGE_CREASE,
+  TFM_VERT_CREASE,
   TFM_MIRROR,
   TFM_BONESIZE,
   TFM_BONE_ENVELOPE,
@@ -104,16 +105,16 @@ void BIF_removeTransformOrientationIndex(struct bContext *C, int index);
 bool BIF_createTransformOrientation(struct bContext *C,
                                     struct ReportList *reports,
                                     const char *name,
-                                    const bool use_view,
-                                    const bool activate,
-                                    const bool overwrite);
+                                    bool use_view,
+                                    bool activate,
+                                    bool overwrite);
 void BIF_selectTransformOrientation(struct bContext *C, struct TransformOrientation *target);
 
 void ED_getTransformOrientationMatrix(struct ViewLayer *view_layer,
                                       const struct View3D *v3d,
                                       struct Object *ob,
                                       struct Object *obedit,
-                                      const short around,
+                                      short around,
                                       float r_orientation_mat[3][3]);
 
 int BIF_countTransformOrientation(const struct bContext *C);
@@ -161,8 +162,8 @@ short ED_transform_calc_orientation_from_type_ex(const struct Scene *scene,
                                                  const struct RegionView3D *rv3d,
                                                  struct Object *ob,
                                                  struct Object *obedit,
-                                                 const short orientation_index,
-                                                 const int pivot_point,
+                                                 short orientation_index,
+                                                 int pivot_point,
                                                  float r_mat[3][3]);
 
 /* transform gizmos */
@@ -188,7 +189,7 @@ void ED_widgetgroup_gizmo2d_rotate_callbacks_set(struct wmGizmoGroupType *gzgt);
 
 struct TransformBounds {
   float center[3];      /* Center for transform widget. */
-  float min[3], max[3]; /* Boundbox of selection for transform widget. */
+  float min[3], max[3]; /* Bounding-box of selection for transform widget. */
 
   /* Normalized axis */
   float axis[3][3];

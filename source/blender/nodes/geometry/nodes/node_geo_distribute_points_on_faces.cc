@@ -44,7 +44,7 @@ static void node_declare(NodeDeclarationBuilder &b)
   b.add_input<decl::Bool>(N_("Selection")).default_value(true).hide_value().supports_field();
   b.add_input<decl::Float>(N_("Distance Min")).min(0.0f).subtype(PROP_DISTANCE);
   b.add_input<decl::Float>(N_("Density Max")).default_value(10.0f).min(0.0f);
-  b.add_input<decl::Float>(N_("Density")).default_value(10.0f).supports_field();
+  b.add_input<decl::Float>(N_("Density")).default_value(10.0f).min(0.0f).supports_field();
   b.add_input<decl::Float>(N_("Density Factor"))
       .default_value(1.0f)
       .min(0.0f)
@@ -573,8 +573,7 @@ void register_node_type_geo_distribute_points_on_faces()
   geo_node_type_base(&ntype,
                      GEO_NODE_DISTRIBUTE_POINTS_ON_FACES,
                      "Distribute Points on Faces",
-                     NODE_CLASS_GEOMETRY,
-                     0);
+                     NODE_CLASS_GEOMETRY);
   node_type_update(&ntype, file_ns::node_point_distribute_points_on_faces_update);
   node_type_size(&ntype, 170, 100, 320);
   ntype.declare = file_ns::node_declare;

@@ -437,7 +437,7 @@ void GPU_framebuffer_blit(GPUFrameBuffer *gpufb_read,
 
   fb_read->blit_to(blit_buffers, read_slot, fb_write, write_slot, 0, 0);
 
-  /* FIXME(fclem) sRGB is not saved. */
+  /* FIXME(@fclem): sRGB is not saved. */
   prev_fb->bind(true);
 }
 
@@ -563,7 +563,7 @@ static GPUFrameBuffer *gpu_offscreen_fb_get(GPUOffScreen *ofs)
 GPUOffScreen *GPU_offscreen_create(
     int width, int height, bool depth, eGPUTextureFormat format, char err_out[256])
 {
-  GPUOffScreen *ofs = (GPUOffScreen *)MEM_callocN(sizeof(GPUOffScreen), __func__);
+  GPUOffScreen *ofs = MEM_cnew<GPUOffScreen>(__func__);
 
   /* Sometimes areas can have 0 height or width and this will
    * create a 1D texture which we don't want. */

@@ -580,7 +580,6 @@ static bNodeSocket *do_versions_node_group_add_socket_2_56_2(bNodeTree *ngroup,
   gsock->type = type;
 
   gsock->next = gsock->prev = NULL;
-  gsock->new_sock = NULL;
   gsock->link = NULL;
   /* assign new unique index */
   gsock->own_index = ngroup->cur_index++;
@@ -857,10 +856,9 @@ void blo_do_versions_250(FileData *fd, Library *lib, Main *bmain)
       if (!ts->uv_selectmode || ts->vgroup_weight == 0.0f) {
         ts->selectmode = SCE_SELECT_VERTEX;
 
-        /* autokeying - setting should be taken from the user-prefs
-         * but the userprefs version may not have correct flags set
-         * (i.e. will result in blank box when enabled)
-         */
+        /* The auto-keying setting should be taken from the user-preferences
+         * but the user-preferences version may not have correct flags set
+         * (i.e. will result in blank box when enabled). */
         ts->autokey_mode = U.autokey_mode;
         if (ts->autokey_mode == 0) {
           ts->autokey_mode = 2; /* 'add/replace' but not on */
@@ -1005,7 +1003,7 @@ void blo_do_versions_250(FileData *fd, Library *lib, Main *bmain)
     int a, tot;
 
     /* shape keys are no longer applied to the mesh itself, but rather
-     * to the derivedmesh/displist, so here we ensure that the basis
+     * to the evaluated #Mesh / #DispList, so here we ensure that the basis
      * shape key is always set in the mesh coordinates. */
     for (me = bmain->meshes.first; me; me = me->id.next) {
       if ((key = blo_do_versions_newlibadr(fd, lib, me->key)) && key->refkey) {

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "DNA_ID_enums.h"
 #include "DNA_vec_types.h"
 
 #ifdef __cplusplus
@@ -41,7 +42,6 @@ struct bContext;
 struct bScreen;
 struct wmWindow;
 struct wmWindowManager;
-enum eIconSizes;
 
 /* render_ops.c */
 
@@ -49,7 +49,7 @@ void ED_operatortypes_render(void);
 
 /* render_update.c */
 
-void ED_render_engine_changed(struct Main *bmain, const bool update_scene_data);
+void ED_render_engine_changed(struct Main *bmain, bool update_scene_data);
 void ED_render_engine_area_exit(struct Main *bmain, struct ScrArea *area);
 void ED_render_view_layer_changed(struct Main *bmain, struct bScreen *screen);
 
@@ -60,14 +60,14 @@ void ED_render_id_flush_update(const struct DEGEditorUpdateContext *update_ctx, 
  * Update all 3D viewport render and draw engines on changes to the scene.
  * This is called by the dependency graph when it detects changes.
  */
-void ED_render_scene_update(const struct DEGEditorUpdateContext *update_ctx, const bool updated);
+void ED_render_scene_update(const struct DEGEditorUpdateContext *update_ctx, bool updated);
 /**
  * Update 3D viewport render or draw engine on changes to the scene or view settings.
  */
 void ED_render_view3d_update(struct Depsgraph *depsgraph,
                              struct wmWindow *window,
                              struct ScrArea *area,
-                             const bool updated);
+                             bool updated);
 
 struct Scene *ED_render_job_get_scene(const struct bContext *C);
 struct Scene *ED_render_job_get_current_scene(const struct bContext *C);
@@ -100,7 +100,7 @@ void ED_preview_shader_job(const struct bContext *C,
                            struct MTex *slot,
                            int sizex,
                            int sizey,
-                           int method);
+                           ePreviewRenderMethod method);
 void ED_preview_icon_render(const struct bContext *C,
                             struct Scene *scene,
                             struct ID *id,
@@ -113,7 +113,7 @@ void ED_preview_icon_job(const struct bContext *C,
                          unsigned int *rect,
                          int sizex,
                          int sizey,
-                         const bool delay);
+                         bool delay);
 
 void ED_preview_restart_queue_free(void);
 void ED_preview_restart_queue_add(struct ID *id, enum eIconSizes size);

@@ -65,7 +65,7 @@ Subdiv *multires_reshape_create_subdiv(Depsgraph *depsgraph,
   SubdivSettings subdiv_settings;
   BKE_multires_subdiv_settings_init(&subdiv_settings, mmd);
   Subdiv *subdiv = BKE_subdiv_new_from_mesh(&subdiv_settings, base_mesh);
-  if (!BKE_subdiv_eval_begin_from_mesh(subdiv, base_mesh, NULL)) {
+  if (!BKE_subdiv_eval_begin_from_mesh(subdiv, base_mesh, NULL, SUBDIV_EVALUATOR_TYPE_CPU, NULL)) {
     BKE_subdiv_free(subdiv);
     return NULL;
   }
@@ -135,7 +135,7 @@ static void context_init_commoon(MultiresReshapeContext *reshape_context)
 static bool context_is_valid(MultiresReshapeContext *reshape_context)
 {
   if (reshape_context->mdisps == NULL) {
-    /* Multires displacement has been removed before current changes were applies. */
+    /* Multi-resolution displacement has been removed before current changes were applies. */
     return false;
   }
   return true;
@@ -210,6 +210,8 @@ bool multires_reshape_context_create_from_object(MultiresReshapeContext *reshape
 
   reshape_context->top.level = mmd->totlvl;
   reshape_context->top.grid_size = BKE_subdiv_grid_size_from_level(reshape_context->top.level);
+
+  reshape_context->cd_vertex_crease = CustomData_get_layer(&base_mesh->vdata, CD_CREASE);
 
   context_init_commoon(reshape_context);
 

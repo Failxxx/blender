@@ -76,9 +76,9 @@
 #include "NOD_texture.h"
 #include "node_intern.hh" /* own include */
 
-#define USE_ESC_COMPO
+namespace blender::ed::space_node {
 
-using blender::float2;
+#define USE_ESC_COMPO
 
 /* ***************** composite job manager ********************** */
 
@@ -319,8 +319,12 @@ static void compo_startjob(void *cjv,
   ntree->progress = nullptr;
 }
 
+}  // namespace blender::ed::space_node
+
 void ED_node_composite_job(const bContext *C, struct bNodeTree *nodetree, Scene *scene_owner)
 {
+  using namespace blender::ed::space_node;
+
   Main *bmain = CTX_data_main(C);
   Scene *scene = CTX_data_scene(C);
   ViewLayer *view_layer = CTX_data_view_layer(C);
@@ -343,7 +347,7 @@ void ED_node_composite_job(const bContext *C, struct bNodeTree *nodetree, Scene 
                               "Compositing",
                               WM_JOB_EXCL_RENDER | WM_JOB_PROGRESS,
                               WM_JOB_TYPE_COMPOSITE);
-  CompoJob *cj = (CompoJob *)MEM_callocN(sizeof(CompoJob), "compo job");
+  CompoJob *cj = MEM_cnew<CompoJob>("compo job");
 
   /* customdata for preview thread */
   cj->bmain = bmain;
@@ -359,6 +363,8 @@ void ED_node_composite_job(const bContext *C, struct bNodeTree *nodetree, Scene 
 
   WM_jobs_start(CTX_wm_manager(C), wm_job);
 }
+
+namespace blender::ed::space_node {
 
 /* ***************************************** */
 
@@ -410,18 +416,21 @@ static void send_notifiers_after_tree_change(ID *id, bNodeTree *ntree)
   }
 }
 
+}  // namespace blender::ed::space_node
+
 void ED_node_tree_propagate_change(const bContext *C, Main *bmain, bNodeTree *root_ntree)
 {
   if (C != nullptr) {
     SpaceNode *snode = CTX_wm_space_node(C);
     if (snode != nullptr && root_ntree != nullptr) {
-      send_notifiers_after_tree_change(snode->id, root_ntree);
+      blender::ed::space_node::send_notifiers_after_tree_change(snode->id, root_ntree);
     }
   }
 
   NodeTreeUpdateExtraParams params = {nullptr};
   params.tree_changed_fn = [](ID *id, bNodeTree *ntree, void *UNUSED(user_data)) {
-    send_notifiers_after_tree_change(id, ntree);
+    blender::ed::space_node::send_notifiers_after_tree_change(id, ntree);
+    DEG_id_tag_update(&ntree->id, ID_RECALC_COPY_ON_WRITE);
   };
   params.tree_output_changed_fn = [](ID *UNUSED(id), bNodeTree *ntree, void *UNUSED(user_data)) {
     DEG_id_tag_update(&ntree->id, ID_RECALC_NTREE_OUTPUT);
@@ -587,6 +596,8 @@ void ED_node_texture_default(const bContext *C, Tex *tex)
   BKE_ntree_update_main_tree(CTX_data_main(C), tex->nodetree, nullptr);
 }
 
+namespace blender::ed::space_node {
+
 /**
  * Here we set the active tree(s), even called for each redraw now, so keep it fast :)
  */
@@ -629,6 +640,8 @@ void snode_set_context(const bContext &C)
   }
 }
 
+}  // namespace blender::ed::space_node
+
 void ED_node_set_active(
     Main *bmain, SpaceNode *snode, bNodeTree *ntree, bNode *node, bool *r_active_texture_changed)
 {
@@ -659,11 +672,6 @@ void ED_node_set_active(
 
     /* tree specific activate calls */
     if (ntree->type == NTREE_SHADER) {
-      /* when we select a material, active texture is cleared, for buttons */
-      if (node->id && ELEM(GS(node->id->name), ID_MA, ID_LA, ID_WO)) {
-        nodeClearActiveID(ntree, ID_TE);
-      }
-
       if (ELEM(node->type,
                SH_NODE_OUTPUT_MATERIAL,
                SH_NODE_OUTPUT_WORLD,
@@ -799,6 +807,8 @@ void ED_node_post_apply_transform(bContext *UNUSED(C), bNodeTree *UNUSED(ntree))
   // node_update_nodetree(C, ntree, 0.0f, 0.0f);
 }
 
+namespace blender::ed::space_node {
+
 /* ***************** generic operator functions for nodes ***************** */
 
 #if 0 /* UNUSED */
@@ -906,7 +916,7 @@ static void node_resize_init(bContext *C,
 {
   SpaceNode *snode = CTX_wm_space_node(C);
 
-  NodeSizeWidget *nsw = (NodeSizeWidget *)MEM_callocN(sizeof(NodeSizeWidget), __func__);
+  NodeSizeWidget *nsw = MEM_cnew<NodeSizeWidget>(__func__);
 
   op->customdata = nsw;
   nsw->mxstart = snode->runtime->cursor[0] * UI_DPI_FAC;
@@ -1249,7 +1259,8 @@ bool node_link_is_hidden_or_dimmed(const View2D &v2d, const bNodeLink &link)
 
 /* ****************** Duplicate *********************** */
 
-static void node_duplicate_reparent_recursive(bNode *node)
+static void node_duplicate_reparent_recursive(const Map<const bNode *, bNode *> &node_map,
+                                              bNode *node)
 {
   bNode *parent;
 
@@ -1259,15 +1270,15 @@ static void node_duplicate_reparent_recursive(bNode *node)
   for (parent = node->parent; parent; parent = parent->parent) {
     if (parent->flag & SELECT) {
       if (!(parent->flag & NODE_TEST)) {
-        node_duplicate_reparent_recursive(parent);
+        node_duplicate_reparent_recursive(node_map, parent);
       }
       break;
     }
   }
   /* reparent node copy to parent copy */
   if (parent) {
-    nodeDetachNode(node->new_node);
-    nodeAttachNode(node->new_node, parent->new_node);
+    nodeDetachNode(node_map.lookup(node));
+    nodeAttachNode(node_map.lookup(node), node_map.lookup(parent));
   }
 }
 
@@ -1280,10 +1291,15 @@ static int node_duplicate_exec(bContext *C, wmOperator *op)
 
   ED_preview_kill_jobs(CTX_wm_manager(C), bmain);
 
+  Map<const bNode *, bNode *> node_map;
+  Map<const bNodeSocket *, bNodeSocket *> socket_map;
+
   bNode *lastnode = (bNode *)ntree->nodes.last;
   LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
     if (node->flag & SELECT) {
-      BKE_node_copy_store_new_pointers(ntree, node, LIB_ID_COPY_DEFAULT);
+      bNode *new_node = blender::bke::node_copy_with_mapping(
+          ntree, *node, LIB_ID_COPY_DEFAULT, true, socket_map);
+      node_map.add_new(node, new_node);
     }
 
     /* make sure we don't copy new nodes again! */
@@ -1292,8 +1308,7 @@ static int node_duplicate_exec(bContext *C, wmOperator *op)
     }
   }
 
-  /* Copy links between selected nodes.
-   * NOTE: this depends on correct node->new_node and sock->new_sock pointers from above copy! */
+  /* Copy links between selected nodes. */
   bNodeLink *lastlink = (bNodeLink *)ntree->links.last;
   LISTBASE_FOREACH (bNodeLink *, link, &ntree->links) {
     /* This creates new links between copied nodes.
@@ -1301,13 +1316,13 @@ static int node_duplicate_exec(bContext *C, wmOperator *op)
      */
     if (link->tonode && (link->tonode->flag & NODE_SELECT) &&
         (keep_inputs || (link->fromnode && (link->fromnode->flag & NODE_SELECT)))) {
-      bNodeLink *newlink = (bNodeLink *)MEM_callocN(sizeof(bNodeLink), "bNodeLink");
+      bNodeLink *newlink = MEM_cnew<bNodeLink>("bNodeLink");
       newlink->flag = link->flag;
-      newlink->tonode = link->tonode->new_node;
-      newlink->tosock = link->tosock->new_sock;
+      newlink->tonode = node_map.lookup(link->tonode);
+      newlink->tosock = socket_map.lookup(link->tosock);
       if (link->fromnode && (link->fromnode->flag & NODE_SELECT)) {
-        newlink->fromnode = link->fromnode->new_node;
-        newlink->fromsock = link->fromsock->new_sock;
+        newlink->fromnode = node_map.lookup(link->fromnode);
+        newlink->fromsock = socket_map.lookup(link->fromsock);
       }
       else {
         /* input node not copied, this keeps the original input linked */
@@ -1331,7 +1346,7 @@ static int node_duplicate_exec(bContext *C, wmOperator *op)
   /* reparent copied nodes */
   LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
     if ((node->flag & SELECT) && !(node->flag & NODE_TEST)) {
-      node_duplicate_reparent_recursive(node);
+      node_duplicate_reparent_recursive(node_map, node);
     }
 
     /* only has to check old nodes */
@@ -1344,7 +1359,7 @@ static int node_duplicate_exec(bContext *C, wmOperator *op)
   LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
     if (node->flag & SELECT) {
       /* has been set during copy above */
-      bNode *newnode = node->new_node;
+      bNode *newnode = node_map.lookup(node);
 
       nodeSetSelected(node, false);
       node->flag &= ~(NODE_ACTIVE | NODE_ACTIVE_TEXTURE);
@@ -1379,7 +1394,7 @@ void NODE_OT_duplicate(wmOperatorType *ot)
       ot->srna, "keep_inputs", false, "Keep Inputs", "Keep the input links to duplicated nodes");
 }
 
-bool ED_node_select_check(const ListBase *lb)
+static bool node_select_check(const ListBase *lb)
 {
   LISTBASE_FOREACH (const bNode *, node, lb) {
     if (node->flag & NODE_SELECT) {
@@ -1390,10 +1405,10 @@ bool ED_node_select_check(const ListBase *lb)
   return false;
 }
 
-void ED_node_select_all(ListBase *lb, int action)
+void node_select_all(ListBase *lb, int action)
 {
   if (action == SEL_TOGGLE) {
-    if (ED_node_select_check(lb)) {
+    if (node_select_check(lb)) {
       action = SEL_DESELECT;
     }
     else {
@@ -1728,6 +1743,7 @@ static int node_mute_exec(bContext *C, wmOperator *UNUSED(op))
   LISTBASE_FOREACH (bNode *, node, &snode->edittree->nodes) {
     if ((node->flag & SELECT) && !node->typeinfo->no_muting) {
       node->flag ^= NODE_MUTED;
+      BKE_ntree_update_tag_node_mute(snode->edittree, node);
     }
   }
 
@@ -2037,18 +2053,15 @@ void NODE_OT_output_file_move_active_socket(wmOperatorType *ot)
 
 static int node_copy_color_exec(bContext *C, wmOperator *UNUSED(op))
 {
-  SpaceNode *snode = CTX_wm_space_node(C);
-  bNodeTree *ntree = snode->edittree;
+  SpaceNode &snode = *CTX_wm_space_node(C);
+  bNodeTree &ntree = *snode.edittree;
 
-  if (!ntree) {
-    return OPERATOR_CANCELLED;
-  }
-  bNode *node = nodeGetActive(ntree);
+  bNode *node = nodeGetActive(&ntree);
   if (!node) {
     return OPERATOR_CANCELLED;
   }
 
-  LISTBASE_FOREACH (bNode *, node_iter, &ntree->nodes) {
+  LISTBASE_FOREACH (bNode *, node_iter, &ntree.nodes) {
     if (node_iter->flag & NODE_SELECT && node_iter != node) {
       if (node->flag & NODE_CUSTOM_COLOR) {
         node_iter->flag |= NODE_CUSTOM_COLOR;
@@ -2060,7 +2073,7 @@ static int node_copy_color_exec(bContext *C, wmOperator *UNUSED(op))
     }
   }
 
-  ED_node_sort(ntree);
+  node_sort(ntree);
   WM_event_add_notifier(C, NC_NODE | ND_DISPLAY, nullptr);
 
   return OPERATOR_FINISHED;
@@ -2094,47 +2107,48 @@ static int node_clipboard_copy_exec(bContext *C, wmOperator *UNUSED(op))
   BKE_node_clipboard_clear();
   BKE_node_clipboard_init(ntree);
 
+  Map<const bNode *, bNode *> node_map;
+  Map<const bNodeSocket *, bNodeSocket *> socket_map;
+
   LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
     if (node->flag & SELECT) {
       /* No ID refcounting, this node is virtual,
        * detached from any actual Blender data currently. */
-      bNode *new_node = BKE_node_copy_store_new_pointers(
-          nullptr, node, LIB_ID_CREATE_NO_USER_REFCOUNT | LIB_ID_CREATE_NO_MAIN);
-      BKE_node_clipboard_add_node(new_node);
+      bNode *new_node = blender::bke::node_copy_with_mapping(nullptr,
+                                                             *node,
+                                                             LIB_ID_CREATE_NO_USER_REFCOUNT |
+                                                                 LIB_ID_CREATE_NO_MAIN,
+                                                             false,
+                                                             socket_map);
+      node_map.add_new(node, new_node);
     }
   }
 
-  LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
-    if (node->flag & SELECT) {
-      bNode *new_node = node->new_node;
+  for (bNode *new_node : node_map.values()) {
+    BKE_node_clipboard_add_node(new_node);
 
-      /* ensure valid pointers */
-      if (new_node->parent) {
-        /* parent pointer must be redirected to new node or detached if parent is
-         * not copied */
-        if (new_node->parent->flag & NODE_SELECT) {
-          new_node->parent = new_node->parent->new_node;
-        }
-        else {
-          nodeDetachNode(new_node);
-        }
+    /* Parent pointer must be redirected to new node or detached if parent is not copied. */
+    if (new_node->parent) {
+      if (node_map.contains(new_node->parent)) {
+        new_node->parent = node_map.lookup(new_node->parent);
+      }
+      else {
+        nodeDetachNode(new_node);
       }
     }
   }
 
-  /* Copy links between selected nodes.
-   * NOTE: this depends on correct node->new_node and sock->new_sock pointers from above copy! */
-
+  /* Copy links between selected nodes. */
   LISTBASE_FOREACH (bNodeLink *, link, &ntree->links) {
-    /* This creates new links between copied nodes. */
-    if (link->tonode && (link->tonode->flag & NODE_SELECT) && link->fromnode &&
-        (link->fromnode->flag & NODE_SELECT)) {
-      bNodeLink *newlink = (bNodeLink *)MEM_callocN(sizeof(bNodeLink), "bNodeLink");
+    BLI_assert(link->tonode);
+    BLI_assert(link->fromnode);
+    if (link->tonode->flag & NODE_SELECT && link->fromnode->flag & NODE_SELECT) {
+      bNodeLink *newlink = MEM_cnew<bNodeLink>(__func__);
       newlink->flag = link->flag;
-      newlink->tonode = link->tonode->new_node;
-      newlink->tosock = link->tosock->new_sock;
-      newlink->fromnode = link->fromnode->new_node;
-      newlink->fromsock = link->fromsock->new_sock;
+      newlink->tonode = node_map.lookup(link->tonode);
+      newlink->tosock = socket_map.lookup(link->tosock);
+      newlink->fromnode = node_map.lookup(link->fromnode);
+      newlink->fromsock = socket_map.lookup(link->fromsock);
 
       BKE_node_clipboard_add_link(newlink);
     }
@@ -2229,28 +2243,34 @@ static int node_clipboard_paste_exec(bContext *C, wmOperator *op)
   }
   mul_v2_fl(center, 1.0 / num_nodes);
 
+  Map<const bNode *, bNode *> node_map;
+  Map<const bNodeSocket *, bNodeSocket *> socket_map;
+
   /* copy nodes from clipboard */
   LISTBASE_FOREACH (bNode *, node, clipboard_nodes_lb) {
-    bNode *new_node = BKE_node_copy_store_new_pointers(ntree, node, LIB_ID_COPY_DEFAULT);
-
-    /* pasted nodes are selected */
-    nodeSetSelected(new_node, true);
+    bNode *new_node = blender::bke::node_copy_with_mapping(
+        ntree, *node, LIB_ID_COPY_DEFAULT, true, socket_map);
+    node_map.add_new(node, new_node);
   }
 
-  /* reparent copied nodes */
-  LISTBASE_FOREACH (bNode *, node, clipboard_nodes_lb) {
-    bNode *new_node = node->new_node;
+  for (bNode *new_node : node_map.values()) {
+    /* pasted nodes are selected */
+    nodeSetSelected(new_node, true);
+
+    /* The parent pointer must be redirected to new node. */
     if (new_node->parent) {
-      new_node->parent = new_node->parent->new_node;
+      if (node_map.contains(new_node->parent)) {
+        new_node->parent = node_map.lookup(new_node->parent);
+      }
     }
   }
 
   LISTBASE_FOREACH (bNodeLink *, link, clipboard_links_lb) {
     nodeAddLink(ntree,
-                link->fromnode->new_node,
-                link->fromsock->new_sock,
-                link->tonode->new_node,
-                link->tosock->new_sock);
+                node_map.lookup(link->fromnode),
+                socket_map.lookup(link->fromsock),
+                node_map.lookup(link->tonode),
+                socket_map.lookup(link->tosock));
   }
 
   Main *bmain = CTX_data_main(C);
@@ -2922,3 +2942,4 @@ void NODE_OT_cryptomatte_layer_remove(wmOperatorType *ot)
   /* flags */
   ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO;
 }
+}  // namespace blender::ed::space_node

@@ -212,12 +212,10 @@ void BKE_main_lock(struct Main *bmain);
 void BKE_main_unlock(struct Main *bmain);
 
 /** Generate the mappings between used IDs and their users, and vice-versa. */
-void BKE_main_relations_create(struct Main *bmain, const short flag);
+void BKE_main_relations_create(struct Main *bmain, short flag);
 void BKE_main_relations_free(struct Main *bmain);
 /** Set or clear given `tag` in all relation entries of given `bmain`. */
-void BKE_main_relations_tag_set(struct Main *bmain,
-                                const eMainIDRelationsEntryTags tag,
-                                const bool value);
+void BKE_main_relations_tag_set(struct Main *bmain, eMainIDRelationsEntryTags tag, bool value);
 
 /**
  * Create a #GSet storing all IDs present in given \a bmain, by their pointers.
@@ -408,6 +406,13 @@ int set_listbasepointers(struct Main *main, struct ListBase *lb[]);
   ((main)->versionfile < (ver) || \
    ((main)->versionfile == (ver) && (main)->subversionfile < (subver)))
 
+/**
+ * The size of thumbnails (optionally) stored in the `.blend` files header.
+ *
+ * NOTE(@campbellbarton): This is kept small as it's stored uncompressed in the `.blend` file,
+ * where a larger size would increase the size of every `.blend` file unreasonably.
+ * If we wanted to increase the size, we'd want to use compression (JPEG or similar).
+ */
 #define BLEN_THUMB_SIZE 128
 
 #define BLEN_THUMB_MEMSIZE(_x, _y) \

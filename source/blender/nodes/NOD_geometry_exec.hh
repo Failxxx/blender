@@ -134,12 +134,8 @@ class GeoNodeExecParams {
   }
 
   template<typename T>
-  static inline constexpr bool is_field_base_type_v = std::is_same_v<T, float> ||
-                                                      std::is_same_v<T, int> ||
-                                                      std::is_same_v<T, bool> ||
-                                                      std::is_same_v<T, ColorGeometry4f> ||
-                                                      std::is_same_v<T, float3> ||
-                                                      std::is_same_v<T, std::string>;
+  static inline constexpr bool is_field_base_type_v =
+      is_same_any_v<T, float, int, bool, ColorGeometry4f, float3, std::string>;
 
   /**
    * Get the input value for the input socket with the given identifier.
@@ -332,7 +328,7 @@ class GeoNodeExecParams {
    */
   GVArray get_input_attribute(const StringRef name,
                               const GeometryComponent &component,
-                              const AttributeDomain domain,
+                              AttributeDomain domain,
                               const CustomDataType type,
                               const void *default_value) const;
 
@@ -362,7 +358,7 @@ class GeoNodeExecParams {
    */
   AttributeDomain get_highest_priority_input_domain(Span<std::string> names,
                                                     const GeometryComponent &component,
-                                                    const AttributeDomain default_domain) const;
+                                                    AttributeDomain default_domain) const;
 
   std::string attribute_producer_name() const;
 

@@ -898,6 +898,29 @@ ID *deg_update_copy_on_write_datablock(const Depsgraph *depsgraph, const IDNode 
   if (!deg_copy_on_write_is_needed(id_orig)) {
     return id_cow;
   }
+
+  /* When updating object data in edit-mode, don't request COW update since this will duplicate
+   * all object data which is unnecessary when the edit-mode data is used for calculating
+   * modifiers.
+   *
+   * TODO: Investigate modes besides edit-mode. */
+  if (check_datablock_expanded(id_cow) && !id_node->is_cow_explicitly_tagged) {
+    const ID_Type id_type = GS(id_orig->name);
+    if (OB_DATA_SUPPORT_EDITMODE(id_type) && BKE_object_data_is_in_editmode(id_orig)) {
+      /* Make sure pointers in the edit mode data are updated in the copy.
+       * This allows depsgraph to pick up changes made in another context after it has been
+       * evaluated. Consider the following scenario:
+       *
+       *  - ObjectA in SceneA is using Mesh.
+       *  - ObjectB in SceneB is using Mesh (same exact datablock).
+       *  - Depsgraph of SceneA is evaluated.
+       *  - Depsgraph of SceneB is evaluated.
+       *  - User enters edit mode of ObjectA in SceneA. */
+      update_edit_mode_pointers(depsgraph, id_orig, id_cow);
+      return id_cow;
+    }
+  }
+
   RuntimeBackup backup(depsgraph);
   backup.init_from_id(id_cow);
   deg_free_copy_on_write_datablock(id_cow);
@@ -1010,7 +1033,7 @@ void deg_free_copy_on_write_datablock(ID *id_cow)
     case ID_OB: {
       /* TODO(sergey): This workaround is only to prevent free derived
        * caches from modifying object->data. This is currently happening
-       * due to mesh/curve datablock boundbox tagging dirty. */
+       * due to mesh/curve data-block bound-box tagging dirty. */
       Object *ob_cow = (Object *)id_cow;
       ob_cow->data = nullptr;
       ob_cow->sculpt = nullptr;

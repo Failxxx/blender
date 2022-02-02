@@ -51,7 +51,6 @@ set(SRC
   node_relationships.cc
   node_select.cc
   node_templates.cc
-  node_toolbar.cc
   node_view.cc
   space_node.cc
 
@@ -63,10 +62,6 @@ set(LIB
   bf_blenlib
   bf_editor_screen
 )
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
-endif()
 
 if(WITH_COMPOSITOR)
   add_definitions(-DWITH_COMPOSITOR)

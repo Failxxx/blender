@@ -93,6 +93,13 @@ typedef enum eEditKeyframes_Snap {
   SNAP_KEYS_TIME,
 } eEditKeyframes_Snap;
 
+/* equalizing tools */
+typedef enum eEditKeyframes_Equalize {
+  EQUALIZE_HANDLES_LEFT = (1 << 0),
+  EQUALIZE_HANDLES_RIGHT = (1 << 1),
+  EQUALIZE_HANDLES_BOTH = (EQUALIZE_HANDLES_LEFT | EQUALIZE_HANDLES_RIGHT),
+} eEditKeyframes_Equalize;
+
 /* mirroring tools */
 typedef enum eEditKeyframes_Mirror {
   MIRROR_KEYS_CURFRAME = 1,
@@ -259,6 +266,18 @@ short ANIM_fcurve_keyframes_loop(KeyframeEditData *ked,
                                  KeyframeEditFunc key_cb,
                                  FcuEditFunc fcu_cb);
 /**
+ * Sets selected keyframes' bezier handles to an equal length and optionally makes
+ * the keyframes' handles horizontal.
+ * \param handle_length: Desired handle length, must be positive.
+ * \param flatten: Makes the keyframes' handles the same value as the keyframe,
+ * flattening the curve at that point.
+ */
+void ANIM_fcurve_equalize_keyframes_loop(struct FCurve *fcu,
+                                         eEditKeyframes_Equalize mode,
+                                         float handle_length,
+                                         bool flatten);
+
+/**
  * Function for working with any type (i.e. one of the known types) of animation channel.
  */
 short ANIM_animchannel_keyframes_loop(KeyframeEditData *ked,
@@ -327,13 +346,13 @@ KeyframeEditFunc ANIM_editkeyframes_easing(short mode);
 
 /**
  * Get a callback to populate the selection settings map
- * requires: ked->custom = char[] of length fcurve->totvert.
+ * requires: `ked->custom = char[]` of length `fcurve->totvert`.
  */
 KeyframeEditFunc ANIM_editkeyframes_buildselmap(short mode);
 
 /**
  * Change the selection status of the keyframe based on the map entry for this vert
- * requires: ked->custom = char[] of length fcurve->totvert.
+ * requires: `ked->custom = char[]` of length `fcurve->totvert`.
  */
 short bezt_selmap_flush(KeyframeEditData *ked, struct BezTriple *bezt);
 
@@ -384,11 +403,22 @@ typedef struct FCurveSegment {
   struct FCurveSegment *next, *prev;
   int start_index, length;
 } FCurveSegment;
+
+/**
+ * Return a list of #FCurveSegment with a start index and a length.
+ * A segment is a continuous selection of keyframes.
+ * Keys that have BEZT_FLAG_IGNORE_TAG set are treated as unselected.
+ * The caller is responsible for freeing the memory.
+ */
 ListBase find_fcurve_segments(struct FCurve *fcu);
 void clean_fcurve(struct bAnimContext *ac,
                   struct bAnimListElem *ale,
                   float thresh,
                   bool cleardefault);
+void blend_to_neighbor_fcurve_segment(struct FCurve *fcu,
+                                      struct FCurveSegment *segment,
+                                      float factor);
+void breakdown_fcurve_segment(struct FCurve *fcu, struct FCurveSegment *segment, float factor);
 bool decimate_fcurve(struct bAnimListElem *ale, float remove_ratio, float error_sq_max);
 /**
  * Use a weighted moving-means method to reduce intensity of fluctuations.
@@ -402,8 +432,8 @@ void ANIM_fcurves_copybuf_free(void);
 short copy_animedit_keys(struct bAnimContext *ac, ListBase *anim_data);
 short paste_animedit_keys(struct bAnimContext *ac,
                           ListBase *anim_data,
-                          const eKeyPasteOffset offset_mode,
-                          const eKeyMergeMode merge_mode,
+                          eKeyPasteOffset offset_mode,
+                          eKeyMergeMode merge_mode,
                           bool flip);
 
 /* ************************************************ */

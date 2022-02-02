@@ -87,6 +87,7 @@
 #include "BKE_camera.h"
 #include "BKE_collection.h"
 #include "BKE_constraint.h"
+#include "BKE_crazyspace.h"
 #include "BKE_curve.h"
 #include "BKE_deform.h"
 #include "BKE_displist.h"
@@ -333,30 +334,9 @@ static void object_make_local(Main *bmain, ID *id, const int flags)
   Object *ob = (Object *)id;
   const bool lib_local = (flags & LIB_ID_MAKELOCAL_FULL_LIBRARY) != 0;
   const bool clear_proxy = (flags & LIB_ID_MAKELOCAL_OBJECT_NO_PROXY_CLEARING) == 0;
-  bool force_local = (flags & LIB_ID_MAKELOCAL_FORCE_LOCAL) != 0;
-  bool force_copy = (flags & LIB_ID_MAKELOCAL_FORCE_COPY) != 0;
-  BLI_assert(force_copy == false || force_copy != force_local);
 
-  bool is_local = false, is_lib = false;
-
-  /* - only lib users: do nothing (unless force_local is set)
-   * - only local users: set flag
-   * - mixed: make copy
-   * In case we make a whole lib's content local,
-   * we always want to localize, and we skip remapping (done later).
-   */
-
-  if (!force_local && !force_copy) {
-    BKE_library_ID_test_usages(bmain, ob, &is_local, &is_lib);
-    if (lib_local || is_local) {
-      if (!is_lib) {
-        force_local = true;
-      }
-      else {
-        force_copy = true;
-      }
-    }
-  }
+  bool force_local, force_copy;
+  BKE_lib_id_make_local_generic_action_define(bmain, id, flags, &force_local, &force_copy);
 
   if (force_local) {
     BKE_lib_id_clear_library_data(bmain, &ob->id, flags);
@@ -1506,10 +1486,7 @@ bool BKE_object_support_modifier_type_check(const Object *ob, int modifier_type)
   }
 
   /* Only geometry objects should be able to get modifiers T25291. */
-  if (ob->type == OB_HAIR) {
-    return (mti->modifyHair != nullptr) || (mti->flags & eModifierTypeFlag_AcceptsVertexCosOnly);
-  }
-  if (ELEM(ob->type, OB_POINTCLOUD, OB_VOLUME)) {
+  if (ELEM(ob->type, OB_POINTCLOUD, OB_VOLUME, OB_HAIR)) {
     return (mti->modifyGeometrySet != nullptr);
   }
   if (ELEM(ob->type, OB_MESH, OB_CURVE, OB_SURF, OB_FONT, OB_LATTICE)) {
@@ -1773,8 +1750,9 @@ static void object_update_from_subsurf_ccg(Object *object)
   if (!object->runtime.is_data_eval_owned) {
     return;
   }
-  /* Object was never evaluated, so can not have CCG subdivision surface. */
-  Mesh *mesh_eval = BKE_object_get_evaluated_mesh(object);
+  /* Object was never evaluated, so can not have CCG subdivision surface. If it were evaluated, do
+   * not try to compute OpenSubDiv on the CPU as it is not needed here. */
+  Mesh *mesh_eval = BKE_object_get_evaluated_mesh_no_subsurf(object);
   if (mesh_eval == nullptr) {
     return;
   }
@@ -1866,6 +1844,12 @@ void BKE_object_free_derived_caches(Object *ob)
 
   object_update_from_subsurf_ccg(ob);
 
+  if (ob->runtime.editmesh_eval_cage &&
+      ob->runtime.editmesh_eval_cage != reinterpret_cast<Mesh *>(ob->runtime.data_eval)) {
+    BKE_mesh_eval_delete(ob->runtime.editmesh_eval_cage);
+  }
+  ob->runtime.editmesh_eval_cage = nullptr;
+
   if (ob->runtime.data_eval != nullptr) {
     if (ob->runtime.is_data_eval_owned) {
       ID *data_eval = ob->runtime.data_eval;
@@ -1895,6 +1879,8 @@ void BKE_object_free_derived_caches(Object *ob)
   BKE_object_to_curve_clear(ob);
   BKE_object_free_curve_cache(ob);
 
+  BKE_crazyspace_api_eval_clear(ob);
+
   /* Clear grease pencil data. */
   if (ob->runtime.gpd_eval != nullptr) {
     BKE_gpencil_eval_delete(ob->runtime.gpd_eval);
@@ -1905,6 +1891,8 @@ void BKE_object_free_derived_caches(Object *ob)
     BKE_geometry_set_free(ob->runtime.geometry_set_eval);
     ob->runtime.geometry_set_eval = nullptr;
   }
+
+  MEM_SAFE_FREE(ob->runtime.editmesh_bb_cage);
 }
 
 void BKE_object_free_caches(Object *object)
@@ -3410,7 +3398,8 @@ static void give_parvert(Object *par, int nr, float vec[3])
   if (par->type == OB_MESH) {
     Mesh *me = (Mesh *)par->data;
     BMEditMesh *em = me->edit_mesh;
-    Mesh *me_eval = (em) ? em->mesh_eval_final : BKE_object_get_evaluated_mesh(par);
+    Mesh *me_eval = (em) ? BKE_object_get_editmesh_eval_final(par) :
+                           BKE_object_get_evaluated_mesh(par);
 
     if (me_eval) {
       int count = 0;
@@ -3793,7 +3782,7 @@ BoundBox *BKE_boundbox_alloc_unit()
 {
   const float min[3] = {-1.0f, -1.0f, -1.0f}, max[3] = {1.0f, 1.0f, 1.0f};
 
-  BoundBox *bb = (BoundBox *)MEM_callocN(sizeof(BoundBox), "OB-BoundBox");
+  BoundBox *bb = MEM_cnew<BoundBox>("OB-BoundBox");
   BKE_boundbox_init_from_minmax(bb, min, max);
 
   return bb;
@@ -3903,7 +3892,7 @@ void BKE_object_boundbox_calc_from_mesh(Object *ob, const Mesh *me_eval)
   }
 
   if (ob->runtime.bb == nullptr) {
-    ob->runtime.bb = (BoundBox *)MEM_callocN(sizeof(BoundBox), "DM-BoundBox");
+    ob->runtime.bb = MEM_cnew<BoundBox>("DM-BoundBox");
   }
 
   BKE_boundbox_init_from_minmax(ob->runtime.bb, min, max);
@@ -3917,11 +3906,15 @@ bool BKE_object_boundbox_calc_from_evaluated_geometry(Object *ob)
   INIT_MINMAX(min, max);
 
   if (ob->runtime.geometry_set_eval) {
-    ob->runtime.geometry_set_eval->compute_boundbox_without_instances(&min, &max);
+    if (!ob->runtime.geometry_set_eval->compute_boundbox_without_instances(&min, &max)) {
+      zero_v3(min);
+      zero_v3(max);
+    }
   }
   else if (const Mesh *mesh_eval = BKE_object_get_evaluated_mesh(ob)) {
     if (!BKE_mesh_wrapper_minmax(mesh_eval, min, max)) {
-      return false;
+      zero_v3(min);
+      zero_v3(max);
     }
   }
   else if (ob->runtime.curve_cache) {
@@ -3932,7 +3925,7 @@ bool BKE_object_boundbox_calc_from_evaluated_geometry(Object *ob)
   }
 
   if (ob->runtime.bb == nullptr) {
-    ob->runtime.bb = (BoundBox *)MEM_callocN(sizeof(BoundBox), __func__);
+    ob->runtime.bb = MEM_cnew<BoundBox>(__func__);
   }
 
   BKE_boundbox_init_from_minmax(ob->runtime.bb, min, max);
@@ -4108,7 +4101,7 @@ void BKE_object_empty_draw_type_set(Object *ob, const int value)
 
   if (ob->type == OB_EMPTY && ob->empty_drawtype == OB_EMPTY_IMAGE) {
     if (!ob->iuser) {
-      ob->iuser = (ImageUser *)MEM_callocN(sizeof(ImageUser), "image user");
+      ob->iuser = MEM_cnew<ImageUser>("image user");
       ob->iuser->flag |= IMA_ANIM_ALWAYS;
       ob->iuser->frames = 100;
       ob->iuser->sfra = 1;
@@ -4193,7 +4186,11 @@ bool BKE_object_minmax_dupli(Depsgraph *depsgraph,
       /* pass */
     }
     else {
-      BoundBox *bb = BKE_object_boundbox_get(dob->ob);
+      Object temp_ob = *dob->ob;
+      /* Do not modify the original boundbox. */
+      temp_ob.runtime.bb = nullptr;
+      BKE_object_replace_data_on_shallow_copy(&temp_ob, dob->ob_data);
+      BoundBox *bb = BKE_object_boundbox_get(&temp_ob);
 
       if (bb) {
         int i;
@@ -4205,6 +4202,8 @@ bool BKE_object_minmax_dupli(Depsgraph *depsgraph,
 
         ok = true;
       }
+
+      MEM_SAFE_FREE(temp_ob.runtime.bb);
     }
   }
   free_object_duplilist(lb); /* does restore */
@@ -4447,7 +4446,7 @@ void BKE_object_handle_update(Depsgraph *depsgraph, Scene *scene, Object *ob)
 void BKE_object_sculpt_data_create(Object *ob)
 {
   BLI_assert((ob->sculpt == nullptr) && (ob->mode & OB_MODE_ALL_SCULPT));
-  ob->sculpt = (SculptSession *)MEM_callocN(sizeof(SculptSession), __func__);
+  ob->sculpt = MEM_cnew<SculptSession>(__func__);
   ob->sculpt->mode_type = (eObjectMode)ob->mode;
 }
 
@@ -4496,7 +4495,7 @@ bool BKE_object_obdata_texspace_get(Object *ob, char **r_texflag, float **r_loc,
   return true;
 }
 
-Mesh *BKE_object_get_evaluated_mesh(const Object *object)
+Mesh *BKE_object_get_evaluated_mesh_no_subsurf(const Object *object)
 {
   /* First attempt to retrieve the evaluated mesh from the evaluated geometry set. Most
    * object types either store it there or add a reference to it if it's owned elsewhere. */
@@ -4521,6 +4520,20 @@ Mesh *BKE_object_get_evaluated_mesh(const Object *object)
   }
 
   return nullptr;
+}
+
+Mesh *BKE_object_get_evaluated_mesh(const Object *object)
+{
+  Mesh *mesh = BKE_object_get_evaluated_mesh_no_subsurf(object);
+  if (!mesh) {
+    return nullptr;
+  }
+
+  if (object->data && GS(((const ID *)object->data)->name) == ID_ME) {
+    mesh = BKE_mesh_wrapper_ensure_subdivision(object, mesh);
+  }
+
+  return mesh;
 }
 
 Mesh *BKE_object_get_pre_modified_mesh(const Object *object)
@@ -4553,6 +4566,33 @@ Mesh *BKE_object_get_original_mesh(const Object *object)
   BLI_assert((result->id.tag & (LIB_TAG_COPIED_ON_WRITE | LIB_TAG_COPIED_ON_WRITE_EVAL_RESULT)) ==
              0);
   return result;
+}
+
+Mesh *BKE_object_get_editmesh_eval_final(const Object *object)
+{
+  BLI_assert(!DEG_is_original_id(&object->id));
+  BLI_assert(object->type == OB_MESH);
+
+  const Mesh *mesh = static_cast<const Mesh *>(object->data);
+  if (mesh->edit_mesh == nullptr) {
+    /* Happens when requesting material of evaluated 3d font object: the evaluated object get
+     * converted to mesh, and it does not have edit mesh. */
+    return nullptr;
+  }
+
+  return reinterpret_cast<Mesh *>(object->runtime.data_eval);
+}
+
+Mesh *BKE_object_get_editmesh_eval_cage(const Object *object)
+{
+  BLI_assert(!DEG_is_original_id(&object->id));
+  BLI_assert(object->type == OB_MESH);
+
+  const Mesh *mesh = static_cast<const Mesh *>(object->data);
+  BLI_assert(mesh->edit_mesh != nullptr);
+  UNUSED_VARS_NDEBUG(mesh);
+
+  return object->runtime.editmesh_eval_cage;
 }
 
 Lattice *BKE_object_get_lattice(const Object *object)
@@ -4621,7 +4661,7 @@ int BKE_object_insert_ptcache(Object *ob)
     }
   }
 
-  link = (LinkData *)MEM_callocN(sizeof(LinkData), "PCLink");
+  link = MEM_cnew<LinkData>("PCLink");
   link->data = POINTER_FROM_INT(i);
   BLI_addtail(&ob->pc_ids, link);
 
@@ -5185,6 +5225,9 @@ void BKE_object_runtime_reset_on_copy(Object *object, const int UNUSED(flag))
   runtime->object_as_temp_mesh = nullptr;
   runtime->object_as_temp_curve = nullptr;
   runtime->geometry_set_eval = nullptr;
+
+  runtime->crazyspace_deform_imats = nullptr;
+  runtime->crazyspace_deform_cos = nullptr;
 }
 
 void BKE_object_runtime_free_data(Object *object)
@@ -5777,6 +5820,21 @@ void BKE_object_modifiers_lib_link_common(void *userData,
   if (*idpoin != nullptr && (cb_flag & IDWALK_CB_USER) != 0) {
     id_us_plus_no_lib(*idpoin);
   }
+}
+
+SubsurfModifierData *BKE_object_get_last_subsurf_modifier(const Object *ob)
+{
+  ModifierData *md = (ModifierData *)(ob->modifiers.last);
+
+  while (md) {
+    if (md->type == eModifierType_Subsurf) {
+      break;
+    }
+
+    md = md->prev;
+  }
+
+  return (SubsurfModifierData *)(md);
 }
 
 void BKE_object_replace_data_on_shallow_copy(Object *ob, ID *new_data)

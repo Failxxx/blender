@@ -505,9 +505,9 @@ void applySnapping(TransInfo *t, float *vec)
       if (t->tsnap.targetSnap) {
         t->tsnap.targetSnap(t);
       }
-    }
 
-    t->tsnap.last = current;
+      t->tsnap.last = current;
+    }
 
     if (validSnap(t)) {
       t->tsnap.applySnap(t, vec);
@@ -692,6 +692,15 @@ static void initSnappingMode(TransInfo *t)
             bm_edge_is_snap_target,
             bm_face_is_snap_target,
             POINTER_FROM_UINT((BM_ELEM_SELECT | BM_ELEM_HIDDEN)));
+      }
+      else {
+        /* Ignore hidden geometry in the general case. */
+        ED_transform_snap_object_context_set_editmesh_callbacks(
+            t->tsnap.object_context,
+            (bool (*)(BMVert *, void *))BM_elem_cb_check_hflag_disabled,
+            (bool (*)(BMEdge *, void *))BM_elem_cb_check_hflag_disabled,
+            (bool (*)(BMFace *, void *))BM_elem_cb_check_hflag_disabled,
+            POINTER_FROM_UINT(BM_ELEM_HIDDEN));
       }
     }
   }

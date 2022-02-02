@@ -3495,8 +3495,17 @@ static void ui_textedit_begin(bContext *C, uiBut *but, uiHandleButtonData *data)
 
   ui_but_update(but);
 
-  /* Popup blocks don't support moving after creation, so don't change the view for them. */
-  if (!data->searchbox) {
+  /* Make sure the edited button is in view. */
+  if (data->searchbox) {
+    /* Popup blocks don't support moving after creation, so don't change the view for them. */
+  }
+  else if (UI_block_layout_needs_resolving(but->block)) {
+    /* Layout isn't resolved yet (may happen when activating while drawing through
+     * #UI_but_active_only()), so can't move it into view yet. This causes
+     * #ui_but_update_view_for_active() to run after the layout is resolved. */
+    but->changed = true;
+  }
+  else {
     UI_but_ensure_in_view(C, data->region, but);
   }
 
@@ -3753,7 +3762,12 @@ static void ui_do_but_textedit(
       case EVT_VKEY:
       case EVT_XKEY:
       case EVT_CKEY:
-        if (IS_EVENT_MOD(event, ctrl, oskey)) {
+#if defined(__APPLE__)
+        if ((event->oskey && !IS_EVENT_MOD(event, shift, alt, ctrl)) ||
+            (event->ctrl && !IS_EVENT_MOD(event, shift, alt, oskey))) {
+#else
+        if (event->ctrl && !IS_EVENT_MOD(event, shift, alt, oskey)) {
+#endif
           if (event->type == EVT_VKEY) {
             changed = ui_textedit_copypaste(but, data, UI_TEXTEDIT_PASTE);
           }
@@ -3943,7 +3957,14 @@ static void ui_do_but_textedit(
       ui_textedit_delete_selection(but, data);
     }
     if (event->type == WM_IME_COMPOSITE_EVENT && ime_data->result_len) {
-      ui_textedit_insert_buf(but, data, ime_data->str_result, ime_data->result_len);
+      if (ELEM(but->type, UI_BTYPE_NUM, UI_BTYPE_NUM_SLIDER) &&
+          strcmp(ime_data->str_result, "\xE3\x80\x82") == 0) {
+        /* Convert Ideographic Full Stop (U+3002) to decimal point when entering numbers. */
+        ui_textedit_insert_ascii(but, data, '.');
+      }
+      else {
+        ui_textedit_insert_buf(but, data, ime_data->str_result, ime_data->result_len);
+      }
     }
   }
   else if (event->type == WM_IME_COMPOSITE_END) {
@@ -5470,7 +5491,7 @@ static int ui_do_but_NUM(
                                 log10f(number_but->step_size));
         }
         else {
-          value_step = (double)number_but->step_size * UI_PRECISION_FLOAT_SCALE;
+          value_step = (double)(number_but->step_size * UI_PRECISION_FLOAT_SCALE);
         }
         BLI_assert(value_step > 0.0f);
         const double value_test = (but->drawflag & UI_BUT_ACTIVE_LEFT) ?
@@ -7918,7 +7939,7 @@ static int ui_do_button(bContext *C, uiBlock *block, uiBut *but, const wmEvent *
     const bool do_copy = event->type == EVT_CKEY && is_press_ctrl_but_no_shift;
     const bool do_paste = event->type == EVT_VKEY && is_press_ctrl_but_no_shift;
 
-    /* Specific handling for listrows, we try to find their overlapping tex button. */
+    /* Specific handling for list-rows, we try to find their overlapping text button. */
     if ((do_copy || do_paste) && but->type == UI_BTYPE_LISTROW) {
       uiBut *labelbut = ui_but_list_row_text_activate(C, but, data, event, BUTTON_ACTIVATE_OVER);
       if (labelbut) {

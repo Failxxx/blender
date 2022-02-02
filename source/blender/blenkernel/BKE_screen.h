@@ -38,6 +38,7 @@ struct BlendLibReader;
 struct BlendWriter;
 struct Header;
 struct ID;
+struct IDRemapper;
 struct LibraryForeachIDData;
 struct ListBase;
 struct Menu;
@@ -117,10 +118,7 @@ typedef struct SpaceType {
   bContextDataCallback context;
 
   /* Used when we want to replace an ID by another (or NULL). */
-  void (*id_remap)(struct ScrArea *area,
-                   struct SpaceLink *sl,
-                   struct ID *old_id,
-                   struct ID *new_id);
+  void (*id_remap)(struct ScrArea *area, struct SpaceLink *sl, const struct IDRemapper *mappings);
 
   int (*space_subtype_get)(struct ScrArea *area);
   void (*space_subtype_set)(struct ScrArea *area, int value);
@@ -465,20 +463,19 @@ void BKE_region_callback_refresh_tag_gizmomap_set(void (*callback)(struct wmGizm
  */
 struct ARegion *BKE_area_find_region_type(const struct ScrArea *area, int type);
 struct ARegion *BKE_area_find_region_active_win(struct ScrArea *area);
-struct ARegion *BKE_area_find_region_xy(struct ScrArea *area, const int regiontype, int x, int y);
+struct ARegion *BKE_area_find_region_xy(struct ScrArea *area, int regiontype, const int xy[2])
+    ATTR_NONNULL(3);
 /**
  * \note This is only for screen level regions (typically menus/popups).
  */
 struct ARegion *BKE_screen_find_region_xy(struct bScreen *screen,
-                                          const int regiontype,
-                                          int x,
-                                          int y) ATTR_WARN_UNUSED_RESULT ATTR_NONNULL(1);
+                                          int regiontype,
+                                          const int xy[2]) ATTR_WARN_UNUSED_RESULT
+    ATTR_NONNULL(1, 3);
 
 struct ARegion *BKE_screen_find_main_region_at_xy(struct bScreen *screen,
-                                                  const int space_type,
-                                                  const int x,
-                                                  const int y);
-
+                                                  int space_type,
+                                                  const int xy[2]) ATTR_NONNULL(1, 3);
 /**
  * \note Ideally we can get the area from the context,
  * there are a few places however where this isn't practical.
@@ -490,14 +487,12 @@ struct ScrArea *BKE_screen_find_area_from_space(struct bScreen *screen,
  * \note Using this function is generally a last resort, you really want to be
  * using the context when you can - campbell
  */
-struct ScrArea *BKE_screen_find_big_area(struct bScreen *screen,
-                                         const int spacetype,
-                                         const short min);
+struct ScrArea *BKE_screen_find_big_area(struct bScreen *screen, int spacetype, short min);
 struct ScrArea *BKE_screen_area_map_find_area_xy(const struct ScrAreaMap *areamap,
-                                                 const int spacetype,
-                                                 int x,
-                                                 int y);
-struct ScrArea *BKE_screen_find_area_xy(struct bScreen *screen, const int spacetype, int x, int y);
+                                                 int spacetype,
+                                                 const int xy[2]) ATTR_NONNULL(1, 3);
+struct ScrArea *BKE_screen_find_area_xy(struct bScreen *screen, int spacetype, const int xy[2])
+    ATTR_NONNULL(1, 3);
 
 void BKE_screen_gizmo_tag_refresh(struct bScreen *screen);
 

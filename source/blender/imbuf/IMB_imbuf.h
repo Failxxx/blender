@@ -379,7 +379,8 @@ struct IndexBuildContext *IMB_anim_index_rebuild_context(struct anim *anim,
                                                          IMB_Proxy_Size proxy_sizes_in_use,
                                                          int quality,
                                                          const bool overwrite,
-                                                         struct GSet *file_list);
+                                                         struct GSet *file_list,
+                                                         bool build_only_on_bad_performance);
 
 /**
  * Will rebuild all used indices and proxies at once.
@@ -431,6 +432,7 @@ bool IMB_anim_can_produce_frames(const struct anim *anim);
 int ismovie(const char *filepath);
 int IMB_anim_get_image_width(struct anim *anim);
 int IMB_anim_get_image_height(struct anim *anim);
+bool IMB_get_gop_decode_time(struct anim *anim);
 
 /**
  *
@@ -536,7 +538,7 @@ void IMB_scaleImBuf_threaded(struct ImBuf *ibuf, unsigned int newx, unsigned int
  * \attention Defined in writeimage.c
  */
 bool IMB_saveiff(struct ImBuf *ibuf, const char *filepath, int flags);
-bool IMB_prepare_write_ImBuf(const bool isfloat, struct ImBuf *ibuf);
+bool IMB_prepare_write_ImBuf(bool isfloat, struct ImBuf *ibuf);
 
 /**
  *
@@ -544,7 +546,7 @@ bool IMB_prepare_write_ImBuf(const bool isfloat, struct ImBuf *ibuf);
  */
 bool IMB_ispic(const char *filepath);
 bool IMB_ispic_type_matches(const char *filepath, int filetype);
-int IMB_ispic_type_from_memory(const unsigned char *buf, const size_t buf_size);
+int IMB_ispic_type_from_memory(const unsigned char *buf, size_t buf_size);
 int IMB_ispic_type(const char *filepath);
 
 /**
@@ -837,7 +839,7 @@ void IMB_rectfill_area(struct ImBuf *ibuf,
  */
 void IMB_rectfill_area_replace(
     const struct ImBuf *ibuf, const float col[4], int x1, int y1, int x2, int y2);
-void IMB_rectfill_alpha(struct ImBuf *ibuf, const float value);
+void IMB_rectfill_alpha(struct ImBuf *ibuf, float value);
 
 /**
  * This should not be here, really,
@@ -929,8 +931,8 @@ typedef enum eIMBTransformMode {
  */
 void IMB_transform(const struct ImBuf *src,
                    struct ImBuf *dst,
-                   const eIMBTransformMode mode,
-                   const eIMBInterpolationFilterMode filter,
+                   eIMBTransformMode mode,
+                   eIMBInterpolationFilterMode filter,
                    const float transform_matrix[4][4],
                    const struct rctf *src_crop);
 
@@ -972,28 +974,20 @@ void IMB_update_gpu_texture_sub(struct GPUTexture *tex,
 /**
  * \attention defined in stereoimbuf.c
  */
-void IMB_stereo3d_write_dimensions(const char mode,
-                                   const bool is_squeezed,
-                                   const size_t width,
-                                   const size_t height,
-                                   size_t *r_width,
-                                   size_t *r_height);
-void IMB_stereo3d_read_dimensions(const char mode,
-                                  const bool is_squeezed,
-                                  const size_t width,
-                                  const size_t height,
-                                  size_t *r_width,
-                                  size_t *r_height);
+void IMB_stereo3d_write_dimensions(
+    char mode, bool is_squeezed, size_t width, size_t height, size_t *r_width, size_t *r_height);
+void IMB_stereo3d_read_dimensions(
+    char mode, bool is_squeezed, size_t width, size_t height, size_t *r_width, size_t *r_height);
 int *IMB_stereo3d_from_rect(struct ImageFormatData *im_format,
-                            const size_t x,
-                            const size_t y,
-                            const size_t channels,
+                            size_t x,
+                            size_t y,
+                            size_t channels,
                             int *rect_left,
                             int *rect_right);
 float *IMB_stereo3d_from_rectf(struct ImageFormatData *im_format,
-                               const size_t x,
-                               const size_t y,
-                               const size_t channels,
+                               size_t x,
+                               size_t y,
+                               size_t channels,
                                float *rectf_left,
                                float *rectf_right);
 /**

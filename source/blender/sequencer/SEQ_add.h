@@ -64,7 +64,8 @@ typedef struct SeqLoadData {
   bool use_multiview;
   char views_format;
   struct Stereo3dFormat *stereo3d_format;
-  bool allow_invalid_file; /* Used by RNA API to create placeholder strips. */
+  bool allow_invalid_file;     /* Used by RNA API to create placeholder strips. */
+  double r_video_stream_start; /* For AV synchronization. Set by `SEQ_add_movie_strip`. */
 } SeqLoadData;
 
 /**
@@ -79,8 +80,8 @@ typedef struct SeqLoadData {
 void SEQ_add_load_data_init(struct SeqLoadData *load_data,
                             const char *name,
                             const char *path,
-                            const int start_frame,
-                            const int channel);
+                            int start_frame,
+                            int channel);
 /**
  * Add image strip.
  * \note Use #SEQ_add_image_set_directory() and #SEQ_add_image_load_file() to load image sequences
@@ -108,8 +109,7 @@ struct Sequence *SEQ_add_image_strip(struct Main *bmain,
 struct Sequence *SEQ_add_sound_strip(struct Main *bmain,
                                      struct Scene *scene,
                                      struct ListBase *seqbase,
-                                     struct SeqLoadData *load_data,
-                                     const double audio_offset);
+                                     struct SeqLoadData *load_data);
 /**
  * Add meta strip.
  *
@@ -133,8 +133,7 @@ struct Sequence *SEQ_add_meta_strip(struct Scene *scene,
 struct Sequence *SEQ_add_movie_strip(struct Main *bmain,
                                      struct Scene *scene,
                                      struct ListBase *seqbase,
-                                     struct SeqLoadData *load_data,
-                                     double *r_start_offset);
+                                     struct SeqLoadData *load_data);
 /**
  * Add scene strip.
  *
@@ -206,7 +205,7 @@ void SEQ_add_image_init_alpha_mode(struct Sequence *seq);
 void SEQ_add_reload_new_file(struct Main *bmain,
                              struct Scene *scene,
                              struct Sequence *seq,
-                             const bool lock_range);
+                             bool lock_range);
 void SEQ_add_movie_reload_if_needed(struct Main *bmain,
                                     struct Scene *scene,
                                     struct Sequence *seq,

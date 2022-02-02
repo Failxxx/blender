@@ -34,11 +34,11 @@ extern "C" {
 struct ARegion;
 struct ARegionType;
 struct AssetLibrary;
-struct FileSelectParams;
 struct FileAssetSelectParams;
+struct FileSelectParams;
 struct SpaceFile;
-struct uiLayout;
 struct View2D;
+struct uiLayout;
 
 /* file_draw.c */
 
@@ -128,7 +128,7 @@ void fileselect_refresh_params(struct SpaceFile *sfile);
 /**
  * Sets #FileSelectParams.file (name of selected file)
  */
-void fileselect_file_set(SpaceFile *sfile, const int index);
+void fileselect_file_set(SpaceFile *sfile, int index);
 bool file_attribute_column_type_enabled(const FileSelectParams *params,
                                         FileAttributeColumnType column);
 /**
@@ -204,7 +204,7 @@ void file_tools_region_panels_register(struct ARegionType *art);
 
 /* file_utils.c */
 
-void file_tile_boundbox(const ARegion *region, FileLayout *layout, const int file, rcti *r_bounds);
+void file_tile_boundbox(const ARegion *region, FileLayout *layout, int file, rcti *r_bounds);
 
 /**
  * If \a path leads to a .blend, remove the trailing slash (if needed).

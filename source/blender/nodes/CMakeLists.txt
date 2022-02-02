@@ -18,8 +18,11 @@
 # All rights reserved.
 # ***** END GPL LICENSE BLOCK *****
 
+add_subdirectory(composite)
+add_subdirectory(function)
 add_subdirectory(geometry)
 add_subdirectory(shader)
+add_subdirectory(texture)
 
 set(INC
   .
@@ -45,144 +48,13 @@ set(INC
   ../windowmanager
   ../../../intern/glew-mx
   ../../../intern/guardedalloc
+
+  # dna_type_offsets.h
+  ${CMAKE_CURRENT_BINARY_DIR}/../makesdna/intern
 )
 
 
 set(SRC
-  composite/nodes/node_composite_alphaOver.cc
-  composite/nodes/node_composite_antialiasing.cc
-  composite/nodes/node_composite_bilateralblur.cc
-  composite/nodes/node_composite_blur.cc
-  composite/nodes/node_composite_bokehblur.cc
-  composite/nodes/node_composite_bokehimage.cc
-  composite/nodes/node_composite_boxmask.cc
-  composite/nodes/node_composite_brightness.cc
-  composite/nodes/node_composite_channelMatte.cc
-  composite/nodes/node_composite_chromaMatte.cc
-  composite/nodes/node_composite_colorMatte.cc
-  composite/nodes/node_composite_colorSpill.cc
-  composite/nodes/node_composite_colorbalance.cc
-  composite/nodes/node_composite_colorcorrection.cc
-  composite/nodes/node_composite_common.cc
-  composite/nodes/node_composite_composite.cc
-  composite/nodes/node_composite_cornerpin.cc
-  composite/nodes/node_composite_crop.cc
-  composite/nodes/node_composite_cryptomatte.cc
-  composite/nodes/node_composite_curves.cc
-  composite/nodes/node_composite_defocus.cc
-  composite/nodes/node_composite_denoise.cc
-  composite/nodes/node_composite_despeckle.cc
-  composite/nodes/node_composite_diffMatte.cc
-  composite/nodes/node_composite_dilate.cc
-  composite/nodes/node_composite_directionalblur.cc
-  composite/nodes/node_composite_displace.cc
-  composite/nodes/node_composite_distanceMatte.cc
-  composite/nodes/node_composite_doubleEdgeMask.cc
-  composite/nodes/node_composite_ellipsemask.cc
-  composite/nodes/node_composite_exposure.cc
-  composite/nodes/node_composite_filter.cc
-  composite/nodes/node_composite_flip.cc
-  composite/nodes/node_composite_gamma.cc
-  composite/nodes/node_composite_glare.cc
-  composite/nodes/node_composite_hueSatVal.cc
-  composite/nodes/node_composite_huecorrect.cc
-  composite/nodes/node_composite_idMask.cc
-  composite/nodes/node_composite_image.cc
-  composite/nodes/node_composite_inpaint.cc
-  composite/nodes/node_composite_invert.cc
-  composite/nodes/node_composite_keying.cc
-  composite/nodes/node_composite_keyingscreen.cc
-  composite/nodes/node_composite_lensdist.cc
-  composite/nodes/node_composite_levels.cc
-  composite/nodes/node_composite_lummaMatte.cc
-  composite/nodes/node_composite_mapRange.cc
-  composite/nodes/node_composite_mapUV.cc
-  composite/nodes/node_composite_mapValue.cc
-  composite/nodes/node_composite_mask.cc
-  composite/nodes/node_composite_math.cc
-  composite/nodes/node_composite_mixrgb.cc
-  composite/nodes/node_composite_movieclip.cc
-  composite/nodes/node_composite_moviedistortion.cc
-  composite/nodes/node_composite_normal.cc
-  composite/nodes/node_composite_normalize.cc
-  composite/nodes/node_composite_outputFile.cc
-  composite/nodes/node_composite_pixelate.cc
-  composite/nodes/node_composite_planetrackdeform.cc
-  composite/nodes/node_composite_posterize.cc
-  composite/nodes/node_composite_premulkey.cc
-  composite/nodes/node_composite_rgb.cc
-  composite/nodes/node_composite_rotate.cc
-  composite/nodes/node_composite_scale.cc
-  composite/nodes/node_composite_sepcombHSVA.cc
-  composite/nodes/node_composite_sepcombRGBA.cc
-  composite/nodes/node_composite_sepcombYCCA.cc
-  composite/nodes/node_composite_sepcombYUVA.cc
-  composite/nodes/node_composite_setalpha.cc
-  composite/nodes/node_composite_splitViewer.cc
-  composite/nodes/node_composite_stabilize2d.cc
-  composite/nodes/node_composite_sunbeams.cc
-  composite/nodes/node_composite_switch.cc
-  composite/nodes/node_composite_switchview.cc
-  composite/nodes/node_composite_texture.cc
-  composite/nodes/node_composite_tonemap.cc
-  composite/nodes/node_composite_trackpos.cc
-  composite/nodes/node_composite_transform.cc
-  composite/nodes/node_composite_translate.cc
-  composite/nodes/node_composite_valToRgb.cc
-  composite/nodes/node_composite_value.cc
-  composite/nodes/node_composite_vecBlur.cc
-  composite/nodes/node_composite_viewer.cc
-  composite/nodes/node_composite_zcombine.cc
-
-  composite/node_composite_tree.cc
-  composite/node_composite_util.cc
-
-  function/nodes/legacy/node_fn_random_float.cc
-
-  function/nodes/node_fn_align_euler_to_vector.cc
-  function/nodes/node_fn_boolean_math.cc
-  function/nodes/node_fn_compare.cc
-  function/nodes/node_fn_float_to_int.cc
-  function/nodes/node_fn_input_bool.cc
-  function/nodes/node_fn_input_color.cc
-  function/nodes/node_fn_input_int.cc
-  function/nodes/node_fn_input_special_characters.cc
-  function/nodes/node_fn_input_string.cc
-  function/nodes/node_fn_input_vector.cc
-  function/nodes/node_fn_random_value.cc
-  function/nodes/node_fn_replace_string.cc
-  function/nodes/node_fn_rotate_euler.cc
-  function/nodes/node_fn_slice_string.cc
-  function/nodes/node_fn_string_length.cc
-  function/nodes/node_fn_value_to_string.cc
-  function/node_function_util.cc
-
-  texture/nodes/node_texture_at.c
-  texture/nodes/node_texture_bricks.c
-  texture/nodes/node_texture_checker.c
-  texture/nodes/node_texture_common.c
-  texture/nodes/node_texture_compose.c
-  texture/nodes/node_texture_coord.c
-  texture/nodes/node_texture_curves.c
-  texture/nodes/node_texture_decompose.c
-  texture/nodes/node_texture_distance.c
-  texture/nodes/node_texture_hueSatVal.c
-  texture/nodes/node_texture_image.c
-  texture/nodes/node_texture_invert.c
-  texture/nodes/node_texture_math.c
-  texture/nodes/node_texture_mixRgb.c
-  texture/nodes/node_texture_output.c
-  texture/nodes/node_texture_proc.c
-  texture/nodes/node_texture_rotate.c
-  texture/nodes/node_texture_scale.c
-  texture/nodes/node_texture_texture.c
-  texture/nodes/node_texture_translate.c
-  texture/nodes/node_texture_valToNor.c
-  texture/nodes/node_texture_valToRgb.c
-  texture/nodes/node_texture_viewer.c
-  texture/node_texture_tree.c
-  texture/node_texture_util.c
-
   intern/derived_node_tree.cc
   intern/geometry_nodes_eval_log.cc
   intern/math_functions.cc
@@ -193,13 +65,9 @@ set(SRC
   intern/node_multi_function.cc
   intern/node_socket.cc
   intern/node_socket_declarations.cc
-  intern/socket_search_link.cc
   intern/node_tree_ref.cc
   intern/node_util.c
-
-  composite/node_composite_util.hh
-  function/node_function_util.hh
-  texture/node_texture_util.h
+  intern/socket_search_link.cc
 
   NOD_common.h
   NOD_composite.h
@@ -215,8 +83,8 @@ set(SRC
   NOD_shader.h
   NOD_socket.h
   NOD_socket_declarations.hh
-  NOD_socket_search_link.hh
   NOD_socket_declarations_geometry.hh
+  NOD_socket_search_link.hh
   NOD_static_types.h
   NOD_texture.h
   intern/node_common.h
@@ -227,19 +95,22 @@ set(SRC
 set(LIB
   bf_bmesh
   bf_functions
+  bf_nodes_composite
+  bf_nodes_function
   bf_nodes_geometry
   bf_nodes_shader
+  bf_nodes_texture
 )
 
 if(WITH_BULLET)
   list(APPEND INC_SYS
     ${BULLET_INCLUDE_DIRS}
-    "../../../intern/rigidbody/"
+    ../../../intern/rigidbody
   )
   if(NOT WITH_SYSTEM_BULLET)
   list(APPEND LIB
     extern_bullet
-    )
+  )
   endif()
 
   list(APPEND LIB
@@ -262,10 +133,6 @@ if(WITH_PYTHON)
   add_definitions(-DWITH_PYTHON)
 endif()
 
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
-endif()
-
 if(WITH_TBB)
   list(APPEND INC_SYS
     ${TBB_INCLUDE_DIRS}
@@ -280,13 +147,6 @@ endif()
 
 if(WITH_IMAGE_OPENEXR)
   add_definitions(-DWITH_OPENEXR)
-endif()
-
-if(WITH_COMPOSITOR)
-  list(APPEND INC
-    ../compositor
-  )
-  add_definitions(-DWITH_COMPOSITOR)
 endif()
 
 if(WITH_FREESTYLE)
@@ -316,8 +176,7 @@ if(WITH_OPENVDB)
   add_definitions(-DWITH_OPENVDB ${OPENVDB_DEFINITIONS})
 endif()
 
-if(WITH_OPENIMAGEDENOISE)
-  add_definitions(-DWITH_OPENIMAGEDENOISE)
-endif()
-
 blender_add_lib(bf_nodes "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")
+
+# Needed so we can use dna_type_offsets.h for defaults initialization.
+add_dependencies(bf_nodes bf_dna)

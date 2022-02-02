@@ -62,6 +62,8 @@
 /** \name Utilities
  * \{ */
 
+namespace blender::ed::space_node {
+
 bNode *node_add_node(const bContext &C, const char *idname, int type, float locx, float locy)
 {
   SpaceNode &snode = *CTX_wm_space_node(&C);
@@ -85,7 +87,7 @@ bNode *node_add_node(const bContext &C, const char *idname, int type, float locx
   nodeSetSelected(node, true);
 
   ED_node_set_active(&bmain, &snode, snode.edittree, node, nullptr);
-  BKE_ntree_update_main_tree(&bmain, snode.edittree, nullptr);
+  ED_node_tree_propagate_change(&C, &bmain, snode.edittree);
   return node;
 }
 
@@ -130,7 +132,7 @@ static bNodeSocketLink *add_reroute_insert_socket_link(ListBase *lb,
 {
   bNodeSocketLink *socklink, *prev;
 
-  socklink = (bNodeSocketLink *)MEM_callocN(sizeof(bNodeSocketLink), "socket link");
+  socklink = MEM_cnew<bNodeSocketLink>("socket link");
   socklink->sock = sock;
   socklink->link = link;
   copy_v2_v2(socklink->point, point);
@@ -374,6 +376,7 @@ static int node_add_group_exec(bContext *C, wmOperator *op)
 
   group_node->id = &node_group->id;
   id_us_plus(group_node->id);
+  BKE_ntree_update_tag_node_property(snode->edittree, group_node);
 
   nodeSetActive(ntree, group_node);
   ED_node_tree_propagate_change(C, bmain, nullptr);
@@ -498,6 +501,8 @@ static bool node_add_object_poll(bContext *C)
 
 void NODE_OT_add_object(wmOperatorType *ot)
 {
+  PropertyRNA *prop;
+
   /* identifiers */
   ot->name = "Add Node Object";
   ot->description = "Add an object info node to the current node editor";
@@ -512,15 +517,16 @@ void NODE_OT_add_object(wmOperatorType *ot)
   ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO | OPTYPE_INTERNAL;
 
   RNA_def_string(ot->srna, "name", "Object", MAX_ID_NAME - 2, "Name", "Data-block name to assign");
-  RNA_def_int(ot->srna,
-              "session_uuid",
-              0,
-              INT32_MIN,
-              INT32_MAX,
-              "Session UUID",
-              "Session UUID of the data-block to assign",
-              INT32_MIN,
-              INT32_MAX);
+  prop = RNA_def_int(ot->srna,
+                     "session_uuid",
+                     0,
+                     INT32_MIN,
+                     INT32_MAX,
+                     "Session UUID",
+                     "Session UUID of the data-block to assign",
+                     INT32_MIN,
+                     INT32_MAX);
+  RNA_def_property_flag(prop, (PropertyFlag)(PROP_HIDDEN | PROP_SKIP_SAVE));
 }
 
 /** \} */
@@ -601,6 +607,8 @@ static bool node_add_texture_poll(bContext *C)
 
 void NODE_OT_add_texture(wmOperatorType *ot)
 {
+  PropertyRNA *prop;
+
   /* identifiers */
   ot->name = "Add Node Texture";
   ot->description = "Add a texture to the current node editor";
@@ -616,15 +624,16 @@ void NODE_OT_add_texture(wmOperatorType *ot)
 
   RNA_def_string(
       ot->srna, "name", "Texture", MAX_ID_NAME - 2, "Name", "Data-block name to assign");
-  RNA_def_int(ot->srna,
-              "session_uuid",
-              0,
-              INT32_MIN,
-              INT32_MAX,
-              "Session UUID",
-              "Session UUID of the data-block to assign",
-              INT32_MIN,
-              INT32_MAX);
+  prop = RNA_def_int(ot->srna,
+                     "session_uuid",
+                     0,
+                     INT32_MIN,
+                     INT32_MAX,
+                     "Session UUID",
+                     "Session UUID of the data-block to assign",
+                     INT32_MIN,
+                     INT32_MAX);
+  RNA_def_property_flag(prop, (PropertyFlag)(PROP_HIDDEN | PROP_SKIP_SAVE));
 }
 
 /** \} */
@@ -710,6 +719,8 @@ static bool node_add_collection_poll(bContext *C)
 
 void NODE_OT_add_collection(wmOperatorType *ot)
 {
+  PropertyRNA *prop;
+
   /* identifiers */
   ot->name = "Add Node Collection";
   ot->description = "Add an collection info node to the current node editor";
@@ -725,15 +736,16 @@ void NODE_OT_add_collection(wmOperatorType *ot)
 
   RNA_def_string(
       ot->srna, "name", "Collection", MAX_ID_NAME - 2, "Name", "Data-block name to assign");
-  RNA_def_int(ot->srna,
-              "session_uuid",
-              0,
-              INT32_MIN,
-              INT32_MAX,
-              "Session UUID",
-              "Session UUID of the data-block to assign",
-              INT32_MIN,
-              INT32_MAX);
+  prop = RNA_def_int(ot->srna,
+                     "session_uuid",
+                     0,
+                     INT32_MIN,
+                     INT32_MAX,
+                     "Session UUID",
+                     "Session UUID of the data-block to assign",
+                     INT32_MIN,
+                     INT32_MAX);
+  RNA_def_property_flag(prop, (PropertyFlag)(PROP_HIDDEN | PROP_SKIP_SAVE));
 }
 
 /** \} */
@@ -915,6 +927,8 @@ static int node_add_mask_exec(bContext *C, wmOperator *op)
 
 void NODE_OT_add_mask(wmOperatorType *ot)
 {
+  PropertyRNA *prop;
+
   /* identifiers */
   ot->name = "Add Mask Node";
   ot->description = "Add a mask node to the current node editor";
@@ -928,15 +942,16 @@ void NODE_OT_add_mask(wmOperatorType *ot)
   ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO | OPTYPE_INTERNAL;
 
   RNA_def_string(ot->srna, "name", "Mask", MAX_ID_NAME - 2, "Name", "Data-block name to assign");
-  RNA_def_int(ot->srna,
-              "session_uuid",
-              0,
-              INT32_MIN,
-              INT32_MAX,
-              "Session UUID",
-              "Session UUID of the data-block to assign",
-              INT32_MIN,
-              INT32_MAX);
+  prop = RNA_def_int(ot->srna,
+                     "session_uuid",
+                     0,
+                     INT32_MIN,
+                     INT32_MAX,
+                     "Session UUID",
+                     "Session UUID of the data-block to assign",
+                     INT32_MIN,
+                     INT32_MAX);
+  RNA_def_property_flag(prop, (PropertyFlag)(PROP_HIDDEN | PROP_SKIP_SAVE));
 }
 
 /** \} */
@@ -1033,3 +1048,5 @@ void NODE_OT_new_node_tree(wmOperatorType *ot)
 }
 
 /** \} */
+
+}  // namespace blender::ed::space_node

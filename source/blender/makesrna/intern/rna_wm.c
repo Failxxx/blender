@@ -965,7 +965,7 @@ static void rna_wmKeyMapItem_keymodifier_set(PointerRNA *ptr, int value)
   if (value == EVT_ESCKEY) {
     /* pass */
   }
-  else if (value >= EVT_AKEY) {
+  else if (ISKEYBOARD(value) && !ISKEYMODIFIER(value)) {
     kmi->keymodifier = value;
   }
   else {
@@ -2175,7 +2175,8 @@ static void rna_def_event(BlenderRNA *brna)
   RNA_def_property_ui_text(
       prop, "Mouse Previous Y Position", "The window relative vertical location of the mouse");
 
-  prop = RNA_def_property(srna, "pressure", PROP_FLOAT, PROP_NONE);
+  prop = RNA_def_property(srna, "pressure", PROP_FLOAT, PROP_FACTOR);
+  RNA_def_property_float_default(prop, 1.0f);
   RNA_def_property_clear_flag(prop, PROP_EDITABLE);
   RNA_def_property_float_funcs(prop, "rna_Event_pressure_get", NULL, NULL);
   RNA_def_property_ui_text(

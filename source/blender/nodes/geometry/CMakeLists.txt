@@ -18,7 +18,7 @@
 
 set(INC
   .
-  ../
+  ..
   ../intern
   ../../editors/include
   ../../blenkernel
@@ -80,6 +80,7 @@ set(SRC
   nodes/legacy/node_geo_legacy_subdivision_surface.cc
   nodes/legacy/node_geo_legacy_volume_to_mesh.cc
 
+  nodes/node_geo_accumulate_field.cc
   nodes/node_geo_attribute_capture.cc
   nodes/node_geo_attribute_domain_size.cc
   nodes/node_geo_attribute_remove.cc
@@ -94,6 +95,7 @@ set(SRC
   nodes/node_geo_curve_fillet.cc
   nodes/node_geo_curve_handle_type_selection.cc
   nodes/node_geo_curve_length.cc
+  nodes/node_geo_curve_primitive_arc.cc
   nodes/node_geo_curve_primitive_bezier_segment.cc
   nodes/node_geo_curve_primitive_circle.cc
   nodes/node_geo_curve_primitive_line.cc
@@ -115,14 +117,18 @@ set(SRC
   nodes/node_geo_distribute_points_on_faces.cc
   nodes/node_geo_dual_mesh.cc
   nodes/node_geo_edge_split.cc
+  nodes/node_geo_extrude_mesh.cc
+  nodes/node_geo_field_at_index.cc
+  nodes/node_geo_flip_faces.cc
   nodes/node_geo_geometry_to_instance.cc
   nodes/node_geo_image_texture.cc
   nodes/node_geo_input_curve_handles.cc
   nodes/node_geo_input_curve_tilt.cc
   nodes/node_geo_input_id.cc
   nodes/node_geo_input_index.cc
-  nodes/node_geo_input_material_index.cc
   nodes/node_geo_input_material.cc
+  nodes/node_geo_input_material_index.cc
+  nodes/node_geo_input_mesh_edge_angle.cc
   nodes/node_geo_input_mesh_edge_neighbors.cc
   nodes/node_geo_input_mesh_edge_vertices.cc
   nodes/node_geo_input_mesh_face_area.cc
@@ -144,6 +150,7 @@ set(SRC
   nodes/node_geo_join_geometry.cc
   nodes/node_geo_material_replace.cc
   nodes/node_geo_material_selection.cc
+  nodes/node_geo_merge_by_distance.cc
   nodes/node_geo_mesh_primitive_circle.cc
   nodes/node_geo_mesh_primitive_cone.cc
   nodes/node_geo_mesh_primitive_cube.cc
@@ -162,6 +169,7 @@ set(SRC
   nodes/node_geo_raycast.cc
   nodes/node_geo_realize_instances.cc
   nodes/node_geo_rotate_instances.cc
+  nodes/node_geo_scale_elements.cc
   nodes/node_geo_scale_instances.cc
   nodes/node_geo_separate_components.cc
   nodes/node_geo_separate_geometry.cc
@@ -169,8 +177,8 @@ set(SRC
   nodes/node_geo_set_curve_radius.cc
   nodes/node_geo_set_curve_tilt.cc
   nodes/node_geo_set_id.cc
-  nodes/node_geo_set_material_index.cc
   nodes/node_geo_set_material.cc
+  nodes/node_geo_set_material_index.cc
   nodes/node_geo_set_point_radius.cc
   nodes/node_geo_set_position.cc
   nodes/node_geo_set_shade_smooth.cc
@@ -203,7 +211,7 @@ set(LIB
 if(WITH_BULLET)
   list(APPEND INC_SYS
     ${BULLET_INCLUDE_DIRS}
-    "../../../../intern/rigidbody/"
+    ../../../../intern/rigidbody
   )
   if(NOT WITH_SYSTEM_BULLET)
   list(APPEND LIB
@@ -229,10 +237,6 @@ if(WITH_PYTHON)
     ${PYTHON_LIBRARIES}
   )
   add_definitions(-DWITH_PYTHON)
-endif()
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
 endif()
 
 if(WITH_TBB)

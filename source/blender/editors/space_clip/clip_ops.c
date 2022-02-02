@@ -33,6 +33,7 @@
 
 #include "MEM_guardedalloc.h"
 
+#include "DNA_defaults.h"
 #include "DNA_scene_types.h" /* min/max frames */
 #include "DNA_userdef_types.h"
 
@@ -1321,7 +1322,7 @@ static uchar *proxy_thread_next_frame(ProxyQueue *queue,
 
   BLI_spin_lock(&queue->spin);
   if (!*queue->stop && queue->cfra <= queue->efra) {
-    MovieClipUser user = {0};
+    MovieClipUser user = *DNA_struct_default_get(MovieClipUser);
     char name[FILE_MAX];
     size_t size;
     int file;
@@ -1559,7 +1560,8 @@ static int clip_rebuild_proxy_exec(bContext *C, wmOperator *UNUSED(op))
                                                        clip->proxy.build_size_flag,
                                                        clip->proxy.quality,
                                                        true,
-                                                       NULL);
+                                                       NULL,
+                                                       false);
   }
 
   WM_jobs_customdata_set(wm_job, pj, proxy_freejob);

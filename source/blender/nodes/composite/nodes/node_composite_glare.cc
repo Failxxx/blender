@@ -28,7 +28,7 @@
 
 #include "node_composite_util.hh"
 
-namespace blender::nodes {
+namespace blender::nodes::node_composite_glare_cc {
 
 static void cmp_node_glare_declare(NodeDeclarationBuilder &b)
 {
@@ -36,11 +36,9 @@ static void cmp_node_glare_declare(NodeDeclarationBuilder &b)
   b.add_output<decl::Color>(N_("Image"));
 }
 
-}  // namespace blender::nodes
-
 static void node_composit_init_glare(bNodeTree *UNUSED(ntree), bNode *node)
 {
-  NodeGlare *ndg = (NodeGlare *)MEM_callocN(sizeof(NodeGlare), "node glare data");
+  NodeGlare *ndg = MEM_cnew<NodeGlare>(__func__);
   ndg->quality = 1;
   ndg->type = 2;
   ndg->iter = 3;
@@ -93,14 +91,18 @@ static void node_composit_buts_glare(uiLayout *layout, bContext *UNUSED(C), Poin
   }
 }
 
+}  // namespace blender::nodes::node_composite_glare_cc
+
 void register_node_type_cmp_glare()
 {
+  namespace file_ns = blender::nodes::node_composite_glare_cc;
+
   static bNodeType ntype;
 
-  cmp_node_type_base(&ntype, CMP_NODE_GLARE, "Glare", NODE_CLASS_OP_FILTER, 0);
-  ntype.declare = blender::nodes::cmp_node_glare_declare;
-  ntype.draw_buttons = node_composit_buts_glare;
-  node_type_init(&ntype, node_composit_init_glare);
+  cmp_node_type_base(&ntype, CMP_NODE_GLARE, "Glare", NODE_CLASS_OP_FILTER);
+  ntype.declare = file_ns::cmp_node_glare_declare;
+  ntype.draw_buttons = file_ns::node_composit_buts_glare;
+  node_type_init(&ntype, file_ns::node_composit_init_glare);
   node_type_storage(&ntype, "NodeGlare", node_free_standard_storage, node_copy_standard_storage);
 
   nodeRegisterType(&ntype);

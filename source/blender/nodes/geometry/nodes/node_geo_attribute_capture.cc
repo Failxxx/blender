@@ -48,8 +48,8 @@ static void node_layout(uiLayout *layout, bContext *UNUSED(C), PointerRNA *ptr)
 {
   uiLayoutSetPropSep(layout, true);
   uiLayoutSetPropDecorate(layout, false);
-  uiItemR(layout, ptr, "domain", 0, "", ICON_NONE);
   uiItemR(layout, ptr, "data_type", 0, "", ICON_NONE);
+  uiItemR(layout, ptr, "domain", 0, "", ICON_NONE);
 }
 
 static void node_init(bNodeTree *UNUSED(tree), bNode *node)
@@ -234,7 +234,7 @@ void register_node_type_geo_attribute_capture()
   static bNodeType ntype;
 
   geo_node_type_base(
-      &ntype, GEO_NODE_CAPTURE_ATTRIBUTE, "Capture Attribute", NODE_CLASS_ATTRIBUTE, 0);
+      &ntype, GEO_NODE_CAPTURE_ATTRIBUTE, "Capture Attribute", NODE_CLASS_ATTRIBUTE);
   node_type_storage(&ntype,
                     "NodeGeometryAttributeCapture",
                     node_free_standard_storage,

@@ -816,7 +816,7 @@ void DRW_shgroup_call_ex(DRWShadingGroup *shgroup,
       culling->user_data = user_data;
     }
     if (bypass_culling) {
-      /* NOTE this will disable culling for the whole object. */
+      /* NOTE: this will disable culling for the whole object. */
       culling->bsphere.radius = -1.0f;
     }
   }
@@ -1248,6 +1248,17 @@ static void drw_shgroup_init(DRWShadingGroup *shgroup, GPUShader *shader)
   int chunkid_location = GPU_shader_get_builtin_uniform(shader, GPU_UNIFORM_RESOURCE_CHUNK);
   int resourceid_location = GPU_shader_get_builtin_uniform(shader, GPU_UNIFORM_RESOURCE_ID);
 
+  /* TODO(@fclem): Will take the place of the above after the GPUShaderCreateInfo port. */
+  if (view_ubo_location == -1) {
+    view_ubo_location = GPU_shader_get_builtin_block(shader, GPU_UNIFORM_BLOCK_DRW_VIEW);
+  }
+  if (model_ubo_location == -1) {
+    model_ubo_location = GPU_shader_get_builtin_block(shader, GPU_UNIFORM_BLOCK_DRW_MODEL);
+  }
+  if (info_ubo_location == -1) {
+    info_ubo_location = GPU_shader_get_builtin_block(shader, GPU_UNIFORM_BLOCK_DRW_INFOS);
+  }
+
   if (chunkid_location != -1) {
     drw_shgroup_uniform_create_ex(
         shgroup, chunkid_location, DRW_UNIFORM_RESOURCE_CHUNK, NULL, 0, 0, 1);
@@ -1364,14 +1375,15 @@ void DRW_shgroup_add_material_resources(DRWShadingGroup *grp, struct GPUMaterial
     if (tex->ima) {
       /* Image */
       GPUTexture *gputex;
+      ImageUser *iuser = tex->iuser_available ? &tex->iuser : NULL;
       if (tex->tiled_mapping_name[0]) {
-        gputex = BKE_image_get_gpu_tiles(tex->ima, tex->iuser, NULL);
+        gputex = BKE_image_get_gpu_tiles(tex->ima, iuser, NULL);
         drw_shgroup_material_texture(grp, gputex, tex->sampler_name, tex->sampler_state);
-        gputex = BKE_image_get_gpu_tilemap(tex->ima, tex->iuser, NULL);
+        gputex = BKE_image_get_gpu_tilemap(tex->ima, iuser, NULL);
         drw_shgroup_material_texture(grp, gputex, tex->tiled_mapping_name, tex->sampler_state);
       }
       else {
-        gputex = BKE_image_get_gpu_texture(tex->ima, tex->iuser, NULL);
+        gputex = BKE_image_get_gpu_texture(tex->ima, iuser, NULL);
         drw_shgroup_material_texture(grp, gputex, tex->sampler_name, tex->sampler_state);
       }
     }
@@ -1892,10 +1904,10 @@ void DRW_view_reset(void)
   DST.view_previous = NULL;
 }
 
-void DRW_view_default_set(DRWView *view)
+void DRW_view_default_set(const DRWView *view)
 {
   BLI_assert(DST.view_default == NULL);
-  DST.view_default = view;
+  DST.view_default = (DRWView *)view;
 }
 
 void DRW_view_clip_planes_set(DRWView *view, float (*planes)[4], int plane_len)

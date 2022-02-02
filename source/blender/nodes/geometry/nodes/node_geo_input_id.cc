@@ -20,7 +20,9 @@ namespace blender::nodes::node_geo_input_id_cc {
 
 static void node_declare(NodeDeclarationBuilder &b)
 {
-  b.add_output<decl::Int>(N_("ID")).field_source();
+  b.add_output<decl::Int>(N_("ID")).field_source().description(
+      N_("The values from the \"id\" attribute on points, or the index if that attribute does not "
+         "exist"));
 }
 
 static void node_geo_exec(GeoNodeExecParams params)
@@ -37,7 +39,7 @@ void register_node_type_geo_input_id()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_INPUT_ID, "ID", NODE_CLASS_INPUT, 0);
+  geo_node_type_base(&ntype, GEO_NODE_INPUT_ID, "ID", NODE_CLASS_INPUT);
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   ntype.declare = file_ns::node_declare;
   nodeRegisterType(&ntype);

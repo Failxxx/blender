@@ -494,9 +494,9 @@ void UI_draw_widget_scroll(struct uiWidgetColors *wcol,
 float UI_text_clip_middle_ex(const struct uiFontStyle *fstyle,
                              char *str,
                              float okwidth,
-                             const float minwidth,
-                             const size_t max_len,
-                             const char rpart_sep);
+                             float minwidth,
+                             size_t max_len,
+                             char rpart_sep);
 
 /**
  * Callbacks
@@ -531,11 +531,8 @@ typedef struct ARegion *(*uiButSearchCreateFn)(struct bContext *C,
  * to display the full list of options. The value will be false after the button's text is edited
  * (for every call except the first).
  */
-typedef void (*uiButSearchUpdateFn)(const struct bContext *C,
-                                    void *arg,
-                                    const char *str,
-                                    uiSearchItems *items,
-                                    const bool is_first);
+typedef void (*uiButSearchUpdateFn)(
+    const struct bContext *C, void *arg, const char *str, uiSearchItems *items, bool is_first);
 typedef bool (*uiButSearchContextMenuFn)(struct bContext *C,
                                          void *arg,
                                          void *active,
@@ -621,7 +618,7 @@ bool UI_but_is_tool(const uiBut *but);
 bool UI_but_is_utf8(const uiBut *but);
 #define UI_but_is_decorator(but) ((but)->type == UI_BTYPE_DECORATOR)
 
-bool UI_block_is_empty_ex(const uiBlock *block, const bool skip_title);
+bool UI_block_is_empty_ex(const uiBlock *block, bool skip_title);
 bool UI_block_is_empty(const uiBlock *block);
 bool UI_block_can_add_separator(const uiBlock *block);
 
@@ -662,7 +659,7 @@ int UI_popup_menu_invoke(struct bContext *C, const char *idname, struct ReportLi
  * Allow setting menu return value from externals.
  * E.g. WM might need to do this for exiting files correctly.
  */
-void UI_popup_menu_retval_set(const uiBlock *block, const int retval, const bool enable);
+void UI_popup_menu_retval_set(const uiBlock *block, int retval, bool enable);
 /**
  * Setting the button makes the popup open from the button instead of the cursor.
  */
@@ -866,7 +863,7 @@ void UI_but_drag_set_id(uiBut *but, struct ID *id);
  * Set an image to display while dragging. This works for any drag type (`WM_DRAG_XXX`).
  * Not to be confused with #UI_but_drag_set_image(), which sets up dragging of an image.
  */
-void UI_but_drag_attach_image(uiBut *but, struct ImBuf *imb, const float scale);
+void UI_but_drag_attach_image(uiBut *but, struct ImBuf *imb, float scale);
 /**
  * \param asset: May be passed from a temporary variable, drag data only stores a copy of this.
  */
@@ -879,14 +876,14 @@ void UI_but_drag_set_asset(uiBut *but,
                            struct ImBuf *imb,
                            float scale);
 void UI_but_drag_set_rna(uiBut *but, struct PointerRNA *ptr);
-void UI_but_drag_set_path(uiBut *but, const char *path, const bool use_free);
+void UI_but_drag_set_path(uiBut *but, const char *path, bool use_free);
 void UI_but_drag_set_name(uiBut *but, const char *name);
 /**
  * Value from button itself.
  */
 void UI_but_drag_set_value(uiBut *but);
 void UI_but_drag_set_image(
-    uiBut *but, const char *path, int icon, struct ImBuf *imb, float scale, const bool use_free);
+    uiBut *but, const char *path, int icon, struct ImBuf *imb, float scale, bool use_free);
 
 uiBut *UI_but_active_drop_name_button(const struct bContext *C);
 /**
@@ -918,7 +915,7 @@ bool UI_but_active_only_ex(const struct bContext *C,
                            struct ARegion *region,
                            uiBlock *block,
                            uiBut *but,
-                           const bool remove_on_failure);
+                           bool remove_on_failure);
 bool UI_but_active_only(const struct bContext *C,
                         struct ARegion *region,
                         uiBlock *block,
@@ -982,21 +979,6 @@ uiBut *uiDefButF(uiBlock *block,
                  float a1,
                  float a2,
                  const char *tip);
-uiBut *uiDefButBitF(uiBlock *block,
-                    int type,
-                    int bit,
-                    int retval,
-                    const char *str,
-                    int x,
-                    int y,
-                    short width,
-                    short height,
-                    float *poin,
-                    float min,
-                    float max,
-                    float a1,
-                    float a2,
-                    const char *tip);
 uiBut *uiDefButI(uiBlock *block,
                  int type,
                  int retval,
@@ -1154,35 +1136,6 @@ uiBut *uiDefIconBut(uiBlock *block,
                     float a1,
                     float a2,
                     const char *tip);
-uiBut *uiDefIconButF(uiBlock *block,
-                     int type,
-                     int retval,
-                     int icon,
-                     int x,
-                     int y,
-                     short width,
-                     short height,
-                     float *poin,
-                     float min,
-                     float max,
-                     float a1,
-                     float a2,
-                     const char *tip);
-uiBut *uiDefIconButBitF(uiBlock *block,
-                        int type,
-                        int bit,
-                        int retval,
-                        int icon,
-                        int x,
-                        int y,
-                        short width,
-                        short height,
-                        float *poin,
-                        float min,
-                        float max,
-                        float a1,
-                        float a2,
-                        const char *tip);
 uiBut *uiDefIconButI(uiBlock *block,
                      int type,
                      int retval,
@@ -1241,20 +1194,6 @@ uiBut *uiDefIconButBitS(uiBlock *block,
                         float a1,
                         float a2,
                         const char *tip);
-uiBut *uiDefIconButC(uiBlock *block,
-                     int type,
-                     int retval,
-                     int icon,
-                     int x,
-                     int y,
-                     short width,
-                     short height,
-                     char *poin,
-                     float min,
-                     float max,
-                     float a1,
-                     float a2,
-                     const char *tip);
 uiBut *uiDefIconButBitC(uiBlock *block,
                         int type,
                         int bit,
@@ -1356,22 +1295,6 @@ uiBut *uiDefIconTextButF(uiBlock *block,
                          float a1,
                          float a2,
                          const char *tip);
-uiBut *uiDefIconTextButBitF(uiBlock *block,
-                            int type,
-                            int bit,
-                            int retval,
-                            int icon,
-                            const char *str,
-                            int x,
-                            int y,
-                            short width,
-                            short height,
-                            float *poin,
-                            float min,
-                            float max,
-                            float a1,
-                            float a2,
-                            const char *tip);
 uiBut *uiDefIconTextButI(uiBlock *block,
                          int type,
                          int retval,
@@ -1387,84 +1310,6 @@ uiBut *uiDefIconTextButI(uiBlock *block,
                          float a1,
                          float a2,
                          const char *tip);
-uiBut *uiDefIconTextButBitI(uiBlock *block,
-                            int type,
-                            int bit,
-                            int retval,
-                            int icon,
-                            const char *str,
-                            int x,
-                            int y,
-                            short width,
-                            short height,
-                            int *poin,
-                            float min,
-                            float max,
-                            float a1,
-                            float a2,
-                            const char *tip);
-uiBut *uiDefIconTextButS(uiBlock *block,
-                         int type,
-                         int retval,
-                         int icon,
-                         const char *str,
-                         int x,
-                         int y,
-                         short width,
-                         short height,
-                         short *poin,
-                         float min,
-                         float max,
-                         float a1,
-                         float a2,
-                         const char *tip);
-uiBut *uiDefIconTextButBitS(uiBlock *block,
-                            int type,
-                            int bit,
-                            int retval,
-                            int icon,
-                            const char *str,
-                            int x,
-                            int y,
-                            short width,
-                            short height,
-                            short *poin,
-                            float min,
-                            float max,
-                            float a1,
-                            float a2,
-                            const char *tip);
-uiBut *uiDefIconTextButC(uiBlock *block,
-                         int type,
-                         int retval,
-                         int icon,
-                         const char *str,
-                         int x,
-                         int y,
-                         short width,
-                         short height,
-                         char *poin,
-                         float min,
-                         float max,
-                         float a1,
-                         float a2,
-                         const char *tip);
-uiBut *uiDefIconTextButBitC(uiBlock *block,
-                            int type,
-                            int bit,
-                            int retval,
-                            int icon,
-                            const char *str,
-                            int x,
-                            int y,
-                            short width,
-                            short height,
-                            char *poin,
-                            float min,
-                            float max,
-                            float a1,
-                            float a2,
-                            const char *tip);
 uiBut *uiDefIconTextButR(uiBlock *block,
                          int type,
                          int retval,
@@ -1525,7 +1370,9 @@ uiBut *uiDefIconTextButO_ptr(uiBlock *block,
 /* for passing inputs to ButO buttons */
 struct PointerRNA *UI_but_operator_ptr_get(uiBut *but);
 
-void UI_but_unit_type_set(uiBut *but, const int unit_type);
+struct bContextStore *UI_but_context_get(const uiBut *but);
+
+void UI_but_unit_type_set(uiBut *but, int unit_type);
 int UI_but_unit_type_get(const uiBut *but);
 
 typedef enum uiStringInfoType {
@@ -1793,7 +1640,7 @@ eAutoPropButsReturn uiDefAutoButsRNA(uiLayout *layout,
                                      void *user_data,
                                      struct PropertyRNA *prop_activate_init,
                                      eButLabelAlign label_align,
-                                     const bool compact);
+                                     bool compact);
 
 /**
  * Public function exported for functions that use #UI_BTYPE_SEARCH_MENU.
@@ -1813,7 +1660,7 @@ bool UI_search_item_add(uiSearchItems *items,
                         void *poin,
                         int iconid,
                         int state,
-                        const uint8_t name_prefix_offset);
+                        uint8_t name_prefix_offset);
 
 /**
  * \note The item-pointer (referred to below) is a per search item user pointer
@@ -1834,7 +1681,7 @@ void UI_but_func_search_set(uiBut *but,
                             uiButSearchCreateFn search_create_fn,
                             uiButSearchUpdateFn search_update_fn,
                             void *arg,
-                            const bool free_arg,
+                            bool free_arg,
                             uiFreeArgFunc search_arg_free_fn,
                             uiButHandleFunc search_exec_fn,
                             void *active);
@@ -1845,7 +1692,7 @@ void UI_but_func_search_set_tooltip(uiBut *but, uiButSearchTooltipFn tooltip_fn)
  * showing the icon and highlighted text after the last instance of this string.
  */
 void UI_but_func_search_set_sep_string(uiBut *but, const char *search_sep_string);
-void UI_but_func_search_set_results_are_suggestions(uiBut *but, const bool value);
+void UI_but_func_search_set_results_are_suggestions(uiBut *but, bool value);
 
 /**
  * Height in pixels, it's using hard-coded values still.
@@ -2070,7 +1917,7 @@ void UI_region_handlers_add(struct ListBase *handlers);
 void UI_popup_handlers_add(struct bContext *C,
                            struct ListBase *handlers,
                            uiPopupBlockHandle *popup,
-                           const char flag);
+                           char flag);
 void UI_popup_handlers_remove(struct ListBase *handlers, uiPopupBlockHandle *popup);
 void UI_popup_handlers_remove_all(struct bContext *C, struct ListBase *handlers);
 
@@ -2196,6 +2043,7 @@ uiLayout *UI_block_layout(uiBlock *block,
                           const struct uiStyle *style);
 void UI_block_layout_set_current(uiBlock *block, uiLayout *layout);
 void UI_block_layout_resolve(uiBlock *block, int *r_x, int *r_y);
+bool UI_block_layout_needs_resolving(const uiBlock *block);
 /**
  * Used for property search when the layout process needs to be cancelled in order to avoid
  * computing the locations for buttons, but the layout items created while adding the buttons
@@ -2319,7 +2167,7 @@ void uiTemplateID(uiLayout *layout,
                   const char *openop,
                   const char *unlinkop,
                   int filter,
-                  const bool live_icon,
+                  bool live_icon,
                   const char *text);
 void uiTemplateIDBrowse(uiLayout *layout,
                         struct bContext *C,
@@ -2340,7 +2188,7 @@ void uiTemplateIDPreview(uiLayout *layout,
                          int rows,
                          int cols,
                          int filter,
-                         const bool hide_buttons);
+                         bool hide_buttons);
 /**
  * Version of #uiTemplateID using tabs.
  */
@@ -2384,8 +2232,8 @@ void uiTemplateSearchPreview(uiLayout *layout,
                              const char *searchpropname,
                              const char *newop,
                              const char *unlinkop,
-                             const int rows,
-                             const int cols);
+                             int rows,
+                             int cols);
 /**
  * This is creating/editing RNA-Paths
  *
@@ -2544,10 +2392,48 @@ void uiTemplateComponentMenu(uiLayout *layout,
                              const char *propname,
                              const char *name);
 void uiTemplateNodeSocket(uiLayout *layout, struct bContext *C, float color[4]);
+
+/**
+ * Draw the main CacheFile properties and operators (file path, scale, etc.), that is those which
+ * do not have their own dedicated template functions.
+ */
 void uiTemplateCacheFile(uiLayout *layout,
                          const struct bContext *C,
                          struct PointerRNA *ptr,
                          const char *propname);
+
+/**
+ * Lookup the CacheFile PointerRNA of the given pointer and return it in the output parameter.
+ * Returns true if `ptr` has a RNACacheFile, false otherwise. If false, the output parameter is not
+ * initialized.
+ */
+bool uiTemplateCacheFilePointer(struct PointerRNA *ptr,
+                                const char *propname,
+                                struct PointerRNA *r_file_ptr);
+
+/**
+ * Draw the velocity related properties of the CacheFile.
+ */
+void uiTemplateCacheFileVelocity(uiLayout *layout, struct PointerRNA *fileptr);
+
+/**
+ * Draw the render procedural related properties of the CacheFile.
+ */
+void uiTemplateCacheFileProcedural(uiLayout *layout,
+                                   const struct bContext *C,
+                                   struct PointerRNA *fileptr);
+
+/**
+ * Draw the time related properties of the CacheFile.
+ */
+void uiTemplateCacheFileTimeSettings(uiLayout *layout, struct PointerRNA *fileptr);
+
+/**
+ * Draw the override layers related properties of the CacheFile.
+ */
+void uiTemplateCacheFileLayers(uiLayout *layout,
+                               const struct bContext *C,
+                               struct PointerRNA *fileptr);
 
 /* Default UIList class name, keep in sync with its declaration in bl_ui/__init__.py */
 #define UI_UL_DEFAULT_CLASS_NAME "UI_UL_list"
@@ -2661,7 +2547,7 @@ void uiTemplateAssetView(struct uiLayout *layout,
                          struct PointerRNA *active_dataptr,
                          const char *active_propname,
                          const struct AssetFilterSettings *filter_settings,
-                         const int display_flags,
+                         int display_flags,
                          const char *activate_opname,
                          struct PointerRNA *r_activate_op_properties,
                          const char *drag_opname,
@@ -2870,8 +2756,7 @@ typedef struct uiPropertySplitWrapper {
 uiPropertySplitWrapper uiItemPropertySplitWrapperCreate(uiLayout *parent_layout);
 
 void uiItemL(uiLayout *layout, const char *name, int icon); /* label */
-void uiItemL_ex(
-    uiLayout *layout, const char *name, int icon, const bool highlight, const bool redalert);
+void uiItemL_ex(uiLayout *layout, const char *name, int icon, bool highlight, bool redalert);
 /**
  * Helper to add a label and creates a property split layout if needed.
  */
@@ -2982,7 +2867,7 @@ const char *UI_layout_introspect(uiLayout *layout);
  * Helper to add a big icon and create a split layout for alert popups.
  * Returns the layout to place further items into the alert box.
  */
-uiLayout *uiItemsAlertBox(uiBlock *block, const int size, const eAlertIcon icon);
+uiLayout *uiItemsAlertBox(uiBlock *block, int size, eAlertIcon icon);
 
 /* UI Operators */
 typedef struct uiDragColorHandle {
@@ -3081,15 +2966,17 @@ void UI_fontstyle_set(const struct uiFontStyle *fs);
 void UI_fontstyle_draw_ex(const struct uiFontStyle *fs,
                           const struct rcti *rect,
                           const char *str,
+                          size_t str_len,
                           const uchar col[4],
                           const struct uiFontStyleDraw_Params *fs_params,
-                          size_t len,
                           int *r_xofs,
                           int *r_yofs,
                           struct ResultBLF *r_info);
+
 void UI_fontstyle_draw(const struct uiFontStyle *fs,
                        const struct rcti *rect,
                        const char *str,
+                       size_t str_len,
                        const uchar col[4],
                        const struct uiFontStyleDraw_Params *fs_params);
 /**
@@ -3131,7 +3018,7 @@ int UI_fontstyle_string_width(const struct uiFontStyle *fs,
  */
 int UI_fontstyle_string_width_with_block_aspect(const struct uiFontStyle *fs,
                                                 const char *str,
-                                                const float aspect) ATTR_WARN_UNUSED_RESULT
+                                                float aspect) ATTR_WARN_UNUSED_RESULT
     ATTR_NONNULL(1, 2);
 int UI_fontstyle_height_max(const struct uiFontStyle *fs);
 

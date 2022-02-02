@@ -27,6 +27,7 @@
 struct wmOperatorType;
 
 struct Base;
+struct GPUSelectResult;
 struct Object;
 struct Scene;
 struct bContext;
@@ -297,7 +298,7 @@ void armature_tag_select_mirrored(struct bArmature *arm);
  * Helper function for tools to work on mirrored parts.
  * it leaves mirrored bones selected then too, which is a good indication of what happened.
  */
-void armature_select_mirrored_ex(struct bArmature *arm, const int flag);
+void armature_select_mirrored_ex(struct bArmature *arm, int flag);
 void armature_select_mirrored(struct bArmature *arm);
 /** Only works when tagged. */
 void armature_tag_unselect(struct bArmature *arm);
@@ -323,21 +324,21 @@ struct Bone *ED_armature_pick_bone(struct bContext *C,
 
 struct EditBone *ED_armature_pick_ebone_from_selectbuffer(struct Base **bases,
                                                           uint bases_len,
-                                                          const uint *buffer,
+                                                          const struct GPUSelectResult *buffer,
                                                           short hits,
                                                           bool findunsel,
                                                           bool do_nearest,
                                                           struct Base **r_base);
 struct bPoseChannel *ED_armature_pick_pchan_from_selectbuffer(struct Base **bases,
                                                               uint bases_len,
-                                                              const uint *buffer,
+                                                              const struct GPUSelectResult *buffer,
                                                               short hits,
                                                               bool findunsel,
                                                               bool do_nearest,
                                                               struct Base **r_base);
 struct Bone *ED_armature_pick_bone_from_selectbuffer(struct Base **bases,
                                                      uint bases_len,
-                                                     const uint *buffer,
+                                                     const struct GPUSelectResult *buffer,
                                                      short hits,
                                                      bool findunsel,
                                                      bool do_nearest,

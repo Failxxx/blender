@@ -50,12 +50,11 @@ static VArray<int> construct_edge_vertices_gvarray(const MeshComponent &componen
     return {};
   }
   if (domain == ATTR_DOMAIN_EDGE) {
-
     if (vertex == VERTEX_ONE) {
-      return VArray<int>::ForFunc(mesh->totpoly,
+      return VArray<int>::ForFunc(mesh->totedge,
                                   [mesh](const int i) -> int { return mesh->medge[i].v1; });
     }
-    return VArray<int>::ForFunc(mesh->totpoly,
+    return VArray<int>::ForFunc(mesh->totedge,
                                 [mesh](const int i) -> int { return mesh->medge[i].v2; });
   }
   return {};
@@ -180,8 +179,7 @@ void register_node_type_geo_input_mesh_edge_vertices()
   namespace file_ns = blender::nodes::node_geo_input_mesh_edge_vertices_cc;
 
   static bNodeType ntype;
-  geo_node_type_base(
-      &ntype, GEO_NODE_INPUT_MESH_EDGE_VERTICES, "Edge Vertices", NODE_CLASS_INPUT, 0);
+  geo_node_type_base(&ntype, GEO_NODE_INPUT_MESH_EDGE_VERTICES, "Edge Vertices", NODE_CLASS_INPUT);
   ntype.declare = file_ns::node_declare;
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   nodeRegisterType(&ntype);

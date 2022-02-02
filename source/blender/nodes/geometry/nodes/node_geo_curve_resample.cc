@@ -81,8 +81,11 @@ static SplinePtr resample_spline(const Spline &src, const int count)
   Spline::copy_base_settings(src, *dst);
 
   if (src.evaluated_edges_size() < 1 || count == 1) {
-    dst->add_point(src.positions().first(), src.radii().first(), src.tilts().first());
-    dst->attributes.reallocate(1);
+    dst->resize(1);
+    dst->positions().first() = src.positions().first();
+    dst->radii().first() = src.radii().first();
+    dst->tilts().first() = src.tilts().first();
+
     src.attributes.foreach_attribute(
         [&](const AttributeIDRef &attribute_id, const AttributeMetaData &meta_data) {
           std::optional<GSpan> src_attribute = src.attributes.get_for_read(attribute_id);
@@ -294,7 +297,7 @@ void register_node_type_geo_curve_resample()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_RESAMPLE_CURVE, "Resample Curve", NODE_CLASS_GEOMETRY, 0);
+  geo_node_type_base(&ntype, GEO_NODE_RESAMPLE_CURVE, "Resample Curve", NODE_CLASS_GEOMETRY);
   ntype.declare = file_ns::node_declare;
   ntype.draw_buttons = file_ns::node_layout;
   node_type_storage(

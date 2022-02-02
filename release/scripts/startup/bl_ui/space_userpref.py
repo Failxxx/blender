@@ -772,6 +772,17 @@ class USERPREF_PT_viewport_selection(ViewportPanel, CenterAlignMixIn, Panel):
         layout.prop(system, "use_select_pick_depth")
 
 
+class USERPREF_PT_viewport_subdivision(ViewportPanel, CenterAlignMixIn, Panel):
+    bl_label = "Subdivision"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw_centered(self, context, layout):
+        prefs = context.preferences
+        system = prefs.system
+
+        layout.prop(system, "use_gpu_subdivision")
+
+
 # -----------------------------------------------------------------------------
 # Theme Panels
 
@@ -2305,10 +2316,10 @@ class USERPREF_PT_experimental_debugging(ExperimentalPanel, Panel):
             context, (
                 ({"property": "use_undo_legacy"}, "T60695"),
                 ({"property": "override_auto_resync"}, "T83811"),
-                ({"property": "proxy_to_override_auto_conversion"}, "T91671"),
                 ({"property": "use_cycles_debug"}, None),
                 ({"property": "use_geometry_nodes_legacy"}, "T91274"),
                 ({"property": "show_asset_debug_info"}, None),
+                ({"property": "use_asset_indexing"}, None),
             ),
         )
 
@@ -2342,6 +2353,7 @@ classes = (
     USERPREF_PT_viewport_quality,
     USERPREF_PT_viewport_textures,
     USERPREF_PT_viewport_selection,
+    USERPREF_PT_viewport_subdivision,
 
     USERPREF_PT_edit_objects,
     USERPREF_PT_edit_objects_new,

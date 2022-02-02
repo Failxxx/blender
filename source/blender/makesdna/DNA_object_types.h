@@ -126,7 +126,12 @@ typedef struct Object_Runtime {
   /** Did last modifier stack generation need mapping support? */
   char last_need_mapping;
 
-  char _pad0[3];
+  /** Opaque data reserved for management of objects in collection context.
+   *  E.g. used currently to check for potential duplicates of objects in a collection, after
+   * remapping process. */
+  char collection_management;
+
+  char _pad0[2];
 
   /** Only used for drawing the parent/child help-line. */
   float parent_display_origin[3];
@@ -147,7 +152,7 @@ typedef struct Object_Runtime {
   /** Start time of the mode transfer overlay animation. */
   double overlay_mode_transfer_start_time;
 
-  /** Axis aligned boundbox (in localspace). */
+  /** Axis aligned bound-box (in local-space). */
   struct BoundBox *bb;
 
   /**
@@ -175,6 +180,12 @@ typedef struct Object_Runtime {
    * It has deformation only modifiers applied on it.
    */
   struct Mesh *mesh_deform_eval;
+
+  /* Evaluated mesh cage in edit mode. */
+  struct Mesh *editmesh_eval_cage;
+
+  /** Cached cage bounding box of `editmesh_eval_cage` for selection. */
+  struct BoundBox *editmesh_bb_cage;
 
   /**
    * Original grease pencil bGPdata pointer, before object->data was changed to point
@@ -205,6 +216,12 @@ typedef struct Object_Runtime {
 
   unsigned short local_collections_bits;
   short _pad2[3];
+
+  float (*crazyspace_deform_imats)[3][3];
+  float (*crazyspace_deform_cos)[3];
+  int crazyspace_num_verts;
+
+  int _pad3[3];
 } Object_Runtime;
 
 typedef struct ObjectLineArt {

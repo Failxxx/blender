@@ -27,6 +27,7 @@ set(INC
   ../../gpu
   ../../imbuf
   ../../makesdna
+  ../../nodes
   ../../makesrna
   ../../render
   ../../windowmanager
@@ -59,7 +60,7 @@ set(SRC
   sculpt.c
   sculpt_automasking.c
   sculpt_boundary.c
-  sculpt_brushes.c
+  sculpt_brush_types.c
   sculpt_cloth.c
   sculpt_detail.c
   sculpt_dyntopo.c
@@ -88,10 +89,6 @@ set(LIB
   bf_blenkernel
   bf_blenlib
 )
-
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
-endif()
 
 
 blender_add_lib(bf_editor_sculpt_paint "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")

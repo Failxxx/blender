@@ -43,6 +43,8 @@
 
 #include "node_intern.hh"
 
+namespace blender::ed::space_node {
+
 /* -------------------------------------------------------------------- */
 /** \name Local Utilities
  * \{ */
@@ -292,7 +294,11 @@ static void gizmo_node_crop_prop_matrix_set(const wmGizmo *gz,
   const bool ny = rct.ymin > rct.ymax;
   BLI_rctf_resize(&rct, fabsf(matrix[0][0]), fabsf(matrix[1][1]));
   BLI_rctf_recenter(&rct, (matrix[3][0] / dims[0]) + 0.5f, (matrix[3][1] / dims[1]) + 0.5f);
-  const rctf rct_isect{0, 0, 1, 1};
+  rctf rct_isect{};
+  rct_isect.xmin = 0;
+  rct_isect.xmax = 1;
+  rct_isect.ymin = 0;
+  rct_isect.ymax = 1;
   BLI_rctf_isect(&rct_isect, &rct, &rct);
   if (nx) {
     SWAP(float, rct.xmin, rct.xmax);
@@ -380,7 +386,7 @@ static void WIDGETGROUP_node_crop_refresh(const bContext *C, wmGizmoGroup *gzgro
     params.value_get_fn = gizmo_node_crop_prop_matrix_get;
     params.value_set_fn = gizmo_node_crop_prop_matrix_set;
     params.range_get_fn = nullptr;
-    params.user_data = snode;
+    params.user_data = node;
     WM_gizmo_target_property_def_func(gz, "matrix", &params);
   }
   else {
@@ -632,3 +638,5 @@ void NODE_GGT_backdrop_corner_pin(wmGizmoGroupType *gzgt)
 }
 
 /** \} */
+
+}  // namespace blender::ed::space_node

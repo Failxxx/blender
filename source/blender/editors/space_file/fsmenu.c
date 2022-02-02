@@ -185,8 +185,8 @@ static void fsmenu_xdg_user_dirs_free(GHash *xdg_map)
 
 /**
  * Add fsmenu entry for system folders on linux.
- * - Check if a path is stored in the GHash generated from user-dirs.dirs
- * - If not, check for a default path in $HOME
+ * - Check if a path is stored in the #GHash generated from `user-dirs.dirs`.
+ * - If not, check for a default path in `$HOME`.
  *
  * \param key: Use `user-dirs.dirs` format "XDG_EXAMPLE_DIR"
  * \param default_path: Directory name to check in $HOME, also used for the menu entry name.
@@ -745,14 +745,17 @@ void fsmenu_read_system(struct FSMenu *fsmenu, int read_bookmarks)
                                 N_("Fonts"),
                                 ICON_FILE_FONT,
                                 FS_INSERT_LAST);
+      fsmenu_add_windows_folder(fsmenu,
+                                FS_CATEGORY_SYSTEM_BOOKMARKS,
+                                &FOLDERID_SkyDrive,
+                                N_("OneDrive"),
+                                ICON_URL,
+                                FS_INSERT_LAST);
 
       /* These items are just put in path cache for thumbnail views and if bookmarked. */
 
       fsmenu_add_windows_folder(
           fsmenu, FS_CATEGORY_OTHER, &FOLDERID_UserProfiles, NULL, ICON_COMMUNITY, FS_INSERT_LAST);
-
-      fsmenu_add_windows_folder(
-          fsmenu, FS_CATEGORY_OTHER, &FOLDERID_SkyDrive, NULL, ICON_URL, FS_INSERT_LAST);
     }
   }
 #elif defined(__APPLE__)

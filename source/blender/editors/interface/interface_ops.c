@@ -597,6 +597,9 @@ static int override_type_set_button_exec(bContext *C, wmOperator *op)
     opop->operation = operation;
   }
 
+  /* Outliner e.g. has to be aware of this change. */
+  WM_main_add_notifier(NC_WM | ND_LIB_OVERRIDE_CHANGED, NULL);
+
   return operator_button_property_finish(C, &ptr, prop);
 }
 
@@ -713,6 +716,9 @@ static int override_remove_button_exec(bContext *C, wmOperator *op)
       RNA_property_copy(bmain, &ptr, &src, prop, -1);
     }
   }
+
+  /* Outliner e.g. has to be aware of this change. */
+  WM_main_add_notifier(NC_WM | ND_LIB_OVERRIDE_CHANGED, NULL);
 
   return operator_button_property_finish(C, &ptr, prop);
 }
@@ -1753,9 +1759,7 @@ static int ui_button_press_invoke(bContext *C, wmOperator *op, const wmEvent *ev
   bScreen *screen = CTX_wm_screen(C);
   const bool skip_depressed = RNA_boolean_get(op->ptr, "skip_depressed");
   ARegion *region_prev = CTX_wm_region(C);
-  ARegion *region = screen ? BKE_screen_find_region_xy(
-                                 screen, RGN_TYPE_ANY, event->xy[0], event->xy[1]) :
-                             NULL;
+  ARegion *region = screen ? BKE_screen_find_region_xy(screen, RGN_TYPE_ANY, event->xy) : NULL;
 
   if (region == NULL) {
     region = region_prev;

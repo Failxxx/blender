@@ -17,6 +17,8 @@
 #include "BLI_map.hh"
 #include "BLI_task.hh"
 
+#include "BLT_translation.h"
+
 #include "BKE_attribute.h"
 #include "BKE_attribute_access.hh"
 #include "BKE_geometry_set.hh"
@@ -183,25 +185,27 @@ Vector<const GeometryComponent *> GeometrySet::get_components_for_read() const
   return components;
 }
 
-void GeometrySet::compute_boundbox_without_instances(float3 *r_min, float3 *r_max) const
+bool GeometrySet::compute_boundbox_without_instances(float3 *r_min, float3 *r_max) const
 {
+  bool have_minmax = false;
   const PointCloud *pointcloud = this->get_pointcloud_for_read();
   if (pointcloud != nullptr) {
-    BKE_pointcloud_minmax(pointcloud, *r_min, *r_max);
+    have_minmax |= BKE_pointcloud_minmax(pointcloud, *r_min, *r_max);
   }
   const Mesh *mesh = this->get_mesh_for_read();
   if (mesh != nullptr) {
-    BKE_mesh_wrapper_minmax(mesh, *r_min, *r_max);
+    have_minmax |= BKE_mesh_wrapper_minmax(mesh, *r_min, *r_max);
   }
   const Volume *volume = this->get_volume_for_read();
   if (volume != nullptr) {
-    BKE_volume_min_max(volume, *r_min, *r_max);
+    have_minmax |= BKE_volume_min_max(volume, *r_min, *r_max);
   }
   const CurveEval *curve = this->get_curve_for_read();
   if (curve != nullptr) {
     /* Using the evaluated positions is somewhat arbitrary, but it is probably expected. */
-    curve->bounds_min_max(*r_min, *r_max, true);
+    have_minmax |= curve->bounds_min_max(*r_min, *r_max, true);
   }
+  return have_minmax;
 }
 
 std::ostream &operator<<(std::ostream &stream, const GeometrySet &geometry_set)
@@ -562,6 +566,48 @@ void GeometrySet::modify_geometry_sets(ForeachSubGeometryCallback callback)
   blender::threading::parallel_for_each(
       geometry_sets, [&](GeometrySet *geometry_set) { callback(*geometry_set); });
 }
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
+/** \name Mesh and Curve Normals Field Input
+ * \{ */
+
+namespace blender::bke {
+
+GVArray NormalFieldInput::get_varray_for_context(const GeometryComponent &component,
+                                                 const AttributeDomain domain,
+                                                 IndexMask mask) const
+{
+  if (component.type() == GEO_COMPONENT_TYPE_MESH) {
+    const MeshComponent &mesh_component = static_cast<const MeshComponent &>(component);
+    if (const Mesh *mesh = mesh_component.get_for_read()) {
+      return mesh_normals_varray(mesh_component, *mesh, mask, domain);
+    }
+  }
+  else if (component.type() == GEO_COMPONENT_TYPE_CURVE) {
+    const CurveComponent &curve_component = static_cast<const CurveComponent &>(component);
+    return curve_normals_varray(curve_component, domain);
+  }
+  return {};
+}
+
+std::string NormalFieldInput::socket_inspection_name() const
+{
+  return TIP_("Normal");
+}
+
+uint64_t NormalFieldInput::hash() const
+{
+  return 213980475983;
+}
+
+bool NormalFieldInput::is_equal_to(const fn::FieldNode &other) const
+{
+  return dynamic_cast<const NormalFieldInput *>(&other) != nullptr;
+}
+
+}  // namespace blender::bke
 
 /** \} */
 

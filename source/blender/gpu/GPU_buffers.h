@@ -61,7 +61,7 @@ GPU_PBVH_Buffers *GPU_pbvh_mesh_buffers_build(const struct MPoly *mpoly,
                                               const struct MVert *mvert,
                                               const int *face_indices,
                                               const int *sculpt_face_sets,
-                                              const int face_indices_len,
+                                              int face_indices_len,
                                               const struct Mesh *mesh);
 
 /**
@@ -96,13 +96,14 @@ enum {
  */
 void GPU_pbvh_mesh_buffers_update(GPU_PBVH_Buffers *buffers,
                                   const struct MVert *mvert,
+                                  const float (*vert_normals)[3],
                                   const float *vmask,
                                   const struct MLoopCol *vcol,
                                   const int *sculpt_face_sets,
-                                  const int face_sets_color_seed,
-                                  const int face_sets_color_default,
+                                  int face_sets_color_seed,
+                                  int face_sets_color_default,
                                   const struct MPropCol *vtcol,
-                                  const int update_flags);
+                                  int update_flags);
 
 /**
  * Creates a vertex buffer (coordinate, normal, color) and,
@@ -114,7 +115,7 @@ void GPU_pbvh_bmesh_buffers_update(GPU_PBVH_Buffers *buffers,
                                    struct GSet *bm_faces,
                                    struct GSet *bm_unique_verts,
                                    struct GSet *bm_other_verts,
-                                   const int update_flags);
+                                   int update_flags);
 
 /**
  * Threaded: do not call any functions that use OpenGL calls!
@@ -126,10 +127,10 @@ void GPU_pbvh_grid_buffers_update(GPU_PBVH_Buffers *buffers,
                                   int *grid_indices,
                                   int totgrid,
                                   const int *sculpt_face_sets,
-                                  const int face_sets_color_seed,
-                                  const int face_sets_color_default,
+                                  int face_sets_color_seed,
+                                  int face_sets_color_default,
                                   const struct CCGKey *key,
-                                  const int update_flags);
+                                  int update_flags);
 
 /**
  * Finish update. Not thread safe, must run in OpenGL main thread.

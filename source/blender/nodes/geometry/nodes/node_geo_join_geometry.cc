@@ -180,8 +180,7 @@ static void join_component_type(Span<GeometrySet> src_geometry_sets, GeometrySet
   InstancesComponent &instances =
       instances_geometry_set.get_component_for_write<InstancesComponent>();
 
-  if constexpr (std::is_same_v<Component, InstancesComponent> ||
-                std::is_same_v<Component, VolumeComponent>) {
+  if constexpr (is_same_any_v<Component, InstancesComponent, VolumeComponent>) {
     join_components(components, result);
   }
   else {
@@ -221,7 +220,7 @@ void register_node_type_geo_join_geometry()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_JOIN_GEOMETRY, "Join Geometry", NODE_CLASS_GEOMETRY, 0);
+  geo_node_type_base(&ntype, GEO_NODE_JOIN_GEOMETRY, "Join Geometry", NODE_CLASS_GEOMETRY);
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   ntype.declare = file_ns::node_declare;
   nodeRegisterType(&ntype);

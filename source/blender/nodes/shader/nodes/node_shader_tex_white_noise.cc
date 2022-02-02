@@ -17,11 +17,14 @@
  * All rights reserved.
  */
 
-#include "../node_shader_util.h"
+#include "node_shader_util.hh"
 
 #include "BLI_noise.hh"
 
-namespace blender::nodes {
+#include "UI_interface.h"
+#include "UI_resources.h"
+
+namespace blender::nodes::node_shader_tex_white_noise_cc {
 
 static void sh_node_tex_white_noise_declare(NodeDeclarationBuilder &b)
 {
@@ -33,9 +36,12 @@ static void sh_node_tex_white_noise_declare(NodeDeclarationBuilder &b)
   });
   b.add_output<decl::Float>(N_("Value"));
   b.add_output<decl::Color>(N_("Color"));
-};
+}
 
-}  // namespace blender::nodes
+static void node_shader_buts_white_noise(uiLayout *layout, bContext *UNUSED(C), PointerRNA *ptr)
+{
+  uiItemR(layout, ptr, "noise_dimensions", UI_ITEM_R_SPLIT_EMPTY_NAME, "", ICON_NONE);
+}
 
 static void node_shader_init_tex_white_noise(bNodeTree *UNUSED(ntree), bNode *node)
 {
@@ -69,8 +75,6 @@ static void node_shader_update_tex_white_noise(bNodeTree *ntree, bNode *node)
   nodeSetSocketAvailability(ntree, sockVector, node->custom1 != 1);
   nodeSetSocketAvailability(ntree, sockW, node->custom1 == 1 || node->custom1 == 4);
 }
-
-namespace blender::nodes {
 
 class WhiteNoiseFunction : public fn::MultiFunction {
  private:
@@ -192,19 +196,21 @@ static void sh_node_noise_build_multi_function(blender::nodes::NodeMultiFunction
   builder.construct_and_set_matching_fn<WhiteNoiseFunction>((int)node.custom1);
 }
 
-}  // namespace blender::nodes
+}  // namespace blender::nodes::node_shader_tex_white_noise_cc
 
 void register_node_type_sh_tex_white_noise()
 {
+  namespace file_ns = blender::nodes::node_shader_tex_white_noise_cc;
+
   static bNodeType ntype;
 
-  sh_fn_node_type_base(
-      &ntype, SH_NODE_TEX_WHITE_NOISE, "White Noise Texture", NODE_CLASS_TEXTURE, 0);
-  ntype.declare = blender::nodes::sh_node_tex_white_noise_declare;
-  node_type_init(&ntype, node_shader_init_tex_white_noise);
-  node_type_gpu(&ntype, gpu_shader_tex_white_noise);
-  node_type_update(&ntype, node_shader_update_tex_white_noise);
-  ntype.build_multi_function = blender::nodes::sh_node_noise_build_multi_function;
+  sh_fn_node_type_base(&ntype, SH_NODE_TEX_WHITE_NOISE, "White Noise Texture", NODE_CLASS_TEXTURE);
+  ntype.declare = file_ns::sh_node_tex_white_noise_declare;
+  ntype.draw_buttons = file_ns::node_shader_buts_white_noise;
+  node_type_init(&ntype, file_ns::node_shader_init_tex_white_noise);
+  node_type_gpu(&ntype, file_ns::gpu_shader_tex_white_noise);
+  node_type_update(&ntype, file_ns::node_shader_update_tex_white_noise);
+  ntype.build_multi_function = file_ns::sh_node_noise_build_multi_function;
 
   nodeRegisterType(&ntype);
 }

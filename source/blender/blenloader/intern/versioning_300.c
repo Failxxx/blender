@@ -45,6 +45,8 @@
 #include "DNA_listBase.h"
 #include "DNA_material_types.h"
 #include "DNA_modifier_types.h"
+#include "DNA_screen_types.h"
+#include "DNA_space_types.h"
 #include "DNA_text_types.h"
 #include "DNA_workspace_types.h"
 
@@ -58,6 +60,7 @@
 #include "BKE_fcurve.h"
 #include "BKE_fcurve_driver.h"
 #include "BKE_idprop.h"
+#include "BKE_image.h"
 #include "BKE_lib_id.h"
 #include "BKE_lib_override.h"
 #include "BKE_main.h"
@@ -779,19 +782,7 @@ void do_versions_after_linking_300(Main *bmain, ReportList *UNUSED(reports))
     }
   }
 
-  /**
-   * Versioning code until next subversion bump goes here.
-   *
-   * \note Be sure to check when bumping the version:
-   * - #blo_do_versions_300 in this file.
-   * - "versioning_userdef.c", #blo_do_versions_userdef
-   * - "versioning_userdef.c", #do_versions_theme
-   *
-   * \note Keep this message at the bottom of the function.
-   */
-  {
-    /* Keep this block, even when empty. */
-
+  if (!MAIN_VERSION_ATLEAST(bmain, 301, 6)) {
     { /* Ensure driver variable names are unique within the driver. */
       ID *id;
       FOREACH_MAIN_ID_BEGIN (bmain, id) {
@@ -817,6 +808,28 @@ void do_versions_after_linking_300(Main *bmain, ReportList *UNUSED(reports))
       }
       FOREACH_MAIN_ID_END;
     }
+
+    /* Ensure tiled image sources contain a UDIM token. */
+    LISTBASE_FOREACH (Image *, ima, &bmain->images) {
+      if (ima->source == IMA_SRC_TILED) {
+        char *filename = (char *)BLI_path_basename(ima->filepath);
+        BKE_image_ensure_tile_token(filename);
+      }
+    }
+  }
+
+  /**
+   * Versioning code until next subversion bump goes here.
+   *
+   * \note Be sure to check when bumping the version:
+   * - #blo_do_versions_300 in this file.
+   * - "versioning_userdef.c", #blo_do_versions_userdef
+   * - "versioning_userdef.c", #do_versions_theme
+   *
+   * \note Keep this message at the bottom of the function.
+   */
+  {
+    /* Keep this block, even when empty. */
   }
 }
 
@@ -1163,7 +1176,7 @@ static void legacy_vec_roll_to_mat3_normalized(const float nor[3],
   const float z = nor[2];
 
   const float theta = 1.0f + y;          /* remapping Y from [-1,+1] to [0,2]. */
-  const float theta_alt = x * x + z * z; /* Helper value for matrix calculations.*/
+  const float theta_alt = x * x + z * z; /* Helper value for matrix calculations. */
   float rMatrix[3][3], bMatrix[3][3];
 
   BLI_ASSERT_UNIT_V3(nor);
@@ -2062,7 +2075,7 @@ void blo_do_versions_300(FileData *fd, Library *UNUSED(lib), Main *bmain)
               SpaceFile *sfile = (SpaceFile *)sl;
               if (sfile->params) {
                 sfile->params->flag &= ~(FILE_PARAMS_FLAG_UNUSED_1 | FILE_PARAMS_FLAG_UNUSED_2 |
-                                         FILE_PARAMS_FLAG_UNUSED_3 | FILE_PARAMS_FLAG_UNUSED_4);
+                                         FILE_PARAMS_FLAG_UNUSED_3 | FILE_PATH_TOKENS_ALLOW);
               }
 
               /* New default import type: Append with reuse. */
@@ -2474,18 +2487,7 @@ void blo_do_versions_300(FileData *fd, Library *UNUSED(lib), Main *bmain)
     }
   }
 
-  /**
-   * Versioning code until next subversion bump goes here.
-   *
-   * \note Be sure to check when bumping the version:
-   * - "versioning_userdef.c", #blo_do_versions_userdef
-   * - "versioning_userdef.c", #do_versions_theme
-   *
-   * \note Keep this message at the bottom of the function.
-   */
-  {
-    /* Keep this block, even when empty. */
-
+  if (!MAIN_VERSION_ATLEAST(bmain, 301, 6)) {
     /* Add node storage for map range node. */
     FOREACH_NODETREE_BEGIN (bmain, ntree, id) {
       LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
@@ -2501,5 +2503,62 @@ void blo_do_versions_300(FileData *fd, Library *UNUSED(lib), Main *bmain)
       }
     }
     FOREACH_NODETREE_END;
+
+    /* Update spreadsheet data set region type. */
+    LISTBASE_FOREACH (bScreen *, screen, &bmain->screens) {
+      LISTBASE_FOREACH (ScrArea *, area, &screen->areabase) {
+        LISTBASE_FOREACH (SpaceLink *, sl, &area->spacedata) {
+          if (sl->spacetype == SPACE_SPREADSHEET) {
+            ListBase *regionbase = (sl == area->spacedata.first) ? &area->regionbase :
+                                                                   &sl->regionbase;
+            LISTBASE_FOREACH (ARegion *, region, regionbase) {
+              if (region->regiontype == RGN_TYPE_CHANNELS) {
+                region->regiontype = RGN_TYPE_TOOLS;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* Initialize the bone wireframe opacity setting. */
+    if (!DNA_struct_elem_find(fd->filesdna, "View3DOverlay", "float", "bone_wire_alpha")) {
+      for (bScreen *screen = bmain->screens.first; screen; screen = screen->id.next) {
+        LISTBASE_FOREACH (ScrArea *, area, &screen->areabase) {
+          LISTBASE_FOREACH (SpaceLink *, sl, &area->spacedata) {
+            if (sl->spacetype == SPACE_VIEW3D) {
+              View3D *v3d = (View3D *)sl;
+              v3d->overlay.bone_wire_alpha = 1.0f;
+            }
+          }
+        }
+      }
+    }
+
+    /* Rename sockets on multiple nodes */
+    LISTBASE_FOREACH (bNodeTree *, ntree, &bmain->nodetrees) {
+      if (ntree->type == NTREE_GEOMETRY) {
+        version_node_output_socket_name(
+            ntree, GEO_NODE_STRING_TO_CURVES, "Curves", "Curve Instances");
+        version_node_output_socket_name(
+            ntree, GEO_NODE_INPUT_MESH_EDGE_ANGLE, "Angle", "Unsigned Angle");
+        version_node_output_socket_name(
+            ntree, GEO_NODE_INPUT_MESH_ISLAND, "Index", "Island Index");
+        version_node_input_socket_name(ntree, GEO_NODE_TRANSFER_ATTRIBUTE, "Target", "Source");
+      }
+    }
+  }
+
+  /**
+   * Versioning code until next subversion bump goes here.
+   *
+   * \note Be sure to check when bumping the version:
+   * - "versioning_userdef.c", #blo_do_versions_userdef
+   * - "versioning_userdef.c", #do_versions_theme
+   *
+   * \note Keep this message at the bottom of the function.
+   */
+  {
+    /* Keep this block, even when empty. */
   }
 }

@@ -253,10 +253,7 @@ ListBase CTX_data_collection_get(const bContext *C, const char *member);
  * \param use_rna: Use Include the properties from 'RNA_Context'.
  * \param use_all: Don't skip values (currently only "scene").
  */
-ListBase CTX_data_dir_get_ex(const bContext *C,
-                             const bool use_store,
-                             const bool use_rna,
-                             const bool use_all);
+ListBase CTX_data_dir_get_ex(const bContext *C, bool use_store, bool use_rna, bool use_all);
 ListBase CTX_data_dir_get(const bContext *C);
 int /*eContextResult*/ CTX_data_get(
     const bContext *C, const char *member, PointerRNA *r_ptr, ListBase *r_lb, short *r_type);
@@ -282,8 +279,9 @@ bool CTX_data_dir(const char *member);
     ListBase ctx_data_list; \
     CollectionPointerLink *ctx_link; \
     CTX_data_##member(C, &ctx_data_list); \
-    for (ctx_link = ctx_data_list.first; ctx_link; ctx_link = ctx_link->next) { \
-      Type instance = ctx_link->ptr.data;
+    for (ctx_link = (CollectionPointerLink *)ctx_data_list.first; ctx_link; \
+         ctx_link = ctx_link->next) { \
+      Type instance = (Type)ctx_link->ptr.data;
 
 #define CTX_DATA_END \
   } \
@@ -319,7 +317,7 @@ struct ToolSettings *CTX_data_tool_settings(const bContext *C);
 const char *CTX_data_mode_string(const bContext *C);
 enum eContextObjectMode CTX_data_mode_enum_ex(const struct Object *obedit,
                                               const struct Object *ob,
-                                              const eObjectMode object_mode);
+                                              eObjectMode object_mode);
 enum eContextObjectMode CTX_data_mode_enum(const bContext *C);
 
 void CTX_data_main_set(bContext *C, struct Main *bmain);

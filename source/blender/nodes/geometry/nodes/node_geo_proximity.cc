@@ -48,8 +48,7 @@ static void node_layout(uiLayout *layout, bContext *UNUSED(C), PointerRNA *ptr)
 
 static void geo_proximity_init(bNodeTree *UNUSED(ntree), bNode *node)
 {
-  NodeGeometryProximity *node_storage = (NodeGeometryProximity *)MEM_callocN(
-      sizeof(NodeGeometryProximity), __func__);
+  NodeGeometryProximity *node_storage = MEM_cnew<NodeGeometryProximity>(__func__);
   node_storage->target_element = GEO_NODE_PROX_TARGET_FACES;
   node->storage = node_storage;
 }
@@ -86,7 +85,7 @@ static bool calculate_mesh_proximity(const VArray<float3> &positions,
     for (int i : range) {
       const int index = mask[i];
       /* Use the distance to the last found point as upper bound to speedup the bvh lookup. */
-      nearest.dist_sq = float3::distance_squared(nearest.co, positions[index]);
+      nearest.dist_sq = math::distance_squared(float3(nearest.co), positions[index]);
 
       BLI_bvhtree_find_nearest(
           bvh_data.tree, positions[index], &nearest, bvh_data.nearest_callback, &bvh_data);
@@ -178,7 +177,7 @@ class ProximityFunction : public fn::MultiFunction {
      * comparison per vertex, so it's likely not worth it. */
     MutableSpan<float> distances = params.uninitialized_single_output<float>(2, "Distance");
 
-    distances.fill(FLT_MAX);
+    distances.fill_indices(mask, FLT_MAX);
 
     bool success = false;
     if (target_.has_mesh()) {
@@ -192,8 +191,12 @@ class ProximityFunction : public fn::MultiFunction {
     }
 
     if (!success) {
-      positions.fill(float3(0));
-      distances.fill(0.0f);
+      if (!positions.is_empty()) {
+        positions.fill_indices(mask, float3(0));
+      }
+      if (!distances.is_empty()) {
+        distances.fill_indices(mask, 0.0f);
+      }
       return;
     }
 
@@ -239,7 +242,7 @@ void register_node_type_geo_proximity()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_PROXIMITY, "Geometry Proximity", NODE_CLASS_GEOMETRY, 0);
+  geo_node_type_base(&ntype, GEO_NODE_PROXIMITY, "Geometry Proximity", NODE_CLASS_GEOMETRY);
   node_type_init(&ntype, file_ns::geo_proximity_init);
   node_type_storage(
       &ntype, "NodeGeometryProximity", node_free_standard_storage, node_copy_standard_storage);

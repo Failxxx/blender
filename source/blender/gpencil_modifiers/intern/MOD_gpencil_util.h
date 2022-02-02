@@ -34,16 +34,16 @@ struct bGPDstroke;
  */
 bool is_stroke_affected_by_modifier(struct Object *ob,
                                     char *mlayername,
-                                    const struct Material *material,
-                                    const int mpassindex,
-                                    const int gpl_passindex,
-                                    const int minpoints,
+                                    struct Material *material,
+                                    int mpassindex,
+                                    int gpl_passindex,
+                                    int minpoints,
                                     bGPDlayer *gpl,
                                     bGPDstroke *gps,
-                                    const bool inv1,
-                                    const bool inv2,
-                                    const bool inv3,
-                                    const bool inv4);
+                                    bool inv1,
+                                    bool inv2,
+                                    bool inv3,
+                                    bool inv4);
 
 /**
  * Verify if valid vertex group *and return weight.

@@ -33,6 +33,10 @@ struct Scene;
 struct SceneEEVEE;
 struct ViewLayer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Light Bake.
  */
@@ -66,14 +70,15 @@ void EEVEE_lightbake_update_world_quick(struct EEVEE_ViewLayerData *sldata,
 /**
  * Light Cache.
  */
-struct LightCache *EEVEE_lightcache_create(const int grid_len,
-                                           const int cube_len,
-                                           const int cube_size,
-                                           const int vis_size,
-                                           const int irr_size[3]);
+struct LightCache *EEVEE_lightcache_create(
+    int grid_len, int cube_len, int cube_size, int vis_size, const int irr_size[3]);
 void EEVEE_lightcache_free(struct LightCache *lcache);
 bool EEVEE_lightcache_load(struct LightCache *lcache);
 void EEVEE_lightcache_info_update(struct SceneEEVEE *eevee);
 
 void EEVEE_lightcache_blend_write(struct BlendWriter *writer, struct LightCache *cache);
 void EEVEE_lightcache_blend_read_data(struct BlendDataReader *reader, struct LightCache *cache);
+
+#ifdef __cplusplus
+}
+#endif

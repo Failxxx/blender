@@ -237,7 +237,7 @@ void RE_ReleaseResultImageViews(struct Render *re, struct RenderResult *rr);
  * This #RenderResult struct is the only exception to the rule of a #RenderResult
  * always having at least one #RenderView.
  */
-void RE_AcquireResultImage(struct Render *re, struct RenderResult *rr, const int view_id);
+void RE_AcquireResultImage(struct Render *re, struct RenderResult *rr, int view_id);
 void RE_ReleaseResultImage(struct Render *re);
 void RE_SwapResult(struct Render *re, struct RenderResult **rr);
 void RE_ClearResult(struct Render *re);
@@ -255,12 +255,12 @@ void RE_ResultGet32(struct Render *re, unsigned int *rect);
 void RE_AcquiredResultGet32(struct Render *re,
                             struct RenderResult *result,
                             unsigned int *rect,
-                            const int view_id);
+                            int view_id);
 
 void RE_render_result_rect_from_ibuf(struct RenderResult *rr,
                                      struct RenderData *rd,
                                      struct ImBuf *ibuf,
-                                     const int view_id);
+                                     int view_id);
 
 struct RenderLayer *RE_GetRenderLayer(struct RenderResult *rr, const char *name);
 float *RE_RenderLayerGetPass(volatile struct RenderLayer *rl,
@@ -283,7 +283,7 @@ void RE_create_render_pass(struct RenderResult *rr,
                            const char *chan_id,
                            const char *layername,
                            const char *viewname,
-                           const bool allocate);
+                           bool allocate);
 
 /**
  * Obligatory initialize call, doesn't change during entire render sequence.
@@ -310,7 +310,7 @@ void RE_SetOverrideCamera(struct Render *re, struct Object *cam_ob);
  *
  * \note call this after #RE_InitState().
  */
-void RE_SetCamera(struct Render *re, struct Object *cam_ob);
+void RE_SetCamera(struct Render *re, const struct Object *cam_ob);
 
 /**
  * Get current view and window transform.
@@ -325,7 +325,7 @@ void RE_init_threadcount(Render *re);
 bool RE_WriteRenderViewsImage(struct ReportList *reports,
                               struct RenderResult *rr,
                               struct Scene *scene,
-                              const bool stamp,
+                              bool stamp,
                               char *name);
 bool RE_WriteRenderViewsMovie(struct ReportList *reports,
                               struct RenderResult *rr,
@@ -333,7 +333,7 @@ bool RE_WriteRenderViewsMovie(struct ReportList *reports,
                               struct RenderData *rd,
                               struct bMovieHandle *mh,
                               void **movie_ctx_arr,
-                              const int totvideos,
+                              int totvideos,
                               bool preview);
 
 /**
@@ -347,7 +347,7 @@ void RE_RenderFrame(struct Render *re,
                     struct ViewLayer *single_layer,
                     struct Object *camera_override,
                     int frame,
-                    const bool write_still);
+                    bool write_still);
 /**
  * Saves images to disk.
  */
@@ -454,14 +454,14 @@ struct RenderPass *RE_pass_find_by_type(volatile struct RenderLayer *rl,
 #define RE_BAKE_DISPLACEMENT 1
 #define RE_BAKE_AO 2
 
-void RE_GetCameraWindow(struct Render *re, struct Object *camera, float mat[4][4]);
+void RE_GetCameraWindow(struct Render *re, const struct Object *camera, float mat[4][4]);
 /**
  * Must be called after #RE_GetCameraWindow(), does not change `re->winmat`.
  */
-void RE_GetCameraWindowWithOverscan(struct Render *re, float overscan, float r_winmat[4][4]);
-void RE_GetCameraModelMatrix(struct Render *re, struct Object *camera, float r_modelmat[4][4]);
-
-/* displist.c utility. */
+void RE_GetCameraWindowWithOverscan(const struct Render *re, float overscan, float r_winmat[4][4]);
+void RE_GetCameraModelMatrix(const struct Render *re,
+                             const struct Object *camera,
+                             float r_modelmat[4][4]);
 
 struct Scene *RE_GetScene(struct Render *re);
 void RE_SetScene(struct Render *re, struct Scene *sce);
@@ -478,7 +478,7 @@ bool RE_allow_render_generic_object(struct Object *ob);
 bool RE_HasCombinedLayer(RenderResult *res);
 bool RE_HasFloatPixels(RenderResult *res);
 bool RE_RenderResult_is_stereo(RenderResult *res);
-struct RenderView *RE_RenderViewGetById(struct RenderResult *rr, const int view_id);
+struct RenderView *RE_RenderViewGetById(struct RenderResult *rr, int view_id);
 struct RenderView *RE_RenderViewGetByName(struct RenderResult *rr, const char *viewname);
 
 RenderResult *RE_DuplicateRenderResult(RenderResult *rr);

@@ -20,12 +20,12 @@
  * \ingroup bke
  */
 
+struct ID;
+struct Main;
 struct bNode;
+struct bNodeLink;
 struct bNodeSocket;
 struct bNodeTree;
-struct bNodeLink;
-struct Main;
-struct ID;
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +35,7 @@ extern "C" {
  * Tag tree as changed without providing any more information about what has changed exactly.
  * The update process has to assume that everything may have changed.
  *
- * Using one of the methods below to tag the tree after changes is preffered when possible.
+ * Using one of the methods below to tag the tree after changes is preferred when possible.
  */
 void BKE_ntree_update_tag_all(struct bNodeTree *ntree);
 
@@ -46,6 +46,7 @@ void BKE_ntree_update_tag_all(struct bNodeTree *ntree);
 void BKE_ntree_update_tag_node_property(struct bNodeTree *ntree, struct bNode *node);
 void BKE_ntree_update_tag_node_new(struct bNodeTree *ntree, struct bNode *node);
 void BKE_ntree_update_tag_node_removed(struct bNodeTree *ntree);
+void BKE_ntree_update_tag_node_mute(struct bNodeTree *ntree, struct bNode *node);
 void BKE_ntree_update_tag_node_internal_link(struct bNodeTree *ntree, struct bNode *node);
 
 void BKE_ntree_update_tag_socket_property(struct bNodeTree *ntree, struct bNodeSocket *socket);

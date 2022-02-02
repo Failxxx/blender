@@ -176,7 +176,7 @@ enum {
   VAR_MAT_MESH = (1 << 0),
   VAR_MAT_VOLUME = (1 << 1),
   VAR_MAT_HAIR = (1 << 2),
-  /* VAR_MAT_PROBE = (1 << 3), UNUSED */
+  VAR_MAT_POINTCLOUD = (1 << 3),
   VAR_MAT_BLEND = (1 << 4),
   VAR_MAT_LOOKDEV = (1 << 5),
   VAR_MAT_HOLDOUT = (1 << 6),
@@ -192,8 +192,8 @@ enum {
 /* Material shader cache keys */
 enum {
   /* HACK: This assumes the struct GPUShader will never be smaller than our variations.
-   * This allow us to only keep one ghash and avoid bigger keys comparisons/hashing.
-   * We combine the GPUShader pointer with the key. */
+   * This allow us to only keep one #GHash and avoid bigger keys comparisons/hashing.
+   * We combine the #GPUShader pointer with the key. */
   KEY_CULL = (1 << 0),
   KEY_REFRACT = (1 << 1),
   KEY_HAIR = (1 << 2),
@@ -1499,7 +1499,7 @@ void EEVEE_temporal_sampling_create_view(EEVEE_Data *vedata);
 int EEVEE_temporal_sampling_sample_count_get(const Scene *scene, const EEVEE_StorageList *stl);
 int EEVEE_temporal_sampling_init(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata);
 void EEVEE_temporal_sampling_offset_calc(const double ht_point[2],
-                                         const float filter_size,
+                                         float filter_size,
                                          float r_offset[2]);
 void EEVEE_temporal_sampling_matrices_calc(EEVEE_EffectsInfo *effects, const double ht_point[2]);
 /**
@@ -1533,7 +1533,7 @@ void EEVEE_volumes_free(void);
 void EEVEE_effects_init(EEVEE_ViewLayerData *sldata,
                         EEVEE_Data *vedata,
                         Object *camera,
-                        const bool minimal);
+                        bool minimal);
 void EEVEE_effects_cache_init(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata);
 void EEVEE_effects_draw_init(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata);
 /**

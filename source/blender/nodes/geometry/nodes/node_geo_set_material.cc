@@ -40,6 +40,12 @@ static void node_declare(NodeDeclarationBuilder &b)
 
 static void assign_material_to_faces(Mesh &mesh, const IndexMask selection, Material *material)
 {
+  if (selection.size() != mesh.totpoly) {
+    /* If the entire mesh isn't selected, and there is no material slot yet, add an empty
+     * slot so that the faces that aren't selected can still refer to the default material. */
+    BKE_id_material_eval_ensure_default_slot(&mesh.id);
+  }
+
   int new_material_index = -1;
   for (const int i : IndexRange(mesh.totcol)) {
     Material *other_material = mesh.mat[i];
@@ -121,7 +127,7 @@ void register_node_type_geo_set_material()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_SET_MATERIAL, "Set Material", NODE_CLASS_GEOMETRY, 0);
+  geo_node_type_base(&ntype, GEO_NODE_SET_MATERIAL, "Set Material", NODE_CLASS_GEOMETRY);
   ntype.declare = file_ns::node_declare;
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   nodeRegisterType(&ntype);

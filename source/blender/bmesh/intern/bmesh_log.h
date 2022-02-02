@@ -119,7 +119,7 @@ void BM_log_redo(BMesh *bm, BMLog *log);
  * state so that a subsequent redo operation will restore the newer
  * vertex state.
  */
-void BM_log_vert_before_modified(BMLog *log, struct BMVert *v, const int cd_vert_mask_offset);
+void BM_log_vert_before_modified(BMLog *log, struct BMVert *v, int cd_vert_mask_offset);
 
 /* Log a new vertex as added to the BMesh */
 /* Log a new vertex as added to the BMesh
@@ -128,7 +128,7 @@ void BM_log_vert_before_modified(BMLog *log, struct BMVert *v, const int cd_vert
  * of added vertices, with the key being its ID and the value
  * containing everything needed to reconstruct that vertex.
  */
-void BM_log_vert_added(BMLog *log, struct BMVert *v, const int cd_vert_mask_offset);
+void BM_log_vert_added(BMLog *log, struct BMVert *v, int cd_vert_mask_offset);
 
 /* Log a face before it is modified */
 /* Log a face before it is modified
@@ -164,7 +164,7 @@ void BM_log_face_added(BMLog *log, struct BMFace *f);
  * If there's a move record for the vertex, that's used as the
  * vertices original location, then the move record is deleted.
  */
-void BM_log_vert_removed(BMLog *log, struct BMVert *v, const int cd_vert_mask_offset);
+void BM_log_vert_removed(BMLog *log, struct BMVert *v, int cd_vert_mask_offset);
 
 /* Log a face as removed from the BMesh */
 /* Log a face as removed from the BMesh
@@ -196,11 +196,10 @@ void BM_log_before_all_removed(BMesh *bm, BMLog *log);
  * Does not modify the log or the vertex */
 const float *BM_log_original_vert_co(BMLog *log, BMVert *v);
 
-/* Get the logged normal of a vertex */
 /* Get the logged normal of a vertex
  *
  * Does not modify the log or the vertex */
-const short *BM_log_original_vert_no(BMLog *log, BMVert *v);
+const float *BM_log_original_vert_no(BMLog *log, BMVert *v);
 
 /* Get the logged mask of a vertex */
 /* Get the logged mask of a vertex
@@ -209,7 +208,7 @@ const short *BM_log_original_vert_no(BMLog *log, BMVert *v);
 float BM_log_original_mask(BMLog *log, BMVert *v);
 
 /* Get the logged data of a vertex (avoid multiple lookups) */
-void BM_log_original_vert_data(BMLog *log, BMVert *v, const float **r_co, const short **r_no);
+void BM_log_original_vert_data(BMLog *log, BMVert *v, const float **r_co, const float **r_no);
 
 /* For internal use only (unit testing) */
 /* For internal use only (unit testing) */

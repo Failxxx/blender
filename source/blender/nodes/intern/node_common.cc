@@ -224,7 +224,7 @@ void node_group_update(struct bNodeTree *ntree, struct bNode *node)
 
 static void node_frame_init(bNodeTree *UNUSED(ntree), bNode *node)
 {
-  NodeFrame *data = (NodeFrame *)MEM_callocN(sizeof(NodeFrame), "frame node storage");
+  NodeFrame *data = MEM_cnew<NodeFrame>("frame node storage");
   node->storage = data;
 
   data->flag |= NODE_FRAME_SHRINK;
@@ -232,16 +232,17 @@ static void node_frame_init(bNodeTree *UNUSED(ntree), bNode *node)
   data->label_size = 20;
 }
 
-void register_node_type_frame(void)
+void register_node_type_frame()
 {
   /* frame type is used for all tree types, needs dynamic allocation */
-  bNodeType *ntype = (bNodeType *)MEM_callocN(sizeof(bNodeType), "frame node type");
+  bNodeType *ntype = MEM_cnew<bNodeType>("frame node type");
   ntype->free_self = (void (*)(bNodeType *))MEM_freeN;
 
-  node_type_base(ntype, NODE_FRAME, "Frame", NODE_CLASS_LAYOUT, NODE_BACKGROUND);
+  node_type_base(ntype, NODE_FRAME, "Frame", NODE_CLASS_LAYOUT);
   node_type_init(ntype, node_frame_init);
   node_type_storage(ntype, "NodeFrame", node_free_standard_storage, node_copy_standard_storage);
   node_type_size(ntype, 150, 100, 0);
+  ntype->flag |= NODE_BACKGROUND;
 
   nodeRegisterType(ntype);
 }
@@ -261,13 +262,13 @@ static void node_reroute_init(bNodeTree *ntree, bNode *node)
   nodeAddStaticSocket(ntree, node, SOCK_OUT, SOCK_RGBA, PROP_NONE, "Output", "Output");
 }
 
-void register_node_type_reroute(void)
+void register_node_type_reroute()
 {
   /* frame type is used for all tree types, needs dynamic allocation */
-  bNodeType *ntype = (bNodeType *)MEM_callocN(sizeof(bNodeType), "frame node type");
+  bNodeType *ntype = MEM_cnew<bNodeType>("frame node type");
   ntype->free_self = (void (*)(bNodeType *))MEM_freeN;
 
-  node_type_base(ntype, NODE_REROUTE, "Reroute", NODE_CLASS_LAYOUT, 0);
+  node_type_base(ntype, NODE_REROUTE, "Reroute", NODE_CLASS_LAYOUT);
   node_type_init(ntype, node_reroute_init);
 
   nodeRegisterType(ntype);
@@ -419,6 +420,11 @@ void BKE_node_tree_unlink_id(ID *id, struct bNodeTree *ntree)
 /** \name Node #GROUP_INPUT / #GROUP_OUTPUT
  * \{ */
 
+static bool is_group_extension_socket(const bNode *node, const bNodeSocket *socket)
+{
+  return socket->type == SOCK_CUSTOM && ELEM(node->type, NODE_GROUP_OUTPUT, NODE_GROUP_INPUT);
+}
+
 static void node_group_input_init(bNodeTree *ntree, bNode *node)
 {
   node_group_input_update(ntree, node);
@@ -454,7 +460,7 @@ void node_group_input_update(bNodeTree *ntree, bNode *node)
     }
 
     if (link->fromsock == extsock) {
-      bNodeLink *tlink = (bNodeLink *)MEM_callocN(sizeof(bNodeLink), "temporary link");
+      bNodeLink *tlink = MEM_cnew<bNodeLink>("temporary link");
       *tlink = *link;
       BLI_addtail(&tmplinks, tlink);
 
@@ -470,7 +476,7 @@ void node_group_input_update(bNodeTree *ntree, bNode *node)
      * This could be improved by choosing the "best" type among all links,
      * whatever that means.
      */
-    if (link->tosock->type != SOCK_CUSTOM) {
+    if (!is_group_extension_socket(link->tonode, link->tosock)) {
       exposelink = link;
       break;
     }
@@ -502,13 +508,13 @@ void node_group_input_update(bNodeTree *ntree, bNode *node)
   }
 }
 
-void register_node_type_group_input(void)
+void register_node_type_group_input()
 {
   /* used for all tree types, needs dynamic allocation */
-  bNodeType *ntype = (bNodeType *)MEM_callocN(sizeof(bNodeType), "node type");
+  bNodeType *ntype = MEM_cnew<bNodeType>("node type");
   ntype->free_self = (void (*)(bNodeType *))MEM_freeN;
 
-  node_type_base(ntype, NODE_GROUP_INPUT, "Group Input", NODE_CLASS_INTERFACE, 0);
+  node_type_base(ntype, NODE_GROUP_INPUT, "Group Input", NODE_CLASS_INTERFACE);
   node_type_size(ntype, 140, 80, 400);
   node_type_init(ntype, node_group_input_init);
   node_type_update(ntype, node_group_input_update);
@@ -551,7 +557,7 @@ void node_group_output_update(bNodeTree *ntree, bNode *node)
     }
 
     if (link->tosock == extsock) {
-      bNodeLink *tlink = (bNodeLink *)MEM_callocN(sizeof(bNodeLink), "temporary link");
+      bNodeLink *tlink = MEM_cnew<bNodeLink>("temporary link");
       *tlink = *link;
       BLI_addtail(&tmplinks, tlink);
 
@@ -567,7 +573,7 @@ void node_group_output_update(bNodeTree *ntree, bNode *node)
      * This could be improved by choosing the "best" type among all links,
      * whatever that means.
      */
-    if (link->fromsock->type != SOCK_CUSTOM) {
+    if (!is_group_extension_socket(link->fromnode, link->fromsock)) {
       exposelink = link;
       break;
     }
@@ -600,13 +606,13 @@ void node_group_output_update(bNodeTree *ntree, bNode *node)
   }
 }
 
-void register_node_type_group_output(void)
+void register_node_type_group_output()
 {
   /* used for all tree types, needs dynamic allocation */
-  bNodeType *ntype = (bNodeType *)MEM_callocN(sizeof(bNodeType), "node type");
+  bNodeType *ntype = MEM_cnew<bNodeType>("node type");
   ntype->free_self = (void (*)(bNodeType *))MEM_freeN;
 
-  node_type_base(ntype, NODE_GROUP_OUTPUT, "Group Output", NODE_CLASS_INTERFACE, 0);
+  node_type_base(ntype, NODE_GROUP_OUTPUT, "Group Output", NODE_CLASS_INTERFACE);
   node_type_size(ntype, 140, 80, 400);
   node_type_init(ntype, node_group_output_init);
   node_type_update(ntype, node_group_output_update);

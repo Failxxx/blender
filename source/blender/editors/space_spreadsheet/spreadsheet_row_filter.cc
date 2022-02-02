@@ -123,9 +123,7 @@ static void apply_row_filter(const SpreadsheetRowFilter &row_filter,
         const float threshold_sq = row_filter.threshold;
         apply_filter_operation(
             column_data.typed<float2>(),
-            [&](const float2 cell) {
-              return float2::distance_squared(cell, value) > threshold_sq;
-            },
+            [&](const float2 cell) { return math::distance_squared(cell, value) > threshold_sq; },
             prev_mask,
             new_indices);
         break;
@@ -155,9 +153,7 @@ static void apply_row_filter(const SpreadsheetRowFilter &row_filter,
         const float threshold_sq = row_filter.threshold;
         apply_filter_operation(
             column_data.typed<float3>(),
-            [&](const float3 cell) {
-              return float3::distance_squared(cell, value) > threshold_sq;
-            },
+            [&](const float3 cell) { return math::distance_squared(cell, value) > threshold_sq; },
             prev_mask,
             new_indices);
         break;
@@ -311,8 +307,7 @@ IndexMask spreadsheet_filter_rows(const SpaceSpreadsheet &sspreadsheet,
 
 SpreadsheetRowFilter *spreadsheet_row_filter_new()
 {
-  SpreadsheetRowFilter *row_filter = (SpreadsheetRowFilter *)MEM_callocN(
-      sizeof(SpreadsheetRowFilter), __func__);
+  SpreadsheetRowFilter *row_filter = MEM_cnew<SpreadsheetRowFilter>(__func__);
   row_filter->flag = (SPREADSHEET_ROW_FILTER_UI_EXPAND | SPREADSHEET_ROW_FILTER_ENABLED);
   row_filter->operation = SPREADSHEET_ROW_FILTER_LESS;
   row_filter->threshold = 0.01f;

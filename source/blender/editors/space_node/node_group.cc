@@ -28,10 +28,11 @@
 #include "DNA_anim_types.h"
 #include "DNA_node_types.h"
 
-#include "BLI_float2.hh"
 #include "BLI_linklist.h"
 #include "BLI_listbase.h"
+#include "BLI_math_vec_types.hh"
 #include "BLI_string.h"
+#include "BLI_vector.hh"
 
 #include "BLT_translation.h"
 
@@ -61,7 +62,7 @@
 #include "NOD_socket.h"
 #include "node_intern.hh" /* own include */
 
-using blender::float2;
+namespace blender::ed::space_node {
 
 /* -------------------------------------------------------------------- */
 /** \name Local Utilities
@@ -217,38 +218,34 @@ static void animation_basepath_change_free(AnimationBasePathChange *basepath_cha
   MEM_freeN(basepath_change);
 }
 
-/* returns 1 if its OK */
-static int node_group_ungroup(Main *bmain, bNodeTree *ntree, bNode *gnode)
+/**
+ * \return True if successful.
+ */
+static bool node_group_ungroup(Main *bmain, bNodeTree *ntree, bNode *gnode)
 {
-  /* Clear new pointers, set in #ntreeCopyTree_ex_new_pointers. */
-  LISTBASE_FOREACH (bNode *, node, &ntree->nodes) {
-    node->new_node = nullptr;
-  }
-
   ListBase anim_basepaths = {nullptr, nullptr};
-  LinkNode *nodes_delayed_free = nullptr;
-  bNodeTree *ngroup = (bNodeTree *)gnode->id;
+  Vector<bNode *> nodes_delayed_free;
+  const bNodeTree *ngroup = reinterpret_cast<const bNodeTree *>(gnode->id);
 
-  /* wgroup is a temporary copy of the NodeTree we're merging in
-   * - all of wgroup's nodes are copied across to their new home
-   * - ngroup (i.e. the source NodeTree) is left unscathed
-   * - temp copy. do change ID usercount for the copies
+  /* `wgroup` is a temporary copy of the #NodeTree we're merging in
+   * - All of wgroup's nodes are copied across to their new home.
+   * - `ngroup` (i.e. the source NodeTree) is left unscathed.
+   * - Temp copy. do change ID user-count for the copies.
    */
-  bNodeTree *wgroup = ntreeCopyTree_ex_new_pointers(ngroup, bmain, true);
+  bNodeTree *wgroup = ntreeCopyTree(bmain, ngroup);
 
-  /* Add the nodes into the ntree */
+  /* Add the nodes into the `ntree`. */
   LISTBASE_FOREACH_MUTABLE (bNode *, node, &wgroup->nodes) {
     /* Remove interface nodes.
      * This also removes remaining links to and from interface nodes.
      */
     if (ELEM(node->type, NODE_GROUP_INPUT, NODE_GROUP_OUTPUT)) {
       /* We must delay removal since sockets will reference this node. see: T52092 */
-      BLI_linklist_prepend(&nodes_delayed_free, node);
+      nodes_delayed_free.append(node);
     }
 
-    /* keep track of this node's RNA "base" path (the part of the path identifying the node)
-     * if the old nodetree has animation data which potentially covers this node
-     */
+    /* Keep track of this node's RNA "base" path (the part of the path identifying the node)
+     * if the old node-tree has animation data which potentially covers this node. */
     const char *old_animation_basepath = nullptr;
     if (wgroup->adt) {
       PointerRNA ptr;
@@ -388,15 +385,14 @@ static int node_group_ungroup(Main *bmain, bNodeTree *ntree, bNode *gnode)
     }
   }
 
-  while (nodes_delayed_free) {
-    bNode *node = (bNode *)BLI_linklist_pop(&nodes_delayed_free);
+  for (bNode *node : nodes_delayed_free) {
     nodeRemoveNode(bmain, ntree, node, false);
   }
 
   /* delete the group instance and dereference group tree */
   nodeRemoveNode(bmain, ntree, gnode, true);
 
-  return 1;
+  return true;
 }
 
 static int node_group_ungroup_exec(bContext *C, wmOperator *op)
@@ -455,12 +451,10 @@ static bool node_group_separate_selected(
     nodeSetSelected(node, false);
   }
 
-  /* clear new pointers, set in BKE_node_copy_ex(). */
-  LISTBASE_FOREACH (bNode *, node, &ngroup.nodes) {
-    node->new_node = nullptr;
-  }
-
   ListBase anim_basepaths = {nullptr, nullptr};
+
+  Map<const bNode *, bNode *> node_map;
+  Map<const bNodeSocket *, bNodeSocket *> socket_map;
 
   /* add selected nodes into the ntree */
   LISTBASE_FOREACH_MUTABLE (bNode *, node, &ngroup.nodes) {
@@ -477,16 +471,17 @@ static bool node_group_separate_selected(
     bNode *newnode;
     if (make_copy) {
       /* make a copy */
-      newnode = BKE_node_copy_store_new_pointers(&ngroup, node, LIB_ID_COPY_DEFAULT);
+      newnode = blender::bke::node_copy_with_mapping(
+          &ngroup, *node, LIB_ID_COPY_DEFAULT, true, socket_map);
+      node_map.add_new(node, newnode);
     }
     else {
       /* use the existing node */
       newnode = node;
     }
 
-    /* keep track of this node's RNA "base" path (the part of the path identifying the node)
-     * if the old nodetree has animation data which potentially covers this node
-     */
+    /* Keep track of this node's RNA "base" path (the part of the path identifying the node)
+     * if the old node-tree has animation data which potentially covers this node. */
     if (ngroup.adt) {
       PointerRNA ptr;
       char *path;
@@ -526,10 +521,10 @@ static bool node_group_separate_selected(
       /* make a copy of internal links */
       if (fromselect && toselect) {
         nodeAddLink(&ntree,
-                    link->fromnode->new_node,
-                    link->fromsock->new_sock,
-                    link->tonode->new_node,
-                    link->tosock->new_sock);
+                    node_map.lookup(link->fromnode),
+                    socket_map.lookup(link->fromsock),
+                    node_map.lookup(link->tonode),
+                    socket_map.lookup(link->tosock));
       }
     }
     else {
@@ -781,12 +776,23 @@ static void node_group_make_insert_selected(const bContext &C, bNodeTree &ntree,
 
   ListBase anim_basepaths = {nullptr, nullptr};
 
+  /* Detach unselected nodes inside frames when the frame is put into the group. Otherwise the
+   * `parent` pointer becomes dangling. */
+  LISTBASE_FOREACH (bNode *, node, &ntree.nodes) {
+    if (node->parent == nullptr) {
+      continue;
+    }
+    if (node_group_make_use_node(*node->parent, gnode) &&
+        !node_group_make_use_node(*node, gnode)) {
+      nodeDetachNode(node);
+    }
+  }
+
   /* move nodes over */
   LISTBASE_FOREACH_MUTABLE (bNode *, node, &ntree.nodes) {
     if (node_group_make_use_node(*node, gnode)) {
-      /* keep track of this node's RNA "base" path (the part of the pat identifying the node)
-       * if the old nodetree has animation data which potentially covers this node
-       */
+      /* Keep track of this node's RNA "base" path (the part of the pat identifying the node)
+       * if the old node-tree has animation data which potentially covers this node. */
       if (ntree.adt) {
         PointerRNA ptr;
         char *path;
@@ -996,7 +1002,7 @@ static bNode *node_group_make_from_selected(const bContext &C,
     return nullptr;
   }
 
-  /* new nodetree */
+  /* New node-tree. */
   bNodeTree *ngroup = ntreeAddTree(bmain, "NodeGroup", ntreetype);
 
   /* make group node */
@@ -1113,3 +1119,5 @@ void NODE_OT_group_insert(wmOperatorType *ot)
 }
 
 /** \} */
+
+}  // namespace blender::ed::space_node

@@ -31,11 +31,11 @@
 extern "C" {
 #endif
 
-struct GPUViewport;
-struct DrawEngineType;
 struct DRWRegisteredDrawEngine;
+struct DrawEngineType;
+struct GPUViewport;
 
-/* NOTE these structs are only here for reading the actual lists from the engine.
+/* NOTE: these structs are only here for reading the actual lists from the engine.
  * The actual length of them is stored in a ViewportEngineData_Info.
  * The length of 1 is just here to avoid compiler warning. */
 typedef struct FramebufferList {

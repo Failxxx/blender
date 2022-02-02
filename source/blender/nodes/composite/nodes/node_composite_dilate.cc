@@ -30,7 +30,7 @@
 
 /* **************** Dilate/Erode ******************** */
 
-namespace blender::nodes {
+namespace blender::nodes::node_composite_dilate_cc {
 
 static void cmp_node_dilate_declare(NodeDeclarationBuilder &b)
 {
@@ -38,12 +38,9 @@ static void cmp_node_dilate_declare(NodeDeclarationBuilder &b)
   b.add_output<decl::Float>(N_("Mask"));
 }
 
-}  // namespace blender::nodes
-
 static void node_composit_init_dilateerode(bNodeTree *UNUSED(ntree), bNode *node)
 {
-  NodeDilateErode *data = (NodeDilateErode *)MEM_callocN(sizeof(NodeDilateErode),
-                                                         "NodeDilateErode");
+  NodeDilateErode *data = MEM_cnew<NodeDilateErode>(__func__);
   data->falloff = PROP_SMOOTH;
   node->storage = data;
 }
@@ -62,14 +59,18 @@ static void node_composit_buts_dilateerode(uiLayout *layout, bContext *UNUSED(C)
   }
 }
 
+}  // namespace blender::nodes::node_composite_dilate_cc
+
 void register_node_type_cmp_dilateerode()
 {
+  namespace file_ns = blender::nodes::node_composite_dilate_cc;
+
   static bNodeType ntype;
 
-  cmp_node_type_base(&ntype, CMP_NODE_DILATEERODE, "Dilate/Erode", NODE_CLASS_OP_FILTER, 0);
-  ntype.draw_buttons = node_composit_buts_dilateerode;
-  ntype.declare = blender::nodes::cmp_node_dilate_declare;
-  node_type_init(&ntype, node_composit_init_dilateerode);
+  cmp_node_type_base(&ntype, CMP_NODE_DILATEERODE, "Dilate/Erode", NODE_CLASS_OP_FILTER);
+  ntype.draw_buttons = file_ns::node_composit_buts_dilateerode;
+  ntype.declare = file_ns::cmp_node_dilate_declare;
+  node_type_init(&ntype, file_ns::node_composit_init_dilateerode);
   node_type_storage(
       &ntype, "NodeDilateErode", node_free_standard_storage, node_copy_standard_storage);
 

@@ -55,8 +55,7 @@ static void node_layout(uiLayout *layout, bContext *UNUSED(C), PointerRNA *ptr)
 
 static void node_type_init(bNodeTree *UNUSED(tree), bNode *node)
 {
-  NodeGeometryCurveSample *data = (NodeGeometryCurveSample *)MEM_callocN(
-      sizeof(NodeGeometryCurveSample), __func__);
+  NodeGeometryCurveSample *data = MEM_cnew<NodeGeometryCurveSample>(__func__);
   data->mode = GEO_NODE_CURVE_SAMPLE_LENGTH;
   node->storage = data;
 }
@@ -186,7 +185,7 @@ class SampleCurveFunction : public fn::MultiFunction {
       for (const int i : mask) {
         const Spline::LookupResult &lookup = lookups[i];
         const Span<float3> evaluated_tangents = splines[spline_indices[i]]->evaluated_tangents();
-        sampled_tangents[i] = sample_with_lookup(lookup, evaluated_tangents).normalized();
+        sampled_tangents[i] = math::normalize(sample_with_lookup(lookup, evaluated_tangents));
       }
     }
 
@@ -194,7 +193,7 @@ class SampleCurveFunction : public fn::MultiFunction {
       for (const int i : mask) {
         const Spline::LookupResult &lookup = lookups[i];
         const Span<float3> evaluated_normals = splines[spline_indices[i]]->evaluated_normals();
-        sampled_normals[i] = sample_with_lookup(lookup, evaluated_normals).normalized();
+        sampled_normals[i] = math::normalize(sample_with_lookup(lookup, evaluated_normals));
       }
     }
   }
@@ -287,7 +286,7 @@ void register_node_type_geo_curve_sample()
 
   static bNodeType ntype;
 
-  geo_node_type_base(&ntype, GEO_NODE_SAMPLE_CURVE, " Sample Curve", NODE_CLASS_GEOMETRY, 0);
+  geo_node_type_base(&ntype, GEO_NODE_SAMPLE_CURVE, "Sample Curve", NODE_CLASS_GEOMETRY);
   ntype.geometry_node_execute = file_ns::node_geo_exec;
   ntype.declare = file_ns::node_declare;
   node_type_init(&ntype, file_ns::node_type_init);

@@ -65,7 +65,7 @@ extern char datatoc_gpu_shader_common_obinfos_lib_glsl[];
  * same for 2 different Materials. Unused GPUPasses are free by Garbage collection.
  */
 
-/* Only use one linklist that contains the GPUPasses grouped by hash. */
+/* Only use one linked-list that contains the GPUPasses grouped by hash. */
 static GPUPass *pass_cache = NULL;
 static SpinLock pass_cache_spin;
 
@@ -711,10 +711,10 @@ static char *code_generate_vertex(GPUNodeGraph *graph,
   LISTBASE_FOREACH (GPUMaterialAttribute *, attr, &graph->attributes) {
     const char *type_str = gpu_data_type_to_string(attr->gputype);
     const char *prefix = attr_prefix_get(attr->type);
-    /* XXX FIXME : see notes in mesh_render_data_create() */
-    /* NOTE : Replicate changes to mesh_render_data_create() in draw_cache_impl_mesh.c */
+    /* XXX FIXME: see notes in mesh_render_data_create() */
+    /* NOTE: Replicate changes to mesh_render_data_create() in draw_cache_impl_mesh.c */
     if (attr->type == CD_ORCO) {
-      /* OPTI : orco is computed from local positions, but only if no modifier is present. */
+      /* OPTI: orco is computed from local positions, but only if no modifier is present. */
       BLI_dynstr_append(ds, datatoc_gpu_shader_common_obinfos_lib_glsl);
       BLI_dynstr_append(ds, "DEFINE_ATTR(vec4, orco);\n");
     }

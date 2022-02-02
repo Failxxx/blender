@@ -21,9 +21,9 @@
  * \ingroup shdnodes
  */
 
-#include "node_shader_util.h"
+#include "node_shader_util.hh"
 
-namespace blender::nodes {
+namespace blender::nodes::node_shader_sepcomb_rgb_cc {
 
 static void sh_node_seprgb_declare(NodeDeclarationBuilder &b)
 {
@@ -32,23 +32,6 @@ static void sh_node_seprgb_declare(NodeDeclarationBuilder &b)
   b.add_output<decl::Float>(N_("R"));
   b.add_output<decl::Float>(N_("G"));
   b.add_output<decl::Float>(N_("B"));
-};
-
-}  // namespace blender::nodes
-
-static void node_shader_exec_seprgb(void *UNUSED(data),
-                                    int UNUSED(thread),
-                                    bNode *UNUSED(node),
-                                    bNodeExecData *UNUSED(execdata),
-                                    bNodeStack **in,
-                                    bNodeStack **out)
-{
-  float col[3];
-  nodestack_get_vec(col, SOCK_VECTOR, in[0]);
-
-  out[0]->vec[0] = col[0];
-  out[1]->vec[0] = col[1];
-  out[2]->vec[0] = col[2];
 }
 
 static int gpu_shader_seprgb(GPUMaterial *mat,
@@ -103,20 +86,23 @@ static void sh_node_seprgb_build_multi_function(blender::nodes::NodeMultiFunctio
   builder.set_matching_fn(fn);
 }
 
+}  // namespace blender::nodes::node_shader_sepcomb_rgb_cc
+
 void register_node_type_sh_seprgb()
 {
+  namespace file_ns = blender::nodes::node_shader_sepcomb_rgb_cc;
+
   static bNodeType ntype;
 
-  sh_fn_node_type_base(&ntype, SH_NODE_SEPRGB, "Separate RGB", NODE_CLASS_CONVERTER, 0);
-  ntype.declare = blender::nodes::sh_node_seprgb_declare;
-  node_type_exec(&ntype, nullptr, nullptr, node_shader_exec_seprgb);
-  node_type_gpu(&ntype, gpu_shader_seprgb);
-  ntype.build_multi_function = sh_node_seprgb_build_multi_function;
+  sh_fn_node_type_base(&ntype, SH_NODE_SEPRGB, "Separate RGB", NODE_CLASS_CONVERTER);
+  ntype.declare = file_ns::sh_node_seprgb_declare;
+  node_type_gpu(&ntype, file_ns::gpu_shader_seprgb);
+  ntype.build_multi_function = file_ns::sh_node_seprgb_build_multi_function;
 
   nodeRegisterType(&ntype);
 }
 
-namespace blender::nodes {
+namespace blender::nodes::node_shader_sepcomb_rgb_cc {
 
 static void sh_node_combrgb_declare(NodeDeclarationBuilder &b)
 {
@@ -125,25 +111,6 @@ static void sh_node_combrgb_declare(NodeDeclarationBuilder &b)
   b.add_input<decl::Float>(N_("G")).min(0.0f).max(1.0f);
   b.add_input<decl::Float>(N_("B")).min(0.0f).max(1.0f);
   b.add_output<decl::Color>(N_("Image"));
-};
-
-}  // namespace blender::nodes
-
-static void node_shader_exec_combrgb(void *UNUSED(data),
-                                     int UNUSED(thread),
-                                     bNode *UNUSED(node),
-                                     bNodeExecData *UNUSED(execdata),
-                                     bNodeStack **in,
-                                     bNodeStack **out)
-{
-  float r, g, b;
-  nodestack_get_vec(&r, SOCK_FLOAT, in[0]);
-  nodestack_get_vec(&g, SOCK_FLOAT, in[1]);
-  nodestack_get_vec(&b, SOCK_FLOAT, in[2]);
-
-  out[0]->vec[0] = r;
-  out[0]->vec[1] = g;
-  out[0]->vec[2] = b;
 }
 
 static int gpu_shader_combrgb(GPUMaterial *mat,
@@ -163,15 +130,18 @@ static void sh_node_combrgb_build_multi_function(blender::nodes::NodeMultiFuncti
   builder.set_matching_fn(fn);
 }
 
+}  // namespace blender::nodes::node_shader_sepcomb_rgb_cc
+
 void register_node_type_sh_combrgb()
 {
+  namespace file_ns = blender::nodes::node_shader_sepcomb_rgb_cc;
+
   static bNodeType ntype;
 
-  sh_fn_node_type_base(&ntype, SH_NODE_COMBRGB, "Combine RGB", NODE_CLASS_CONVERTER, 0);
-  ntype.declare = blender::nodes::sh_node_combrgb_declare;
-  node_type_exec(&ntype, nullptr, nullptr, node_shader_exec_combrgb);
-  node_type_gpu(&ntype, gpu_shader_combrgb);
-  ntype.build_multi_function = sh_node_combrgb_build_multi_function;
+  sh_fn_node_type_base(&ntype, SH_NODE_COMBRGB, "Combine RGB", NODE_CLASS_CONVERTER);
+  ntype.declare = file_ns::sh_node_combrgb_declare;
+  node_type_gpu(&ntype, file_ns::gpu_shader_combrgb);
+  ntype.build_multi_function = file_ns::sh_node_combrgb_build_multi_function;
 
   nodeRegisterType(&ntype);
 }

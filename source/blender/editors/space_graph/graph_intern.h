@@ -109,8 +109,8 @@ void get_graph_keyframe_extents(struct bAnimContext *ac,
                                 float *xmax,
                                 float *ymin,
                                 float *ymax,
-                                const bool do_sel_only,
-                                const bool include_handles);
+                                bool do_sel_only,
+                                bool include_handles);
 
 void GRAPH_OT_previewrange_set(struct wmOperatorType *ot);
 void GRAPH_OT_view_all(struct wmOperatorType *ot);
@@ -126,6 +126,8 @@ void GRAPH_OT_paste(struct wmOperatorType *ot);
 void GRAPH_OT_duplicate(struct wmOperatorType *ot);
 void GRAPH_OT_delete(struct wmOperatorType *ot);
 void GRAPH_OT_clean(struct wmOperatorType *ot);
+void GRAPH_OT_blend_to_neighbor(struct wmOperatorType *ot);
+void GRAPH_OT_breakdown(struct wmOperatorType *ot);
 void GRAPH_OT_decimate(struct wmOperatorType *ot);
 void GRAPH_OT_sample(struct wmOperatorType *ot);
 void GRAPH_OT_bake(struct wmOperatorType *ot);
@@ -142,6 +144,7 @@ void GRAPH_OT_easing_type(struct wmOperatorType *ot);
 void GRAPH_OT_frame_jump(struct wmOperatorType *ot);
 void GRAPH_OT_snap_cursor_value(struct wmOperatorType *ot);
 void GRAPH_OT_snap(struct wmOperatorType *ot);
+void GRAPH_OT_equalize_handles(struct wmOperatorType *ot);
 void GRAPH_OT_mirror(struct wmOperatorType *ot);
 
 /* defines for snap keyframes
@@ -154,6 +157,15 @@ enum eGraphKeys_Snap_Mode {
   GRAPHKEYS_SNAP_NEAREST_MARKER,
   GRAPHKEYS_SNAP_HORIZONTAL,
   GRAPHKEYS_SNAP_VALUE,
+};
+
+/* Defines for equalize keyframe handles.
+ * NOTE: Keep in sync with eEditKeyframes_Equalize (in ED_keyframes_edit.h).
+ */
+enum eGraphKeys_Equalize_Mode {
+  GRAPHKEYS_EQUALIZE_LEFT = 1,
+  GRAPHKEYS_EQUALIZE_RIGHT,
+  GRAPHKEYS_EQUALIZE_BOTH,
 };
 
 /* defines for mirror keyframes

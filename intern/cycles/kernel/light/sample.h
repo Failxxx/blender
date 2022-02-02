@@ -141,14 +141,23 @@ ccl_device_inline float3 shadow_ray_smooth_surface_offset(
     KernelGlobals kg, ccl_private const ShaderData *ccl_restrict sd, float3 Ng)
 {
   float3 V[3], N[3];
-  triangle_vertices_and_normals(kg, sd->prim, V, N);
+
+  if (sd->type == PRIMITIVE_MOTION_TRIANGLE) {
+    motion_triangle_vertices_and_normals(kg, sd->object, sd->prim, sd->time, V, N);
+  }
+  else {
+    kernel_assert(sd->type == PRIMITIVE_TRIANGLE);
+    triangle_vertices_and_normals(kg, sd->prim, V, N);
+  }
 
   const float u = sd->u, v = sd->v;
   const float w = 1 - u - v;
   float3 P = V[0] * u + V[1] * v + V[2] * w; /* Local space */
   float3 n = N[0] * u + N[1] * v + N[2] * w; /* We get away without normalization */
 
-  object_normal_transform(kg, sd, &n); /* Normal x scale, world space */
+  if (!(sd->object_flag & SD_OBJECT_TRANSFORM_APPLIED)) {
+    object_normal_transform(kg, sd, &n); /* Normal x scale, world space */
+  }
 
   /* Parabolic approximation */
   float a = dot(N[2] - N[0], V[0] - V[2]);
@@ -189,7 +198,7 @@ ccl_device_inline float3 shadow_ray_offset(KernelGlobals kg,
   float NL = dot(sd->N, L);
   bool transmit = (NL < 0.0f);
   float3 Ng = (transmit ? -sd->Ng : sd->Ng);
-  float3 P = ray_offset(sd->P, Ng);
+  float3 P = sd->P;
 
   if ((sd->type & PRIMITIVE_TRIANGLE) && (sd->shader & SHADER_SMOOTH_NORMAL)) {
     const float offset_cutoff =
@@ -234,7 +243,7 @@ ccl_device_inline void shadow_ray_setup(ccl_private const ShaderData *ccl_restri
     }
     else {
       /* other lights, avoid self-intersection */
-      ray->D = ray_offset(ls->P, ls->Ng) - P;
+      ray->D = ls->P - P;
       ray->D = normalize_len(ray->D, &ray->t);
     }
   }
@@ -248,6 +257,12 @@ ccl_device_inline void shadow_ray_setup(ccl_private const ShaderData *ccl_restri
   ray->dP = differential_make_compact(sd->dP);
   ray->dD = differential_zero_compact();
   ray->time = sd->time;
+
+  /* Fill in intersection surface and light details. */
+  ray->self.prim = sd->prim;
+  ray->self.object = sd->object;
+  ray->self.light_prim = ls->prim;
+  ray->self.light_object = ls->object;
 }
 
 /* Create shadow ray towards light sample. */

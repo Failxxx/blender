@@ -23,13 +23,18 @@
 
 #include <algorithm>
 
-#include "node_shader_util.h"
+#include "node_shader_util.hh"
 
 #include "BLI_math_base_safe.h"
 
-NODE_STORAGE_FUNCS(NodeMapRange)
+#include "NOD_socket_search_link.hh"
 
-namespace blender::nodes {
+#include "UI_interface.h"
+#include "UI_resources.h"
+
+namespace blender::nodes::node_shader_map_range_cc {
+
+NODE_STORAGE_FUNCS(NodeMapRange)
 
 static void sh_node_map_range_declare(NodeDeclarationBuilder &b)
 {
@@ -48,9 +53,18 @@ static void sh_node_map_range_declare(NodeDeclarationBuilder &b)
   b.add_input<decl::Vector>(N_("Steps"), "Steps_FLOAT3").default_value(float3(4.0f));
   b.add_output<decl::Float>(N_("Result"));
   b.add_output<decl::Vector>(N_("Vector"));
-};
+}
 
-}  // namespace blender::nodes
+static void node_shader_buts_map_range(uiLayout *layout, bContext *UNUSED(C), PointerRNA *ptr)
+{
+  uiItemR(layout, ptr, "data_type", UI_ITEM_R_SPLIT_EMPTY_NAME, "", ICON_NONE);
+  uiItemR(layout, ptr, "interpolation_type", UI_ITEM_R_SPLIT_EMPTY_NAME, "", ICON_NONE);
+  if (!ELEM(RNA_enum_get(ptr, "interpolation_type"),
+            NODE_MAP_RANGE_SMOOTHSTEP,
+            NODE_MAP_RANGE_SMOOTHERSTEP)) {
+    uiItemR(layout, ptr, "clamp", UI_ITEM_R_SPLIT_EMPTY_NAME, nullptr, ICON_NONE);
+  }
+}
 
 static void node_shader_update_map_range(bNodeTree *ntree, bNode *node)
 {
@@ -80,13 +94,73 @@ static void node_shader_update_map_range(bNodeTree *ntree, bNode *node)
 
 static void node_shader_init_map_range(bNodeTree *UNUSED(ntree), bNode *node)
 {
-  NodeMapRange *data = (NodeMapRange *)MEM_callocN(sizeof(NodeMapRange), __func__);
+  NodeMapRange *data = MEM_cnew<NodeMapRange>(__func__);
   data->clamp = 1;
   data->data_type = CD_PROP_FLOAT;
   data->interpolation_type = NODE_MAP_RANGE_LINEAR;
   node->custom1 = true;                  /* use_clamp */
   node->custom2 = NODE_MAP_RANGE_LINEAR; /* interpolation */
   node->storage = data;
+}
+
+class SocketSearchOp {
+ public:
+  std::string socket_name;
+  CustomDataType data_type;
+  int interpolation_type = NODE_MAP_RANGE_LINEAR;
+
+  void operator()(LinkSearchOpParams &params)
+  {
+    bNode &node = params.add_node("ShaderNodeMapRange");
+    node_storage(node).data_type = data_type;
+    node_storage(node).interpolation_type = interpolation_type;
+    params.update_and_connect_available_socket(node, socket_name);
+  }
+};
+
+static std::optional<CustomDataType> node_type_from_other_socket(const bNodeSocket &socket)
+{
+  switch (socket.type) {
+    case SOCK_FLOAT:
+    case SOCK_BOOLEAN:
+    case SOCK_INT:
+      return CD_PROP_FLOAT;
+    case SOCK_VECTOR:
+    case SOCK_RGBA:
+      return CD_PROP_FLOAT3;
+    default:
+      return {};
+  }
+}
+
+static void node_map_range_gather_link_searches(GatherLinkSearchOpParams &params)
+{
+  const std::optional<CustomDataType> type = node_type_from_other_socket(params.other_socket());
+  if (!type) {
+    return;
+  }
+
+  if (params.in_out() == SOCK_IN) {
+    if (*type == CD_PROP_FLOAT3) {
+      params.add_item(IFACE_("Vector"), SocketSearchOp{"Vector", *type}, 0);
+    }
+    else {
+      params.add_item(IFACE_("Value"), SocketSearchOp{"Value", *type}, 0);
+    }
+    params.add_item(IFACE_("From Min"), SocketSearchOp{"From Min", *type}, -1);
+    params.add_item(IFACE_("From Max"), SocketSearchOp{"From Max", *type}, -1);
+    params.add_item(IFACE_("To Min"), SocketSearchOp{"To Min", *type}, -2);
+    params.add_item(IFACE_("To Max"), SocketSearchOp{"To Max", *type}, -2);
+    params.add_item(IFACE_("Steps"), SocketSearchOp{"Steps", *type, NODE_MAP_RANGE_STEPPED}, -3);
+  }
+  else {
+    if (*type == CD_PROP_FLOAT3) {
+      params.add_item(IFACE_("Vector"), SocketSearchOp{"Vector", *type});
+    }
+    else {
+      params.add_item(IFACE_("Result"), SocketSearchOp{"Result", *type});
+    }
+  }
 }
 
 static const char *gpu_shader_get_name(int mode, bool use_vector)
@@ -143,8 +217,6 @@ static int gpu_shader_map_range(GPUMaterial *mat,
   return ret;
 }
 
-namespace blender::nodes {
-
 static inline float clamp_range(const float value, const float min, const float max)
 {
   return (min > max) ? std::clamp(value, max, min) : std::clamp(value, min, max);
@@ -200,7 +272,7 @@ class MapRangeVectorFunction : public blender::fn::MultiFunction {
     blender::MutableSpan<float3> results = params.uninitialized_single_output<float3>(5, "Vector");
 
     for (int64_t i : mask) {
-      float3 factor = float3::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
+      float3 factor = math::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
       results[i] = factor * (to_max[i] - to_min[i]) + to_min[i];
     }
 
@@ -243,8 +315,8 @@ class MapRangeSteppedVectorFunction : public blender::fn::MultiFunction {
     blender::MutableSpan<float3> results = params.uninitialized_single_output<float3>(6, "Vector");
 
     for (int64_t i : mask) {
-      float3 factor = float3::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
-      factor = float3::safe_divide(float3::floor(factor * (steps[i] + 1.0f)), steps[i]);
+      float3 factor = math::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
+      factor = math::safe_divide(math::floor(factor * (steps[i] + 1.0f)), steps[i]);
       results[i] = factor * (to_max[i] - to_min[i]) + to_min[i];
     }
 
@@ -283,7 +355,7 @@ class MapRangeSmoothstepVectorFunction : public blender::fn::MultiFunction {
     blender::MutableSpan<float3> results = params.uninitialized_single_output<float3>(5, "Vector");
 
     for (int64_t i : mask) {
-      float3 factor = float3::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
+      float3 factor = math::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
       clamp_v3(factor, 0.0f, 1.0f);
       factor = (float3(3.0f) - 2.0f * factor) * (factor * factor);
       results[i] = factor * (to_max[i] - to_min[i]) + to_min[i];
@@ -318,7 +390,7 @@ class MapRangeSmootherstepVectorFunction : public blender::fn::MultiFunction {
     blender::MutableSpan<float3> results = params.uninitialized_single_output<float3>(5, "Vector");
 
     for (int64_t i : mask) {
-      float3 factor = float3::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
+      float3 factor = math::safe_divide(values[i] - from_min[i], from_max[i] - from_min[i]);
       clamp_v3(factor, 0.0f, 1.0f);
       factor = factor * factor * factor * (factor * (factor * 6.0f - 15.0f) + 10.0f);
       results[i] = factor * (to_max[i] - to_min[i]) + to_min[i];
@@ -582,20 +654,23 @@ static void sh_node_map_range_build_multi_function(
   }
 }
 
-}  // namespace blender::nodes
+}  // namespace blender::nodes::node_shader_map_range_cc
 
 void register_node_type_sh_map_range()
 {
+  namespace file_ns = blender::nodes::node_shader_map_range_cc;
+
   static bNodeType ntype;
 
-  sh_fn_node_type_base(&ntype, SH_NODE_MAP_RANGE, "Map Range", NODE_CLASS_CONVERTER, 0);
-  ntype.declare = blender::nodes::sh_node_map_range_declare;
-  node_type_init(&ntype, node_shader_init_map_range);
+  sh_fn_node_type_base(&ntype, SH_NODE_MAP_RANGE, "Map Range", NODE_CLASS_CONVERTER);
+  ntype.declare = file_ns::sh_node_map_range_declare;
+  ntype.draw_buttons = file_ns::node_shader_buts_map_range;
+  node_type_init(&ntype, file_ns::node_shader_init_map_range);
   node_type_storage(
       &ntype, "NodeMapRange", node_free_standard_storage, node_copy_standard_storage);
-  node_type_update(&ntype, node_shader_update_map_range);
-  node_type_gpu(&ntype, gpu_shader_map_range);
-  ntype.build_multi_function = blender::nodes::sh_node_map_range_build_multi_function;
-
+  node_type_update(&ntype, file_ns::node_shader_update_map_range);
+  node_type_gpu(&ntype, file_ns::gpu_shader_map_range);
+  ntype.build_multi_function = file_ns::sh_node_map_range_build_multi_function;
+  ntype.gather_link_search_ops = file_ns::node_map_range_gather_link_searches;
   nodeRegisterType(&ntype);
 }

@@ -1220,7 +1220,7 @@ GHOST_EventKey *GHOST_SystemWin32::processKeyEvent(GHOST_WindowWin32 *window, RA
     }
 
 #ifdef WITH_INPUT_IME
-    if (window->getImeInput()->IsImeKeyEvent(ascii)) {
+    if (window->getImeInput()->IsImeKeyEvent(ascii, key)) {
       return NULL;
     }
 #endif /* WITH_INPUT_IME */
@@ -1552,8 +1552,8 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
            * button is press for menu. To prevent this we must return preventing DefWindowProc.
            *
            * Note that the four low-order bits of the wParam parameter are used internally by the
-           * OS. To obtain the correct result when testing the value of wParam, an application
-           * must combine the value 0xFFF0 with the wParam value by using the bitwise AND operator.
+           * OS. To obtain the correct result when testing the value of wParam, an application must
+           * combine the value 0xFFF0 with the wParam value by using the bit-wise AND operator.
            */
           switch (wParam & 0xFFF0) {
             case SC_KEYMENU:

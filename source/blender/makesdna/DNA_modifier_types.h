@@ -196,6 +196,13 @@ typedef enum {
   SUBSURF_BOUNDARY_SMOOTH_PRESERVE_CORNERS = 1,
 } eSubsurfBoundarySmooth;
 
+typedef struct SubsurfRuntimeData {
+  /* Cached subdivision surface descriptor, with topology and settings. */
+  struct Subdiv *subdiv;
+  char set_by_draw_code;
+  char _pad[7];
+} SubsurfRuntimeData;
+
 typedef struct SubsurfModifierData {
   ModifierData modifier;
 
@@ -1845,6 +1852,7 @@ enum {
   MOD_TRIANGULATE_QUAD_FIXED = 1,
   MOD_TRIANGULATE_QUAD_ALTERNATE = 2,
   MOD_TRIANGULATE_QUAD_SHORTEDGE = 3,
+  MOD_TRIANGULATE_QUAD_LONGEDGE = 4,
 };
 
 typedef struct LaplacianSmoothModifierData {

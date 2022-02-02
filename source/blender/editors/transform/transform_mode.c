@@ -1042,7 +1042,7 @@ void ElementResize(const TransInfo *t,
       applyNumInput(&num_evil, values_final_evil);
 
       float ratio = values_final_evil[0];
-      *td->val = td->ival * ratio * gps->runtime.multi_frame_falloff;
+      *td->val = td->ival * fabs(ratio) * gps->runtime.multi_frame_falloff;
       CLAMP_MIN(*td->val, 0.001f);
     }
   }
@@ -1135,8 +1135,11 @@ void transform_mode_init(TransInfo *t, wmOperator *op, const int mode)
     case TFM_PUSHPULL:
       initPushPull(t);
       break;
-    case TFM_CREASE:
-      initCrease(t);
+    case TFM_EDGE_CREASE:
+      initEgdeCrease(t);
+      break;
+    case TFM_VERT_CREASE:
+      initVertCrease(t);
       break;
     case TFM_BONESIZE:
       initBoneSize(t);

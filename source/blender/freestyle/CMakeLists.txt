@@ -583,10 +583,6 @@ if(WITH_PYTHON_SAFETY)
   add_definitions(-DWITH_PYTHON_SAFETY)
 endif()
 
-if(WITH_INTERNATIONAL)
-  add_definitions(-DWITH_INTERNATIONAL)
-endif()
-
 if(WIN32)
   list(APPEND INC_SYS
     ${PTHREADS_INC}
@@ -594,4 +590,7 @@ if(WIN32)
 endif()
 
 blender_add_lib(bf_freestyle "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")
-blender_precompile_headers(bf_freestyle FRS_precomp.cpp FRS_precomp.h)
+
+if(COMMAND target_precompile_headers)
+  target_precompile_headers(bf_freestyle PRIVATE FRS_precomp.h)
+endif()
