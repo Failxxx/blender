@@ -674,12 +674,6 @@ void update_pose_orig_pointers(const bPose *pose_orig, bPose *pose_cow)
   update_list_orig_pointers(&pose_orig->chanbase, &pose_cow->chanbase, &bPoseChannel::orig_pchan);
 }
 
-void update_modifiers_orig_pointers(const Object *object_orig, Object *object_cow)
-{
-  update_list_orig_pointers(
-      &object_orig->modifiers, &object_cow->modifiers, &ModifierData::orig_modifier_data);
-}
-
 void update_nla_strips_orig_pointers(const ListBase *strips_orig, ListBase *strips_cow)
 {
   NlaStrip *strip_orig = reinterpret_cast<NlaStrip *>(strips_orig->first);
@@ -712,25 +706,6 @@ void update_animation_data_after_copy(const ID *id_orig, ID *id_cow)
   AnimData *anim_data_cow = BKE_animdata_from_id(id_cow);
   BLI_assert(anim_data_cow != nullptr);
   update_nla_tracks_orig_pointers(&anim_data_orig->nla_tracks, &anim_data_cow->nla_tracks);
-}
-
-/* Some builders (like motion path one) will ignore proxies from being built. This code makes it so
- * proxy and proxy_group pointers never point to an original objects, preventing evaluation code
- * from assign evaluated pointer to an original proxy->proxy_from. */
-void update_proxy_pointers_after_copy(const Depsgraph *depsgraph,
-                                      const Object *object_orig,
-                                      Object *object_cow)
-{
-  if (object_cow->proxy != nullptr) {
-    if (!deg_check_id_in_depsgraph(depsgraph, &object_orig->proxy->id)) {
-      object_cow->proxy = nullptr;
-    }
-  }
-  if (object_cow->proxy_group != nullptr) {
-    if (!deg_check_id_in_depsgraph(depsgraph, &object_orig->proxy_group->id)) {
-      object_cow->proxy_group = nullptr;
-    }
-  }
 }
 
 /* Do some special treatment of data transfer from original ID to its
@@ -766,8 +741,6 @@ void update_id_after_copy(const Depsgraph *depsgraph,
         BKE_gpencil_update_orig_pointers(object_orig, object_cow);
       }
       update_particles_after_copy(depsgraph, object_orig, object_cow);
-      update_modifiers_orig_pointers(object_orig, object_cow);
-      update_proxy_pointers_after_copy(depsgraph, object_orig, object_cow);
       break;
     }
     case ID_SCE: {

@@ -211,7 +211,7 @@ void depsgraph_tag_to_component_opcode(const ID *id,
     case ID_RECALC_SEQUENCER_STRIPS:
       *component_type = NodeType::SEQUENCER;
       break;
-    case ID_RECALC_AUDIO_SEEK:
+    case ID_RECALC_FRAME_CHANGE:
     case ID_RECALC_AUDIO_FPS:
     case ID_RECALC_AUDIO_VOLUME:
     case ID_RECALC_AUDIO_MUTE:
@@ -526,12 +526,6 @@ void graph_tag_ids_for_visible_update(Depsgraph *graph)
    * this. */
   for (deg::IDNode *id_node : graph->id_nodes) {
     const ID_Type id_type = GS(id_node->id_orig->name);
-    if (id_type == ID_OB) {
-      Object *object_orig = reinterpret_cast<Object *>(id_node->id_orig);
-      if (object_orig->proxy != nullptr) {
-        object_orig->proxy->proxy_from = object_orig;
-      }
-    }
 
     if (!id_node->visible_components_mask) {
       /* ID has no components which affects anything visible.
@@ -737,8 +731,8 @@ const char *DEG_update_tag_as_string(IDRecalcFlag flag)
       return "EDITORS";
     case ID_RECALC_SEQUENCER_STRIPS:
       return "SEQUENCER_STRIPS";
-    case ID_RECALC_AUDIO_SEEK:
-      return "AUDIO_SEEK";
+    case ID_RECALC_FRAME_CHANGE:
+      return "FRAME_CHANGE";
     case ID_RECALC_AUDIO_FPS:
       return "AUDIO_FPS";
     case ID_RECALC_AUDIO_VOLUME:

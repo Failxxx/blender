@@ -1031,21 +1031,18 @@ static void store_computed_output_attributes(
 {
   for (const OutputAttributeToStore &store : attributes_to_store) {
     GeometryComponent &component = geometry.get_component_for_write(store.component_type);
-    /* Try deleting an existing attribute, so that we can just use `attribute_try_create` to pass
-     * in the data directly. */
-    component.attribute_try_delete(store.name);
     if (component.attribute_exists(store.name)) {
       /* Copy the data into an existing attribute. */
       blender::bke::WriteAttributeLookup write_attribute = component.attribute_try_get_for_write(
           store.name);
       if (write_attribute) {
         write_attribute.varray.set_all(store.data.data());
-        store.data.type().destruct_n(store.data.data(), store.data.size());
-        MEM_freeN(store.data.data());
         if (write_attribute.tag_modified_fn) {
           write_attribute.tag_modified_fn();
         }
       }
+      store.data.type().destruct_n(store.data.data(), store.data.size());
+      MEM_freeN(store.data.data());
     }
     else {
       component.attribute_try_create(store.name,
@@ -1148,7 +1145,8 @@ static GeometrySet compute_geometry(const DerivedNodeTree &tree,
 
   if (geo_logger.has_value()) {
     geo_logger->log_output_geometry(output_geometry_set);
-    NodesModifierData *nmd_orig = (NodesModifierData *)BKE_modifier_get_original(&nmd->modifier);
+    NodesModifierData *nmd_orig = (NodesModifierData *)BKE_modifier_get_original(ctx->object,
+                                                                                 &nmd->modifier);
     clear_runtime_data(nmd_orig);
     nmd_orig->runtime_eval_log = new geo_log::ModifierLog(*geo_logger);
   }
