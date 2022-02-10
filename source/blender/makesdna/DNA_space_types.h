@@ -1439,6 +1439,18 @@ typedef enum eSpaceText_Flags {
 /* SpaceText.findstr/replacestr */
 #define ST_MAX_FIND_STR 256
 
+typedef struct SpacePhysarum {
+  SpaceLink *next, *prev;
+  /* Storage of regions for inactive spaces. */
+  ListBase regionbase;
+  char spacetype;
+
+  int color;
+
+  char _pad0[6];
+  /* End 'SpaceLink' header. */
+} SpacePhysarum;
+
 /** \} */
 
 /* -------------------------------------------------------------------- */

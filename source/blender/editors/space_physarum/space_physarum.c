@@ -17,6 +17,10 @@
  * All rights reserved.
  */
 
+/** \file
+ * \ingroup spphysarum
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -36,7 +40,32 @@
 #include "UI_resources.h"
 #include "UI_view2d.h"
 
-/* only called once, from space/spacetypes.c */
+/* function which is called when a new instance of the editor is created by the user */
+static SpaceLink *physarum_create(const ScrArea *area, const Scene *scene)
+{
+  ARegion *ar;
+  SpacePhysarum *sphys;
+
+  sphys = MEM_callocN(sizeof(*sphys), "new physarum");
+  sphys->spacetype = SPACE_PHYSARUM;
+
+  /* header */
+  ar = MEM_callocN(sizeof(ARegion), "header for physarum");
+
+  BLI_addtail(&sphys->regionbase, ar);
+  ar->regiontype = RGN_TYPE_HEADER;
+  ar->alignment = RGN_ALIGN_BOTTOM;
+
+  /* main region */
+  ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
+
+  BLI_addtail(&sphys->regionbase, ar);
+  ar->regiontype = RGN_TYPE_WINDOW;
+
+  return (SpaceLink *)sphys;
+}
+
+ /* only called once, from space/spacetypes.c */
 void ED_spacetype_physarum(void)
 {
   SpaceType *st = MEM_callocN(sizeof(SpaceType), "spacetype physarum");
@@ -44,7 +73,7 @@ void ED_spacetype_physarum(void)
 
   st->spaceid = SPACE_PHYSARUM;
   strncpy(st->name, "Physarum", BKE_ST_MAXNAME);
-  //st->create = physarum_create;
+  st->create = physarum_create;
   //st->operatortypes = physarum_operatortypes;
 
   /* regions: main window */
