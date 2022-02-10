@@ -43,7 +43,7 @@
 #include "UI_resources.h"
 #include "UI_view2d.h"
 
-static enum PhysarumColor { GREEN, BLUE, RED };
+#include "physarum_intern.h"
 
 /* function which is called when a new instance of the editor is created by the user */
 static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUSED(scene))
@@ -121,6 +121,13 @@ static void physarum_main_region_draw(const bContext *C, ARegion *ar)
   immUnbindProgram();
 }
 
+void physarum_operatortypes(void)
+{
+  WM_operatortype_append(SPACE_PHYSARUM_OT_red_region);
+  WM_operatortype_append(SPACE_PHYSARUM_OT_green_region);
+  WM_operatortype_append(SPACE_PHYSARUM_OT_blue_region);
+}
+
  /* only called once, from space/spacetypes.c */
 void ED_spacetype_physarum(void)
 {
@@ -130,13 +137,13 @@ void ED_spacetype_physarum(void)
   st->spaceid = SPACE_PHYSARUM;
   strncpy(st->name, "Physarum", BKE_ST_MAXNAME);
   st->create = physarum_create;
-  //st->operatortypes = physarum_operatortypes;
+  st->operatortypes = physarum_operatortypes;
 
   /* regions: main window */
   art = MEM_callocN(sizeof(ARegionType), "spacetype physarum main window");
   art->regionid = RGN_TYPE_WINDOW;
-  //art->init = physarum_main_region_init;
-  //art->draw = physarum_main_region_draw;
+  art->init = physarum_main_region_init;
+  art->draw = physarum_main_region_draw;
 
   BLI_addhead(&st->regiontypes, art);
 
