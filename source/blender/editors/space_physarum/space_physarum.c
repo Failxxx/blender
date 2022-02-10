@@ -41,7 +41,7 @@
 #include "UI_view2d.h"
 
 /* function which is called when a new instance of the editor is created by the user */
-static SpaceLink *physarum_create(const ScrArea *area, const Scene *scene)
+static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUSED(scene))
 {
   ARegion *ar;
   SpacePhysarum *sphys;
@@ -63,6 +63,18 @@ static SpaceLink *physarum_create(const ScrArea *area, const Scene *scene)
   ar->regiontype = RGN_TYPE_WINDOW;
 
   return (SpaceLink *)sphys;
+}
+
+/* function which initializes the header region of the editor */
+static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *ar)
+{
+  ED_region_header_init(ar);
+}
+
+/* function which initializes the main region of the editor */
+static void physarum_main_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
+{
+  UI_view2d_region_reinit(&region->v2d, V2D_COMMONVIEW_CUSTOM, region->winx, region->winy);
 }
 
  /* only called once, from space/spacetypes.c */
@@ -89,7 +101,7 @@ void ED_spacetype_physarum(void)
   art->regionid = RGN_TYPE_HEADER;
   art->prefsizey = HEADERY;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
-  //art->init = physarum_header_region_init;
+  art->init = physarum_header_region_init;
   //art->draw = physarum_headar_region_draw;
 
   BLI_addhead(&st->regiontypes, art);
