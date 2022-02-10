@@ -870,6 +870,15 @@ struct SpaceOutliner *CTX_wm_space_outliner(const bContext *C)
   return NULL;
 }
 
+struct SpacePhysarum *CTX_wm_space_physarum(const bContext *C)
+{
+  ScrArea *area = CTX_wm_area(C);
+  if (area && area->spacetype == SPACE_PHYSARUM) {
+    return area->spacedata.first;
+  }
+  return NULL;
+}
+
 struct SpaceNla *CTX_wm_space_nla(const bContext *C)
 {
   ScrArea *area = CTX_wm_area(C);

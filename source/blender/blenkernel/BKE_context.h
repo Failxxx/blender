@@ -192,6 +192,7 @@ struct SpaceProperties *CTX_wm_space_properties(const bContext *C);
 struct SpaceFile *CTX_wm_space_file(const bContext *C);
 struct SpaceSeq *CTX_wm_space_seq(const bContext *C);
 struct SpaceOutliner *CTX_wm_space_outliner(const bContext *C);
+struct SpacePhysarum *CTX_wm_space_physarum(const bContext *C);
 struct SpaceNla *CTX_wm_space_nla(const bContext *C);
 struct SpaceNode *CTX_wm_space_node(const bContext *C);
 struct SpaceGraph *CTX_wm_space_graph(const bContext *C);

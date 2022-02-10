@@ -35,10 +35,15 @@
 #include "ED_screen.h"
 #include "ED_space_api.h"
 
+#include "GPU_framebuffer.h"
+#include "GPU_immediate.h"
+
 #include "WM_api.h"
 
 #include "UI_resources.h"
 #include "UI_view2d.h"
+
+static enum PhysarumColor { GREEN, BLUE, RED };
 
 /* function which is called when a new instance of the editor is created by the user */
 static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUSED(scene))
@@ -75,6 +80,45 @@ static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *ar
 static void physarum_main_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
 {
   UI_view2d_region_reinit(&region->v2d, V2D_COMMONVIEW_CUSTOM, region->winx, region->winy);
+}
+
+/* draw function of the main region */
+static void physarum_main_region_draw(const bContext *C, ARegion *ar)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  View2D *v2d = &ar->v2d;
+
+  switch (sphys->color) {
+    case GREEN:
+      GPU_clear_color(0.0, 1.0, 0.0, 1.0);
+      break;
+    case BLUE:
+      GPU_clear_color(0.0, 0.0, 1.0, 1.0);
+      break;
+    case RED:
+      GPU_clear_color(1.0, 0.0, 0.0, 1.0);
+      break;
+    default:
+      GPU_clear_color(0.0, 0.0, 0.0, 1.0);
+      break;
+  }
+
+  //GPU_clear(GPU_COLOR_BIT);
+
+  /* draw colored rectangles within the mask area of region */
+  uint pos = GPU_vertformat_attr_add(immVertexFormat(), "pos", GPU_COMP_I32, 2, GPU_FETCH_INT_TO_FLOAT);
+  immBindBuiltinProgram(GPU_SHADER_2D_UNIFORM_COLOR);
+
+  immUniformColor4ub(255, 0, 255, 255);
+  immRecti(pos, v2d->mask.xmin + 50, v2d->mask.ymin + 50, v2d->mask.xmax - 50, v2d->mask.ymax - 50);
+
+  immUniformColor4ub(0, 255, 255, 255);
+  immRecti(pos, v2d->mask.xmin + 80, v2d->mask.ymin + 80, v2d->mask.xmax - 80, v2d->mask.ymax - 80);
+
+  immUniformColor4ub(255, 255, 0, 255);
+  immRecti(pos, v2d->mask.xmin + 110, v2d->mask.ymin + 110, v2d->mask.xmax - 110, v2d->mask.ymax - 110);
+
+  immUnbindProgram();
 }
 
  /* only called once, from space/spacetypes.c */
