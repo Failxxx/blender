@@ -35,15 +35,23 @@
 #include "ED_screen.h"
 #include "ED_space_api.h"
 
-#include "GPU_framebuffer.h"
 #include "GPU_immediate.h"
+#include "GPU_immediate_util.h"
+#include "GPU_framebuffer.h"
 
 #include "WM_api.h"
 
+#include "UI_interface.h"
 #include "UI_resources.h"
 #include "UI_view2d.h"
+#include "../interface/interface_intern.h"
 
 #include "physarum_intern.h"
+
+static void physarum_init(struct wmWindowManager *wm, struct ScrArea *sa)
+{
+  SpacePhysarum *sphys = (SpacePhysarum *)sa->spacedata.first;
+}
 
 /* function which is called when a new instance of the editor is created by the user */
 static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUSED(scene))
@@ -63,9 +71,13 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
 
   /* main region */
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
-
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
+
+  /* ui region */
+  ar = MEM_callocN(sizeof(ARegion), "ui region of physarum");
+  BLI_addtail(&sphys->regionbase, ar);
+  ar->regiontype = RGN_TYPE_UI;
 
   return (SpaceLink *)sphys;
 }
@@ -121,6 +133,28 @@ static void physarum_main_region_draw(const bContext *C, ARegion *ar)
   immUnbindProgram();
 }
 
+static void draw_buttons(uiBlock *block)
+{
+  static int value = 100;
+
+  struct wmOperatorType *ot = WM_operatortype_find("SPACE_PHYSARUM_OT_red_region", true);
+  struct uiBut *but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "RED", 100, 2, 30, 19, (void*)&value, 0., 0., 0., 0., "");
+  but->optype = ot;
+
+  ot = WM_operatortype_find("SPACE_PHYSARUM_OT_green_region", true);
+  but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "GREEN", 200, 5, 75, 19, (void*)&value, 0., 0., 0., 0., "");
+  but->optype = ot;
+
+  ot = WM_operatortype_find("SPACE_PHYSARUM_OT_blue_region", true);
+  but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "BLUE", 300, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
+  but->optype = ot;
+}
+
+static void physarum_header_region_draw(const bContext *C, ARegion *ar)
+{
+  //draw_buttons(ar->uiblocks);
+}
+
 void physarum_operatortypes(void)
 {
   WM_operatortype_append(SPACE_PHYSARUM_OT_red_region);
@@ -136,6 +170,7 @@ void ED_spacetype_physarum(void)
 
   st->spaceid = SPACE_PHYSARUM;
   strncpy(st->name, "Physarum", BKE_ST_MAXNAME);
+  st->init = physarum_init;
   st->create = physarum_create;
   st->operatortypes = physarum_operatortypes;
 
@@ -153,7 +188,18 @@ void ED_spacetype_physarum(void)
   art->prefsizey = HEADERY;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
   art->init = physarum_header_region_init;
-  //art->draw = physarum_headar_region_draw;
+  art->draw = physarum_header_region_draw;
+
+  BLI_addhead(&st->regiontypes, art);
+
+  /* regions: header */
+  art = MEM_callocN(sizeof(ARegionType), "spacetype physarum buttons region");
+  art->regionid = RGN_TYPE_UI;
+  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
+  //art->init = physarum_ui_region_init;
+  //art->draw = physarum_ui_region_draw;
+  art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
+  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
 
   BLI_addhead(&st->regiontypes, art);
 
