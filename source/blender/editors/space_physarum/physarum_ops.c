@@ -33,9 +33,9 @@
 #include "physarum_intern.h"
 
 /* poll function for the operators */
-int test_context_for_button_operator(struct bContext *C)
+bool test_context_for_button_operator(struct bContext *C)
 {
-  return 1;
+  return true;
 }
 
 /* RED */
@@ -47,6 +47,7 @@ int set_background_red_in_main_region(struct bContext *C, struct wmOperator *ope
 
   sphys->color = RED;
 
+  ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
 
   return OPERATOR_FINISHED;
@@ -64,7 +65,7 @@ void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot)
   ot->poll = test_context_for_button_operator;
 
   /* flags */
-  ot->flag = "OPTYPE_REGISTER";
+  ot->flag = OPTYPE_REGISTER;
 }
 
 /* GREEN */
@@ -76,6 +77,7 @@ int set_background_green_in_main_region(struct bContext *C, struct wmOperator *o
 
   sphys->color = GREEN;
 
+  ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
 
   return OPERATOR_FINISHED;
@@ -92,7 +94,7 @@ void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot)
   ot->poll = test_context_for_button_operator;
 
   /* flags */
-  ot->flag = "OPTYPE_REGISTER";
+  ot->flag = OPTYPE_REGISTER;
 }
 
 /* BLUE */
@@ -104,6 +106,7 @@ int set_background_blue_in_main_region(struct bContext *C, struct wmOperator *op
 
   sphys->color = BLUE;
 
+  ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
 
   return OPERATOR_FINISHED;
@@ -120,5 +123,5 @@ void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot)
   ot->poll = test_context_for_button_operator;
 
   /* flags */
-  ot->flag = "OPTYPE_REGISTER";
+  ot->flag = OPTYPE_REGISTER;
 }

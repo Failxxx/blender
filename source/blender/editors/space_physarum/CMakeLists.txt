@@ -17,16 +17,14 @@
 
 set(INC
   ../include
+  ../../blenfont
   ../../blenkernel
   ../../blenlib
-  ../../blentranslation
-  ../../bmesh
-  ../../depsgraph
   ../../gpu
+  ../../imbuf
   ../../makesdna
   ../../makesrna
   ../../windowmanager
-  ../../../../intern/eigen
   ../../../../intern/glew-mx
   ../../../../intern/guardedalloc
 )
@@ -39,13 +37,18 @@ set(SRC
   physarum_intern.h
 )
 
+set(INC_SYS
+  ${GLEW_INCLUDE_PATH}
+)
+
 set(LIB
-  bf_bmesh
 )
 
 if(WITH_INTERNATIONAL)
   add_definitions(-DWITH_INTERNATIONAL)
 endif()
+
+add_definitions(${GL_DEFINITIONS})
 
 
 blender_add_lib(bf_editor_space_physarum "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")

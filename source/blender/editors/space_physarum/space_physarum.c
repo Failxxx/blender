@@ -163,7 +163,7 @@ static void draw_buttons(uiBlock *block, uiLayout *layout)
 
 static void physarum_header_region_draw(const bContext *C, ARegion *ar)
 {
-  uiStyle *style = UI_style_get_dpi();
+  const uiStyle *style = UI_style_get_dpi();
   uiBlock *block;
   uiLayout *layout;
   bool region_layout_based = ar->flag & RGN_FLAG_DYNAMIC_SIZE;
