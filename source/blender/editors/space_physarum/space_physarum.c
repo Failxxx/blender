@@ -94,6 +94,12 @@ static void physarum_main_region_init(wmWindowManager *UNUSED(wm), ARegion *regi
   UI_view2d_region_reinit(&region->v2d, V2D_COMMONVIEW_CUSTOM, region->winx, region->winy);
 }
 
+/* function which initializes the ui region of the editor */
+static void physarum_ui_region_init(wmWindowManager *wm, ARegion *ar)
+{
+  ED_region_panels_init(wm, ar);
+}
+
 /* draw function of the main region */
 static void physarum_main_region_draw(const bContext *C, ARegion *ar)
 {
@@ -133,7 +139,7 @@ static void physarum_main_region_draw(const bContext *C, ARegion *ar)
   immUnbindProgram();
 }
 
-static void draw_buttons(uiBlock *block)
+static void draw_buttons(uiBlock *block, uiLayout *layout)
 {
   static int value = 100;
 
@@ -152,7 +158,76 @@ static void draw_buttons(uiBlock *block)
 
 static void physarum_header_region_draw(const bContext *C, ARegion *ar)
 {
-  //draw_buttons(ar->uiblocks);
+  uiStyle *style = UI_style_get_dpi();
+  uiBlock *block;
+  uiLayout *layout;
+  bool region_layout_based = ar->flag & RGN_FLAG_DYNAMIC_SIZE;
+
+  /* Height of buttons and scaling needed to achieve it */
+  const int buttony = min_ii(UI_UNIT_Y, ar->winy - 2 * UI_DPI_FAC);
+  const float buttony_scale = buttony / (float)UI_UNIT_Y;
+
+  /* Vertically center button */
+  int xco = UI_HEADER_OFFSET;
+  int yco = buttony + (ar->winy - buttony) / 2;
+  int maxco = xco;
+
+  /* Set view2d view matrix for scrolling (without scrollers) */
+  UI_view2d_view_ortho(&ar->v2d);
+
+  block = UI_block_begin(C, ar, "", UI_EMBOSS);
+  layout = UI_block_layout(block, UI_LAYOUT_HORIZONTAL, UI_LAYOUT_HEADER, xco, yco, buttony, 1, 0, style);
+
+  if (buttony_scale != 1.0f) {
+    uiLayoutSetScaleY(layout, buttony_scale);
+  }
+
+  /* Buttons */
+  draw_buttons(block, layout);
+
+  UI_block_layout_resolve(block, &xco, &yco);
+
+  /* For view2d */
+  if (xco > maxco) {
+    maxco = xco;
+  }
+
+  int new_sizex = (maxco + UI_HEADER_OFFSET) / UI_DPI_FAC;
+
+  if (region_layout_based && (ar->sizex != new_sizex)) {
+    /* region size is layout based and needs to be updated */
+    ScrArea *sa = CTX_wm_area(C);
+
+    ar->sizex = new_sizex;
+    sa->flag |= AREA_FLAG_REGION_SIZE_UPDATE;
+  }
+
+  UI_block_end(C, block);
+
+  if (!region_layout_based) {
+    maxco += UI_HEADER_OFFSET;
+  }
+
+  /* always at last */
+  UI_view2d_totRect_set(&ar->v2d, maxco, ar->winy);
+
+  /* restore view matrix */
+  UI_view2d_view_restore(C);
+
+  /* clear */
+  UI_ThemeClearColor(TH_HEADER);
+  //GPU_clear(GPU_COLOR_BIT);
+
+  UI_view2d_view_ortho(&ar->v2d);
+
+  /* View2D matrix might have changed due to dynamic sized regions */
+  UI_blocklist_update_window_matrix(C, &ar->uiblocks);
+
+  /* draw blocks */
+  UI_blocklist_draw(C, &ar->uiblocks);
+
+  /* restore view matrix */
+  UI_view2d_view_restore(C);
 }
 
 void physarum_operatortypes(void)
@@ -196,7 +271,7 @@ void ED_spacetype_physarum(void)
   art = MEM_callocN(sizeof(ARegionType), "spacetype physarum buttons region");
   art->regionid = RGN_TYPE_UI;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
-  //art->init = physarum_ui_region_init;
+  art->init = physarum_ui_region_init;
   //art->draw = physarum_ui_region_draw;
   art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
