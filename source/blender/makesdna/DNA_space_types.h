@@ -1439,6 +1439,14 @@ typedef enum eSpaceText_Flags {
 /* SpaceText.findstr/replacestr */
 #define ST_MAX_FIND_STR 256
 
+/* -------------------------------------------------------------------- */
+/** \name Space Physarum
+ * \{ */
+
+/* These two lines with # tell makesdna this struct can be excluded.
+ * Should be: #ifndef WITH_GLOBAL_AREA_WRITING */
+#
+#
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
   /* Storage of regions for inactive spaces. */
@@ -2046,7 +2054,6 @@ typedef enum eSpace_Type {
   SPACE_INFO = 7,
   SPACE_SEQ = 8,
   SPACE_TEXT = 9,
-  SPACE_PHYSARUM = 10,
 #ifdef DNA_DEPRECATED_ALLOW
   SPACE_IMASEL = 10, /* Deprecated */
   SPACE_SOUND = 11,  /* Deprecated */
@@ -2067,9 +2074,10 @@ typedef enum eSpace_Type {
   SPACE_CLIP = 20,
   SPACE_TOPBAR = 21,
   SPACE_STATUSBAR = 22,
-  SPACE_SPREADSHEET = 23
+  SPACE_SPREADSHEET = 23,
+  SPACE_PHYSARUM = 24
 
-#define SPACE_TYPE_LAST SPACE_SPREADSHEET
+#define SPACE_TYPE_LAST SPACE_PHYSARUM
 } eSpace_Type;
 
 /* use for function args */

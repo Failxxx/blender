@@ -100,6 +100,11 @@ static void physarum_ui_region_init(wmWindowManager *wm, ARegion *ar)
   ED_region_panels_init(wm, ar);
 }
 
+static void physarum_ui_region_draw(const bContext *C, ARegion *ar)
+{
+  ED_region_panels_draw(C, ar);
+}
+
 /* draw function of the main region */
 static void physarum_main_region_draw(const bContext *C, ARegion *ar)
 {
@@ -272,7 +277,7 @@ void ED_spacetype_physarum(void)
   art->regionid = RGN_TYPE_UI;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
   art->init = physarum_ui_region_init;
-  //art->draw = physarum_ui_region_draw;
+  art->draw = physarum_ui_region_draw;
   art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
 

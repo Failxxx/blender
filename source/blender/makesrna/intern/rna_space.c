@@ -84,6 +84,7 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_VIEW3D,
      "3D Viewport",
      "Manipulate objects in a 3D environment"},
+    {SPACE_PHYSARUM, "PHYSARUM EDITOR", ICON_NONE, "Physarum editor", "Create and edit physarum shapes"},
     {SPACE_IMAGE,
      "IMAGE_EDITOR",
      ICON_IMAGE,
@@ -165,6 +166,7 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_PREFERENCES,
      "Preferences",
      "Edit persistent configuration settings"},
+    {SPACE_PHYSARUM, "PHYSARUM", ICON_NONE, "Physarum", "Physarum space type"},
     {0, NULL, 0, NULL, NULL},
 };
 
@@ -595,6 +597,8 @@ static StructRNA *rna_Space_refine(struct PointerRNA *ptr)
       return &RNA_SpaceClipEditor;
     case SPACE_SPREADSHEET:
       return &RNA_SpaceSpreadsheet;
+    case SPACE_PHYSARUM:
+      return &RNA_SpacePhysarumEditor;
 
       /* Currently no type info. */
     case SPACE_SCRIPT:
@@ -5149,6 +5153,16 @@ static void rna_def_space_view3d(BlenderRNA *brna)
   RNA_api_region_view3d(srna);
 }
 
+static void rna_def_space_physarum(BlenderRNA *brna)
+{
+  StructRNA *srna;
+  PropertyRNA *prop;
+
+  srna = RNA_def_struct(brna, "SpacePhysarumEditor", "Space");
+  RNA_def_struct_sdna(srna, "SpacePhysarum");
+  RNA_def_struct_ui_text(srna, "Space Physarum Editor", "Physarum editor space data");
+}
+
 static void rna_def_space_properties(BlenderRNA *brna)
 {
   StructRNA *srna;
@@ -7970,6 +7984,7 @@ void RNA_def_space(BlenderRNA *brna)
   rna_def_space_node(brna);
   rna_def_space_clip(brna);
   rna_def_space_spreadsheet(brna);
+  rna_def_space_physarum(brna);
 }
 
 #endif

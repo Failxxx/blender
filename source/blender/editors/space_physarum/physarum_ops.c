@@ -33,9 +33,9 @@
 #include "physarum_intern.h"
 
 /* poll function for the operators */
-bool test_context_for_button_operator(struct bContext *C)
+int test_context_for_button_operator(struct bContext *C)
 {
-  return true;
+  return 1;
 }
 
 /* RED */
