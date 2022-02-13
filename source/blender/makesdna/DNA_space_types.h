@@ -1440,28 +1440,6 @@ typedef enum eSpaceText_Flags {
 #define ST_MAX_FIND_STR 256
 
 /* -------------------------------------------------------------------- */
-/** \name Space Physarum
- * \{ */
-
-/* These two lines with # tell makesdna this struct can be excluded.
- * Should be: #ifndef WITH_GLOBAL_AREA_WRITING */
-#
-#
-typedef struct SpacePhysarum {
-  SpaceLink *next, *prev;
-  /* Storage of regions for inactive spaces. */
-  ListBase regionbase;
-  char spacetype;
-
-  int color;
-
-  char _pad0[6];
-  /* End 'SpaceLink' header. */
-} SpacePhysarum;
-
-/** \} */
-
-/* -------------------------------------------------------------------- */
 /** \name Script View (Obsolete)
  * \{ */
 
@@ -2034,6 +2012,25 @@ typedef enum eSpreadsheetColumnValueType {
  */
 #define SPREADSHEET_WIDTH_UNIT \
   (UI_UNIT_X * UI_style_get_dpi()->widget.points / (float)UI_DEFAULT_TEXT_POINTS)
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
+/** \name Space Physarum
+ * \{ */
+
+typedef struct SpacePhysarum {
+  SpaceLink *next, *prev;
+  /* Storage of regions for inactive spaces. */
+  ListBase regionbase;
+  char spacetype;
+
+  char _pad0[7];
+  int color;
+
+  char _pad1[12];
+  /* End 'SpaceLink' header. */
+} SpacePhysarum;
 
 /** \} */
 

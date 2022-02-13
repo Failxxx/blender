@@ -45,7 +45,7 @@ int set_background_red_in_main_region(struct bContext *C, struct wmOperator *ope
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = RED;
+  sphys->color = 0;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
@@ -56,7 +56,7 @@ int set_background_red_in_main_region(struct bContext *C, struct wmOperator *ope
 
 void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot)
 {
-  ot->name = "Red region button";
+  ot->name = "Red_region_button";
   ot->description = "Turns the main region background to red";
   ot->idname = "SPACE_PHYSARUM_OT_red_region";
 
@@ -75,7 +75,7 @@ int set_background_green_in_main_region(struct bContext *C, struct wmOperator *o
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = GREEN;
+  sphys->color = 1;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
@@ -85,7 +85,7 @@ int set_background_green_in_main_region(struct bContext *C, struct wmOperator *o
 
 void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot)
 {
-  ot->name = "Green region button";
+  ot->name = "Green_region_button";
   ot->description = "Turns the main region background to green";
   ot->idname = "SPACE_PHYSARUM_OT_green_region";
 
@@ -104,7 +104,7 @@ int set_background_blue_in_main_region(struct bContext *C, struct wmOperator *op
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = BLUE;
+  sphys->color = 2;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
@@ -114,7 +114,7 @@ int set_background_blue_in_main_region(struct bContext *C, struct wmOperator *op
 
 void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot)
 {
-  ot->name = "Blue region button";
+  ot->name = "Blue_region_button";
   ot->description = "Turns the main region background to blue";
   ot->idname = "SPACE_PHYSARUM_OT_blue_region";
 

@@ -112,13 +112,13 @@ static void physarum_main_region_draw(const bContext *C, ARegion *ar)
   View2D *v2d = &ar->v2d;
 
   switch (sphys->color) {
-    case GREEN:
+    case 0:
       GPU_clear_color(0.0, 1.0, 0.0, 1.0);
       break;
-    case BLUE:
+    case 1:
       GPU_clear_color(0.0, 0.0, 1.0, 1.0);
       break;
-    case RED:
+    case 2:
       GPU_clear_color(1.0, 0.0, 0.0, 1.0);
       break;
     default:

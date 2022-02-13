@@ -84,7 +84,7 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_VIEW3D,
      "3D Viewport",
      "Manipulate objects in a 3D environment"},
-    {SPACE_PHYSARUM, "PHYSARUM EDITOR", ICON_NONE, "Physarum editor", "Create and edit physarum shapes"},
+    {SPACE_PHYSARUM, "PHYSARUM_EDITOR", ICON_NONE, "Physarum editor", "Create and edit physarum shapes"},
     {SPACE_IMAGE,
      "IMAGE_EDITOR",
      ICON_IMAGE,

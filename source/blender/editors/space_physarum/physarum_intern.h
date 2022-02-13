@@ -25,7 +25,7 @@
 
 /* internal exports only */
 
-enum PhysarumColor { RED = 0, GREEN = 1, BLUE = 2 };
+//enum PhysarumColor { RED = 0, GREEN = 1, BLUE = 2 };
 
 /* operators */
 void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot);
