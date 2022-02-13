@@ -453,7 +453,7 @@ set(LIB
   bf_editor_sculpt_paint
   bf_editor_sound
   bf_editor_transform
-  bf_editor_undo,
+  bf_editor_undo
   bf_editor_space_physarum
 )
 
