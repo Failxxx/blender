@@ -69,6 +69,14 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->regiontype = RGN_TYPE_HEADER;
   ar->alignment = RGN_ALIGN_BOTTOM;
 
+  /* buttons/list view */
+  ar = MEM_callocN(sizeof(ARegion), "buttons for parameters");
+
+  BLI_addtail(&sphys->regionbase, ar);
+  ar->regiontype = RGN_TYPE_UI;
+  ar->alignment = RGN_ALIGN_RIGHT;
+  ar->flag = RGN_FLAG_HIDDEN;
+
   /* main region */
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
   BLI_addtail(&sphys->regionbase, ar);
@@ -242,6 +250,53 @@ void physarum_operatortypes(void)
   WM_operatortype_append(SPACE_PHYSARUM_OT_blue_region);
 }
 
+/* *********************** buttons region ************************ */
+
+/* add handlers, stuff you only do once or on area/region changes */
+static void physarum_buttons_region_init(wmWindowManager *wm, ARegion *ar)
+{
+  wmKeyMap *keymap;
+
+  ED_region_panels_init(wm, ar);
+
+  keymap = WM_keymap_ensure(wm->defaultconf, "Physarum Generic", SPACE_PHYSARUM, 0);
+  WM_event_add_keymap_handler(&ar->handlers, keymap);
+}
+
+void ED_physarum_buttons_region_layout_ex(const bContext *C,
+                                        ARegion *ar,
+                                        const char *category_override)
+{
+  const enum eContextObjectMode mode = CTX_data_mode_enum(C);
+
+  const char *contexts_base[4] = {NULL};
+  contexts_base[0] = CTX_data_mode_string(C);
+
+  const char **contexts = &contexts_base[1];
+
+  ARRAY_SET_ITEMS(contexts, ".physarum_params");
+
+  ListBase *paneltypes = &ar->type->paneltypes;
+
+  ED_region_panels_layout_ex(C, ar, paneltypes, contexts_base, category_override);
+}
+
+static void physarum_buttons_region_layout(const bContext *C, ARegion *ar)
+{
+  ED_physarum_buttons_region_layout_ex(C, ar, NULL);
+}
+
+/* LISTENER SUREMEENT A REFÉFINIR */
+static void physarum_buttons_region_listener(const wmRegionListenerParams *params)
+{
+  ARegion *ar = params->region;
+  wmNotifier *wmn = params->notifier;
+
+  /* context changes */
+  switch (wmn->category) {
+  }
+}
+
  /* only called once, from space/spacetypes.c */
 void ED_spacetype_physarum(void)
 {
@@ -261,6 +316,20 @@ void ED_spacetype_physarum(void)
   art->draw = physarum_main_region_draw;
 
   BLI_addhead(&st->regiontypes, art);
+
+  /* regions: buttons */
+  art = MEM_callocN(sizeof(ARegionType), "spacetype physarum buttons region");
+  art->regionid = RGN_TYPE_UI;
+  art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
+  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
+  art->listener = physarum_buttons_region_listener;
+  art->message_subscribe = ED_area_do_mgs_subscribe_for_tool_ui;
+  art->init = physarum_buttons_region_init;
+  art->layout = physarum_buttons_region_layout;
+  art->draw = ED_region_panels_draw;
+  BLI_addhead(&st->regiontypes, art);
+
+  physarum_buttons_register(art);
 
   /* regions: header */
   art = MEM_callocN(sizeof(ARegionType), "spacetype physarum header region");

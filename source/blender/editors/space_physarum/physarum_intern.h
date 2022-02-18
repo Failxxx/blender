@@ -24,6 +24,7 @@
 #pragma once
 
 /* internal exports only */
+struct ARegionType;
 
 //enum PhysarumColor { RED = 0, GREEN = 1, BLUE = 2 };
 
@@ -31,3 +32,10 @@
 void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot);
 void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot);
 void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot);
+
+/* image_panels.c */
+/*
+struct ImageUser *ntree_get_active_iuser(struct bNodeTree *ntree);
+*/
+void physarum_buttons_register(struct ARegionType *art);
+
