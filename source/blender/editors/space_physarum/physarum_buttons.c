@@ -21,46 +21,60 @@
  * \ingroup spphysarum
  */
 
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "DNA_node_types.h"
+#include "DNA_armature_types.h"
+#include "DNA_curve_types.h"
+#include "DNA_lattice_types.h"
+#include "DNA_mesh_types.h"
+#include "DNA_meshdata_types.h"
+#include "DNA_meta_types.h"
+#include "DNA_object_types.h"
 #include "DNA_scene_types.h"
 
 #include "MEM_guardedalloc.h"
 
-#include "BLI_blenlib.h"
-#include "BLI_utildefines.h"
-
 #include "BLT_translation.h"
 
+#include "BLI_array_utils.h"
+#include "BLI_bitmap.h"
+#include "BLI_blenlib.h"
+#include "BLI_math.h"
+#include "BLI_utildefines.h"
+
+#include "BKE_action.h"
+#include "BKE_armature.h"
 #include "BKE_context.h"
-#include "BKE_image.h"
-#include "BKE_node.h"
-#include "BKE_scene.h"
+#include "BKE_curve.h"
+#include "BKE_customdata.h"
+#include "BKE_deform.h"
+#include "BKE_editmesh.h"
+#include "BKE_object.h"
+#include "BKE_object_deform.h"
+#include "BKE_report.h"
 #include "BKE_screen.h"
 
-#include "RE_pipeline.h"
-
-#include "IMB_colormanagement.h"
-#include "IMB_imbuf.h"
-#include "IMB_imbuf_types.h"
-
-#include "ED_gpencil.h"
-#include "ED_image.h"
-#include "ED_screen.h"
-
-#include "RNA_access.h"
+#include "DEG_depsgraph.h"
 
 #include "WM_api.h"
 #include "WM_types.h"
+
+#include "RNA_access.h"
+
+#include "ED_mesh.h"
+#include "ED_object.h"
+#include "ED_screen.h"
 
 #include "UI_interface.h"
 #include "UI_resources.h"
 
 #include "physarum_intern.h"
 
-/* ******************* view3d space & buttons ************** */
+/* ******************* physarum space & buttons ************** */
+
 enum {
   B_REDR = 2,
   B_TRANSFORM_PANEL_MEDIAN = 1008,
@@ -88,6 +102,7 @@ static void physarum_editparams_buts(uiLayout *layout, Object *ob)
 }
 
 /* SUREMENT A REVOIR */
+
 static void do_physarum_region_buttons(bContext *C, void *UNUSED(index), int event)
 {
   ViewLayer *view_layer = CTX_data_view_layer(C);
@@ -97,7 +112,7 @@ static void do_physarum_region_buttons(bContext *C, void *UNUSED(index), int eve
 
     case B_REDR:
       ED_area_tag_redraw(CTX_wm_area(C));
-      return; /* no notifier! */
+      return;
 
     case B_TRANSFORM_PANEL_MEDIAN:
       if (ob) {
@@ -137,9 +152,9 @@ void physarum_buttons_register(ARegionType *art)
 {
   PanelType *pt;
 
-  pt = MEM_callocN(sizeof(PanelType), "spacetype view3d panel object");
+  pt = MEM_callocN(sizeof(PanelType), "spacetype physarum panel object");
   strcpy(pt->idname, "Physarum_PT_Parameters");
-  strcpy(pt->label, N_("Parameters")); /* XXX C panels unavailable through RNA bpy.types! */
+  strcpy(pt->label, N_("Parameters")); 
   strcpy(pt->category, "Params");
   strcpy(pt->translation_context, BLT_I18NCONTEXT_DEFAULT_BPYRNA);
   pt->draw = physarum_panel_parameters;

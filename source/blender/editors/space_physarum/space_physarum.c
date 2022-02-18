@@ -69,8 +69,8 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->regiontype = RGN_TYPE_HEADER;
   ar->alignment = RGN_ALIGN_BOTTOM;
 
-  /* buttons/list view */
-  ar = MEM_callocN(sizeof(ARegion), "buttons for parameters");
+  /* properties region */
+  ar = MEM_callocN(sizeof(ARegion), "properties for physarum");
 
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_UI;
@@ -250,50 +250,140 @@ void physarum_operatortypes(void)
   WM_operatortype_append(SPACE_PHYSARUM_OT_blue_region);
 }
 
-/* *********************** buttons region ************************ */
+/****************** properties region ******************/
 
 /* add handlers, stuff you only do once or on area/region changes */
-static void physarum_buttons_region_init(wmWindowManager *wm, ARegion *ar)
+static void physarum_buttons_region_init(wmWindowManager *wm, ARegion *region)
 {
   wmKeyMap *keymap;
 
-  ED_region_panels_init(wm, ar);
+  region->v2d.scroll = V2D_SCROLL_RIGHT | V2D_SCROLL_VERTICAL_HIDE;
+  ED_region_panels_init(wm, region);
 
-  keymap = WM_keymap_ensure(wm->defaultconf, "Physarum Generic", SPACE_PHYSARUM, 0);
-  WM_event_add_keymap_handler(&ar->handlers, keymap);
+  keymap = WM_keymap_ensure(wm->defaultconf, "Physarum Properties Generic", SPACE_PHYSARUM, 0);
+  WM_event_add_keymap_handler(&region->handlers, keymap);
 }
 
-void ED_physarum_buttons_region_layout_ex(const bContext *C,
-                                        ARegion *ar,
-                                        const char *category_override)
+static void physarum_buttons_region_layout(const bContext *C, ARegion *region)
 {
   const enum eContextObjectMode mode = CTX_data_mode_enum(C);
+  const char *contexts_base[3] = {NULL};
 
-  const char *contexts_base[4] = {NULL};
-  contexts_base[0] = CTX_data_mode_string(C);
+  const char **contexts = contexts_base;
 
-  const char **contexts = &contexts_base[1];
+  ARRAY_SET_ITEMS(contexts, ".params_physarum", ".imagepaint_2d");
 
-  ARRAY_SET_ITEMS(contexts, ".physarum_params");
-
-  ListBase *paneltypes = &ar->type->paneltypes;
-
-  ED_region_panels_layout_ex(C, ar, paneltypes, contexts_base, category_override);
+  ED_region_panels_layout_ex(C, region, &region->type->paneltypes, contexts_base, NULL);
 }
 
-static void physarum_buttons_region_layout(const bContext *C, ARegion *ar)
+static void physarum_buttons_region_draw(const bContext *C, ARegion *region)
 {
-  ED_physarum_buttons_region_layout_ex(C, ar, NULL);
+  ED_region_panels_draw(C, region);
 }
 
-/* LISTENER SUREMEENT A REFÉFINIR */
 static void physarum_buttons_region_listener(const wmRegionListenerParams *params)
 {
-  ARegion *ar = params->region;
+  ARegion *region = params->region;
   wmNotifier *wmn = params->notifier;
 
   /* context changes */
   switch (wmn->category) {
+    case NC_ANIMATION:
+      switch (wmn->data) {
+        case ND_KEYFRAME_PROP:
+        case ND_NLA_ACTCHANGE:
+          ED_region_tag_redraw(region);
+          break;
+        case ND_NLA:
+        case ND_KEYFRAME:
+          if (ELEM(wmn->action, NA_EDITED, NA_ADDED, NA_REMOVED)) {
+            ED_region_tag_redraw(region);
+          }
+          break;
+      }
+      break;
+    case NC_SCENE:
+      switch (wmn->data) {
+        case ND_FRAME:
+        case ND_OB_ACTIVE:
+        case ND_OB_SELECT:
+        case ND_OB_VISIBLE:
+        case ND_MODE:
+        case ND_LAYER:
+        case ND_LAYER_CONTENT:
+        case ND_TOOLSETTINGS:
+          ED_region_tag_redraw(region);
+          break;
+      }
+      switch (wmn->action) {
+        case NA_EDITED:
+          ED_region_tag_redraw(region);
+          break;
+      }
+      break;
+    case NC_OBJECT:
+      switch (wmn->data) {
+        case ND_BONE_ACTIVE:
+        case ND_BONE_SELECT:
+        case ND_TRANSFORM:
+        case ND_POSE:
+        case ND_DRAW:
+        case ND_KEYS:
+        case ND_MODIFIER:
+        case ND_SHADERFX:
+          ED_region_tag_redraw(region);
+          break;
+      }
+      break;
+    case NC_GEOM:
+      switch (wmn->data) {
+        case ND_DATA:
+        case ND_VERTEX_GROUP:
+        case ND_SELECT:
+          ED_region_tag_redraw(region);
+          break;
+      }
+      if (wmn->action == NA_EDITED) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_TEXTURE:
+    case NC_MATERIAL:
+      /* for brush textures */
+      ED_region_tag_redraw(region);
+      break;
+    case NC_BRUSH:
+      /* NA_SELECTED is used on brush changes */
+      if (ELEM(wmn->action, NA_EDITED, NA_SELECTED)) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_SPACE:
+      if (wmn->data == ND_SPACE_VIEW3D) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_ID:
+      if (wmn->action == NA_RENAME) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_GPENCIL:
+      if ((wmn->data & (ND_DATA | ND_GPENCIL_EDITMODE)) || (wmn->action == NA_EDITED)) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_IMAGE:
+      /* Update for the image layers in texture paint. */
+      if (wmn->action == NA_EDITED) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+    case NC_WM:
+      if (wmn->data == ND_XR_DATA_CHANGED) {
+        ED_region_tag_redraw(region);
+      }
+      break;
   }
 }
 
@@ -317,19 +407,16 @@ void ED_spacetype_physarum(void)
 
   BLI_addhead(&st->regiontypes, art);
 
-  /* regions: buttons */
-  art = MEM_callocN(sizeof(ARegionType), "spacetype physarum buttons region");
+  /* regions: properties */
+  art = MEM_callocN(sizeof(ARegionType), "physarum params region");
   art->regionid = RGN_TYPE_UI;
   art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
-  art->listener = physarum_buttons_region_listener;
   art->message_subscribe = ED_area_do_mgs_subscribe_for_tool_ui;
   art->init = physarum_buttons_region_init;
   art->layout = physarum_buttons_region_layout;
-  art->draw = ED_region_panels_draw;
+  art->draw = physarum_buttons_region_draw;
   BLI_addhead(&st->regiontypes, art);
-
-  physarum_buttons_register(art);
 
   /* regions: header */
   art = MEM_callocN(sizeof(ARegionType), "spacetype physarum header region");
