@@ -48,9 +48,9 @@
 
 #include "physarum_intern.h"
 
-static void physarum_init(struct wmWindowManager *wm, struct ScrArea *sa)
+static void physarum_init(struct wmWindowManager *wm, struct ScrArea *area)
 {
-  SpacePhysarum *sphys = (SpacePhysarum *)sa->spacedata.first;
+  SpacePhysarum *sphys = (SpacePhysarum *)area->spacedata.first;
 }
 
 /* function which is called when a new instance of the editor is created by the user */
@@ -83,9 +83,9 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
 }
 
 /* function which initializes the header region of the editor */
-static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *ar)
+static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
 {
-  ED_region_header_init(ar);
+  ED_region_header_init(region);
 }
 
 /* function which initializes the main region of the editor */
@@ -95,21 +95,21 @@ static void physarum_main_region_init(wmWindowManager *UNUSED(wm), ARegion *regi
 }
 
 /* function which initializes the ui region of the editor */
-static void physarum_ui_region_init(wmWindowManager *wm, ARegion *ar)
+static void physarum_ui_region_init(wmWindowManager *wm, ARegion *region)
 {
-  ED_region_panels_init(wm, ar);
+  ED_region_panels_init(wm, region);
 }
 
-static void physarum_ui_region_draw(const bContext *C, ARegion *ar)
+static void physarum_ui_region_draw(const bContext *C, ARegion *region)
 {
-  ED_region_panels_draw(C, ar);
+  ED_region_panels_draw(C, region);
 }
 
 /* draw function of the main region */
-static void physarum_main_region_draw(const bContext *C, ARegion *ar)
+static void physarum_main_region_draw(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  View2D *v2d = &ar->v2d;
+  View2D *v2d = &region->v2d;
 
   switch (sphys->color) {
     case 0:
@@ -161,78 +161,9 @@ static void draw_buttons(uiBlock *block, uiLayout *layout)
   but->optype = ot;
 }
 
-static void physarum_header_region_draw(const bContext *C, ARegion *ar)
+static void physarum_header_region_draw(const bContext *C, ARegion *region)
 {
-  const uiStyle *style = UI_style_get_dpi();
-  uiBlock *block;
-  uiLayout *layout;
-  bool region_layout_based = ar->flag & RGN_FLAG_DYNAMIC_SIZE;
-
-  /* Height of buttons and scaling needed to achieve it */
-  const int buttony = min_ii(UI_UNIT_Y, ar->winy - 2 * UI_DPI_FAC);
-  const float buttony_scale = buttony / (float)UI_UNIT_Y;
-
-  /* Vertically center button */
-  int xco = UI_HEADER_OFFSET;
-  int yco = buttony + (ar->winy - buttony) / 2;
-  int maxco = xco;
-
-  /* Set view2d view matrix for scrolling (without scrollers) */
-  UI_view2d_view_ortho(&ar->v2d);
-
-  block = UI_block_begin(C, ar, "", UI_EMBOSS);
-  layout = UI_block_layout(block, UI_LAYOUT_HORIZONTAL, UI_LAYOUT_HEADER, xco, yco, buttony, 1, 0, style);
-
-  if (buttony_scale != 1.0f) {
-    uiLayoutSetScaleY(layout, buttony_scale);
-  }
-
-  /* Buttons */
-  draw_buttons(block, layout);
-
-  UI_block_layout_resolve(block, &xco, &yco);
-
-  /* For view2d */
-  if (xco > maxco) {
-    maxco = xco;
-  }
-
-  int new_sizex = (maxco + UI_HEADER_OFFSET) / UI_DPI_FAC;
-
-  if (region_layout_based && (ar->sizex != new_sizex)) {
-    /* region size is layout based and needs to be updated */
-    ScrArea *sa = CTX_wm_area(C);
-
-    ar->sizex = new_sizex;
-    sa->flag |= AREA_FLAG_REGION_SIZE_UPDATE;
-  }
-
-  UI_block_end(C, block);
-
-  if (!region_layout_based) {
-    maxco += UI_HEADER_OFFSET;
-  }
-
-  /* always at last */
-  UI_view2d_totRect_set(&ar->v2d, maxco, ar->winy);
-
-  /* restore view matrix */
-  UI_view2d_view_restore(C);
-
-  /* clear */
-  UI_ThemeClearColor(TH_HEADER);
-  //GPU_clear(GPU_COLOR_BIT);
-
-  UI_view2d_view_ortho(&ar->v2d);
-
-  /* View2D matrix might have changed due to dynamic sized regions */
-  UI_blocklist_update_window_matrix(C, &ar->uiblocks);
-
-  /* draw blocks */
-  UI_blocklist_draw(C, &ar->uiblocks);
-
-  /* restore view matrix */
-  UI_view2d_view_restore(C);
+  ED_region_header(C, region);
 }
 
 void physarum_operatortypes(void)

@@ -166,7 +166,6 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_PREFERENCES,
      "Preferences",
      "Edit persistent configuration settings"},
-    {SPACE_PHYSARUM, "PHYSARUM", ICON_NONE, "Physarum", "Physarum space type"},
     {0, NULL, 0, NULL, NULL},
 };
 
@@ -5153,16 +5152,6 @@ static void rna_def_space_view3d(BlenderRNA *brna)
   RNA_api_region_view3d(srna);
 }
 
-static void rna_def_space_physarum(BlenderRNA *brna)
-{
-  StructRNA *srna;
-  PropertyRNA *prop;
-
-  srna = RNA_def_struct(brna, "SpacePhysarumEditor", "Space");
-  RNA_def_struct_sdna(srna, "SpacePhysarum");
-  RNA_def_struct_ui_text(srna, "Space Physarum Editor", "Physarum editor space data");
-}
-
 static void rna_def_space_properties(BlenderRNA *brna)
 {
   StructRNA *srna;
@@ -7955,6 +7944,20 @@ static void rna_def_space_spreadsheet(BlenderRNA *brna)
   RNA_def_property_struct_type(prop, "SpreadsheetRowFilter");
   RNA_def_property_ui_text(prop, "Row Filters", "Filters to remove rows from the displayed data");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_SPREADSHEET, NULL);
+}
+
+static void rna_def_space_physarum(BlenderRNA *brna)
+{
+  StructRNA *srna;
+  PropertyRNA *prop;
+
+  srna = RNA_def_struct(brna, "SpacePhysarumEditor", "Space");
+  RNA_def_struct_sdna(srna, "SpacePhysarum");
+  RNA_def_struct_ui_text(srna, "Space Physarum Editor", "Physarum editor space data");
+
+  rna_def_space_generic_show_region_toggles(srna,
+                                            ((1 << RGN_TYPE_TOOL_HEADER) | (1 << RGN_TYPE_TOOLS) |
+                                             (1 << RGN_TYPE_UI) | (1 << RGN_TYPE_HUD)));
 }
 
 void RNA_def_space(BlenderRNA *brna)
