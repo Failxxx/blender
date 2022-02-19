@@ -75,89 +75,65 @@
 
 /* ******************* physarum space & buttons ************** */
 
-enum {
-  B_REDR = 2,
-  B_TRANSFORM_PANEL_MEDIAN = 1008,
-  B_TRANSFORM_PANEL_DIMS = 1009,
-};
-
-static void physarum_editparams_buts(uiLayout *layout, Object *ob)
+static void physarum_panel_properties_header(const bContext *C, Panel *panel)
 {
-  PointerRNA mbptr, ptr;
+  bScreen *screen = CTX_wm_screen(C);
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  Scene *scene = CTX_data_scene(C);
+  PointerRNA spaceptr, sceneptr;
   uiLayout *col;
 
-  col = uiLayoutColumn(layout, false);
-  uiItemR(col, &ptr, "co", 0, NULL, ICON_NONE);
+  /* get RNA pointers for use when creating the UI elements */
+  RNA_id_pointer_create(&scene->id, &sceneptr);
+  RNA_pointer_create(&screen->id, &RNA_SpaceGraphEditor, sphys, &spaceptr);
 
-  uiItemR(col, &ptr, "radius", 0, NULL, ICON_NONE);
-  uiItemR(col, &ptr, "stiffness", 0, NULL, ICON_NONE);
-
-  uiItemR(col, &ptr, "type", 0, NULL, ICON_NONE);
-
-  col = uiLayoutColumn(layout, true);
-  uiItemL(col, IFACE_("Parameters:"), ICON_NONE);
-  uiItemR(col, &ptr, "Params_A", 0, "A", ICON_NONE);
-  uiItemR(col, &ptr, "Params_A", 0, "B", ICON_NONE);
-  uiItemR(col, &ptr, "Params_A", 0, "C", ICON_NONE);
-}
-
-/* SUREMENT A REVOIR */
-
-static void do_physarum_region_buttons(bContext *C, void *UNUSED(index), int event)
-{
-  ViewLayer *view_layer = CTX_data_view_layer(C);
-  Object *ob = OBACT(view_layer);
-
-  switch (event) {
-
-    case B_REDR:
-      ED_area_tag_redraw(CTX_wm_area(C));
-      return;
-
-    case B_TRANSFORM_PANEL_MEDIAN:
-      if (ob) {
-        DEG_id_tag_update(ob->data, ID_RECALC_GEOMETRY);
-      }
-      break;
-    case B_TRANSFORM_PANEL_DIMS:
-      if (ob) {
-      }
-      break;
-  }
-}
-
-static void physarum_panel_parameters(const bContext *C, Panel *panel)
-{
-  uiBlock *block;
-  ViewLayer *view_layer = CTX_data_view_layer(C);
-  Object *ob = view_layer->basact->object;
-  Object *obedit = OBEDIT_FROM_OBACT(ob);
-  uiLayout *col;
-
-  block = uiLayoutGetBlock(panel->layout);
-  UI_block_func_handle_set(block, do_physarum_region_buttons, NULL);
-
+  /* 2D-Cursor */
   col = uiLayoutColumn(panel->layout, false);
-
-  physarum_editparams_buts(col, ob);
+  uiItemR(col, &spaceptr, "Physarum_Properties", 0, "", ICON_NONE);
 }
 
-static bool physarum_panel_parameters_poll(const bContext *C, PanelType *UNUSED(pt))
+static void physarum_panel_properties(const bContext *C, Panel *panel)
 {
-  ViewLayer *view_layer = CTX_data_view_layer(C);
-  return (view_layer->basact != NULL);
+  bScreen *screen = CTX_wm_screen(C);
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  Scene *scene = CTX_data_scene(C);
+  PointerRNA spaceptr, sceneptr;
+  uiLayout *layout = panel->layout;
+  uiLayout *col, *sub;
+
+  /* get RNA pointers for use when creating the UI elements */
+  RNA_id_pointer_create(&scene->id, &sceneptr);
+  RNA_pointer_create(&screen->id, &RNA_SpaceGraphEditor, sphys, &spaceptr);
+
+  uiLayoutSetPropSep(layout, true);
+  uiLayoutSetPropDecorate(layout, false);
+
+  /* 2D-Cursor */
+  col = uiLayoutColumn(layout, false);
+
+  sub = uiLayoutColumn(col, true);
+
+  uiItemR(sub, &sceneptr, "frame_current", 0, IFACE_("Propertie A"), ICON_NONE);
+
+  uiItemR(sub, &sceneptr, "frame_current", 0, IFACE_("Propertie B"), ICON_NONE);
+
+  uiItemR(sub, &sceneptr, "frame_current", 0, IFACE_("Propertie C"), ICON_NONE);
+
+  sub = uiLayoutColumn(col, true);
+  uiItemO(sub, IFACE_("Begin"), ICON_NONE, "GRAPH_OT_frame_jump");
 }
+
 
 void physarum_buttons_register(ARegionType *art)
 {
   PanelType *pt;
 
-  pt = MEM_callocN(sizeof(PanelType), "spacetype physarum panel object");
-  strcpy(pt->idname, "Physarum_PT_Parameters");
-  strcpy(pt->label, N_("Parameters")); 
-  strcpy(pt->category, "Params");
+  pt = MEM_callocN(sizeof(PanelType), "spacetype physarum panel properties");
+  strcpy(pt->idname, "PHYSARUM_PT_view");
+  strcpy(pt->category, "Properties");
   strcpy(pt->translation_context, BLT_I18NCONTEXT_DEFAULT_BPYRNA);
-  pt->draw = physarum_panel_parameters;
-  pt->poll = physarum_panel_parameters_poll;
+  pt->draw = physarum_panel_properties;
+  pt->draw_header = physarum_panel_properties_header;
   BLI_addtail(&art->paneltypes, pt);
 }
+
