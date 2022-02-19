@@ -20,11 +20,17 @@ set(INC
   ../../blenfont
   ../../blenkernel
   ../../blenlib
+  ../../blentranslation
+  ../../bmesh
+  ../../depsgraph
+  ../../draw
   ../../gpu
   ../../imbuf
   ../../makesdna
   ../../makesrna
+  ../../render
   ../../windowmanager
+  ../../../../intern/clog
   ../../../../intern/glew-mx
   ../../../../intern/guardedalloc
 )
@@ -32,6 +38,7 @@ set(INC
 
 set(SRC
   space_physarum.c
+  physarum_buttons.c
   physarum_ops.c
 
   physarum_intern.h

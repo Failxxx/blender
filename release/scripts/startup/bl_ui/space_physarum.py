@@ -28,8 +28,19 @@ class PHYSARUM_HT_header(Header):
 
         layout.template_header()
 
+class PHYSARUM_PT_properties(Panel):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Physarum_Properties"
+    bl_label = "Properties"
+
+    def draw(self, context):
+        layout = self.layout
+
+
 classes = (
     PHYSARUM_HT_header,
+    PHYSARUM_PT_properties,
 )
 
 if __name__ == "__main__":  # only for live edit.

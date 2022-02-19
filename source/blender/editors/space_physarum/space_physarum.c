@@ -69,15 +69,17 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->regiontype = RGN_TYPE_HEADER;
   ar->alignment = RGN_ALIGN_BOTTOM;
 
+  /* properties region */
+  ar = MEM_callocN(sizeof(ARegion), "properties region for physarum");
+
+  BLI_addtail(&sphys->regionbase, ar);
+  ar->regiontype = RGN_TYPE_UI;
+  ar->alignment = RGN_ALIGN_RIGHT;
+
   /* main region */
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
-
-  /* ui region */
-  ar = MEM_callocN(sizeof(ARegion), "ui region of physarum");
-  BLI_addtail(&sphys->regionbase, ar);
-  ar->regiontype = RGN_TYPE_UI;
 
   return (SpaceLink *)sphys;
 }
@@ -126,20 +128,24 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
       break;
   }
 
-  //GPU_clear(GPU_COLOR_BIT);
+  // GPU_clear(GPU_COLOR_BIT);
 
   /* draw colored rectangles within the mask area of region */
-  uint pos = GPU_vertformat_attr_add(immVertexFormat(), "pos", GPU_COMP_I32, 2, GPU_FETCH_INT_TO_FLOAT);
+  uint pos = GPU_vertformat_attr_add(
+      immVertexFormat(), "pos", GPU_COMP_I32, 2, GPU_FETCH_INT_TO_FLOAT);
   immBindBuiltinProgram(GPU_SHADER_2D_UNIFORM_COLOR);
 
   immUniformColor4ub(255, 0, 255, 255);
-  immRecti(pos, v2d->mask.xmin + 50, v2d->mask.ymin + 50, v2d->mask.xmax - 50, v2d->mask.ymax - 50);
+  immRecti(
+      pos, v2d->mask.xmin + 50, v2d->mask.ymin + 50, v2d->mask.xmax - 50, v2d->mask.ymax - 50);
 
   immUniformColor4ub(0, 255, 255, 255);
-  immRecti(pos, v2d->mask.xmin + 80, v2d->mask.ymin + 80, v2d->mask.xmax - 80, v2d->mask.ymax - 80);
+  immRecti(
+      pos, v2d->mask.xmin + 80, v2d->mask.ymin + 80, v2d->mask.xmax - 80, v2d->mask.ymax - 80);
 
   immUniformColor4ub(255, 255, 0, 255);
-  immRecti(pos, v2d->mask.xmin + 110, v2d->mask.ymin + 110, v2d->mask.xmax - 110, v2d->mask.ymax - 110);
+  immRecti(
+      pos, v2d->mask.xmin + 110, v2d->mask.ymin + 110, v2d->mask.xmax - 110, v2d->mask.ymax - 110);
 
   immUnbindProgram();
 }
@@ -149,15 +155,18 @@ static void draw_buttons(uiBlock *block, uiLayout *layout)
   static int value = 100;
 
   struct wmOperatorType *ot = WM_operatortype_find("SPACE_PHYSARUM_OT_red_region", true);
-  struct uiBut *but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "RED", 100, 2, 30, 19, (void*)&value, 0., 0., 0., 0., "");
+  struct uiBut *but = uiDefBut(
+      block, UI_BTYPE_BUT_TOGGLE, 1, "RED", 100, 2, 30, 19, (void *)&value, 0., 0., 0., 0., "");
   but->optype = ot;
 
   ot = WM_operatortype_find("SPACE_PHYSARUM_OT_green_region", true);
-  but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "GREEN", 200, 5, 75, 19, (void*)&value, 0., 0., 0., 0., "");
+  but = uiDefBut(
+      block, UI_BTYPE_BUT_TOGGLE, 1, "GREEN", 200, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
   but->optype = ot;
 
   ot = WM_operatortype_find("SPACE_PHYSARUM_OT_blue_region", true);
-  but = uiDefBut(block, UI_BTYPE_BUT_TOGGLE, 1, "BLUE", 300, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
+  but = uiDefBut(
+      block, UI_BTYPE_BUT_TOGGLE, 1, "BLUE", 300, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
   but->optype = ot;
 }
 
@@ -171,6 +180,24 @@ void physarum_operatortypes(void)
   WM_operatortype_append(SPACE_PHYSARUM_OT_red_region);
   WM_operatortype_append(SPACE_PHYSARUM_OT_green_region);
   WM_operatortype_append(SPACE_PHYSARUM_OT_blue_region);
+}
+
+/****************** properties region ******************/
+
+/* add handlers, stuff you only do once or on area/region changes */
+static void physarum_buttons_region_init(wmWindowManager *wm, ARegion *region)
+{
+  wmKeyMap *keymap;
+
+  ED_region_panels_init(wm, region);
+
+  keymap = WM_keymap_ensure(wm->defaultconf, "Graph Editor Generic", SPACE_GRAPH, 0);
+  WM_event_add_keymap_handler_v2d_mask(&region->handlers, keymap);
+}
+
+static void physarum_buttons_region_draw(const bContext *C, ARegion *region)
+{
+  ED_region_panels(C, region);
 }
 
  /* only called once, from space/spacetypes.c */
@@ -212,6 +239,19 @@ void ED_spacetype_physarum(void)
   art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
 
+  /* regions: UI buttons */
+  art = MEM_callocN(sizeof(ARegionType), "spacetype graphedit region");
+  art->regionid = RGN_TYPE_UI;
+  art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
+  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
+  art->init = physarum_buttons_region_init;
+  art->draw = physarum_buttons_region_draw;
+
+  BLI_addhead(&st->regiontypes, art);
+
+  physarum_buttons_register(art);
+
+  art = ED_area_type_hud(st->spaceid);
   BLI_addhead(&st->regiontypes, art);
 
   BKE_spacetype_register(st);
