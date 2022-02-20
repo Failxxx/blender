@@ -37,6 +37,8 @@
 
 #include "GPU_immediate.h"
 #include "GPU_immediate_util.h"
+#include "GPU_capabilities.h"
+#include "GPU_context.h"
 #include "GPU_framebuffer.h"
 
 #include "WM_api.h"
@@ -113,41 +115,40 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   View2D *v2d = &region->v2d;
 
-  switch (sphys->color) {
-    case 0:
-      GPU_clear_color(0.0, 1.0, 0.0, 1.0);
-      break;
-    case 1:
-      GPU_clear_color(0.0, 0.0, 1.0, 1.0);
-      break;
-    case 2:
-      GPU_clear_color(1.0, 0.0, 0.0, 1.0);
-      break;
-    default:
-      GPU_clear_color(0.0, 0.0, 0.0, 1.0);
-      break;
+  /* ----- Setup ----- */
+
+  const float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+  float verts[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
+  uint verts_len = 3;
+
+  GPUVertFormat *format = immVertexFormat();
+  uint pos = GPU_vertformat_attr_add(format, "pos", GPU_COMP_F32, 3, GPU_FETCH_FLOAT);
+
+  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
+  GPU_vertbuf_data_alloc(vbo, verts_len);
+
+  for (int i = 0; i < verts_len; i++) {
+    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
   }
 
-  // GPU_clear(GPU_COLOR_BIT);
+  /* Draw */
+  GPU_blend(GPU_BLEND_ALPHA);
+  GPUBatch *batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  GPU_batch_program_set_builtin(batch, GPU_SHADER_3D_FLAT_COLOR);
 
-  /* draw colored rectangles within the mask area of region */
-  uint pos = GPU_vertformat_attr_add(
-      immVertexFormat(), "pos", GPU_COMP_I32, 2, GPU_FETCH_INT_TO_FLOAT);
-  immBindBuiltinProgram(GPU_SHADER_2D_UNIFORM_COLOR);
+  GPU_batch_uniform_4fv(batch, "color", color);
 
-  immUniformColor4ub(255, 0, 255, 255);
-  immRecti(
-      pos, v2d->mask.xmin + 50, v2d->mask.ymin + 50, v2d->mask.xmax - 50, v2d->mask.ymax - 50);
+  float viewport[4];
+  GPU_viewport_size_get_f(viewport);
+  GPU_batch_uniform_2fv(batch, "viewportSize", &viewport[2]);
+  GPU_batch_uniform_1f(batch, "lineWidth", U.pixelsize);
 
-  immUniformColor4ub(0, 255, 255, 255);
-  immRecti(
-      pos, v2d->mask.xmin + 80, v2d->mask.ymin + 80, v2d->mask.xmax - 80, v2d->mask.ymax - 80);
+  GPU_batch_draw(batch);
 
-  immUniformColor4ub(255, 255, 0, 255);
-  immRecti(
-      pos, v2d->mask.xmin + 110, v2d->mask.ymin + 110, v2d->mask.xmax - 110, v2d->mask.ymax - 110);
-
-  immUnbindProgram();
+  /* Free resources */
+  GPU_batch_discard(batch);
+  GPU_blend(GPU_BLEND_NONE);
 }
 
 static void draw_buttons(uiBlock *block, uiLayout *layout)
