@@ -41,6 +41,7 @@
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
 #include "GPU_matrix.h"
+#include "GPU_glew.h"
 
 #include "WM_api.h"
 
@@ -117,6 +118,13 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   View2D *v2d = &region->v2d;
 
   /* ----- Setup ----- */
+
+  // Only for information
+  float viewport[4];
+  GPU_viewport_size_get_f(viewport);
+  print_v4("Viewport:", viewport);
+
+  // Colors
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
   float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
   float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
@@ -125,6 +133,7 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   float colors[3][4] = {{UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)}};
   float verts[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
   uint verts_len = 3;
+  print_v4("Colors = ", colors[0]);
 
   // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
   uint pos_comp_len = 3;
@@ -162,13 +171,14 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
                             {0.0f, 0.0f, 1.0f, 0.0f},
                             {0.0f, 0.0f, 0.0f, 1.0f}};
   translate_m4(viewMatrix, 0.0f, 0.0f, -3.0f);
+  print_m4("View matrix = ", viewMatrix);
 
-  float viewport[4];
-  GPU_viewport_size_get_f(viewport);
-  print_v4("Viewport:", viewport);
-  const rcti winrct = {0, viewport[2] - 1, 0, viewport[3] - 1};
-  float projectionMatrix[4][4];
-  wmGetProjectionMatrix(projectionMatrix, &winrct);
+  float projectionMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                                  {0.0f, 1.0f, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, 1.0f, 0.0f},
+                                  {0.0f, 0.0f, 0.0f, 1.0f}};
+
+  perspective_m4(projectionMatrix, - 0.5f, 0.5f, -0.5f, 0.5f, 1.0f, 100.f);
   print_m4("Projection matrix = ", projectionMatrix);
 
   float modelViewProjectionMatrix[4][4];
