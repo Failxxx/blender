@@ -40,6 +40,7 @@
 #include "GPU_capabilities.h"
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
+#include "GPU_matrix.h"
 
 #include "WM_api.h"
 
@@ -116,38 +117,76 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   View2D *v2d = &region->v2d;
 
   /* ----- Setup ----- */
+  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+  float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+  float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
 
-  const float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-
+  // Geometry data
+  float colors[3][4] = {{UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)}};
   float verts[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
   uint verts_len = 3;
 
+  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
+  uint pos_comp_len = 3;
+  uint col_comp_len = 4;
+
   GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(format, "pos", GPU_COMP_F32, 3, GPU_FETCH_FLOAT);
+  uint pos = GPU_vertformat_attr_add(format, "pos", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+  uint color = GPU_vertformat_attr_add(format, "color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
   GPU_vertbuf_data_alloc(vbo, verts_len);
 
+  // Fill the vertex buffer with positions
   for (int i = 0; i < verts_len; i++) {
     GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
+    GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
   }
 
-  /* Draw */
+  /* ----- Draw ----- */
   GPU_blend(GPU_BLEND_ALPHA);
+
+  // Init batch
   GPUBatch *batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  // Set shaders
   GPU_batch_program_set_builtin(batch, GPU_SHADER_3D_FLAT_COLOR);
 
-  GPU_batch_uniform_4fv(batch, "color", color);
+  // Compute matrices
+  float modelMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                             {0.0f, 1.0f, 0.0f, 0.0f},
+                             {0.0f, 0.0f, 1.0f, 0.0f},
+                             {0.0f, 0.0f, 0.0f, 1.0f}};
+
+  float viewMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                            {0.0f, 1.0f, 0.0f, 0.0f},
+                            {0.0f, 0.0f, 1.0f, 0.0f},
+                            {0.0f, 0.0f, 0.0f, 1.0f}};
+  translate_m4(viewMatrix, 0.0f, 0.0f, -3.0f);
 
   float viewport[4];
   GPU_viewport_size_get_f(viewport);
-  GPU_batch_uniform_2fv(batch, "viewportSize", &viewport[2]);
-  GPU_batch_uniform_1f(batch, "lineWidth", U.pixelsize);
+  print_v4("Viewport:", viewport);
+  const rcti winrct = {0, viewport[2] - 1, 0, viewport[3] - 1};
+  float projectionMatrix[4][4];
+  wmGetProjectionMatrix(projectionMatrix, &winrct);
+  print_m4("Projection matrix = ", projectionMatrix);
 
+  float modelViewProjectionMatrix[4][4];
+  float viewProjectionMatrix[4][4];
+  mul_m4_m4m4(viewProjectionMatrix, projectionMatrix, viewMatrix);
+  mul_m4_m4m4(modelViewProjectionMatrix, viewProjectionMatrix, modelMatrix);
+  print_m4("modelViewProjectionMatrix = ", modelViewProjectionMatrix);
+
+  // Send uniforms to matrices
+  GPU_batch_uniform_mat4(batch, "ModelViewProjectionMatrix", modelViewProjectionMatrix);
+  GPU_batch_uniform_mat4(batch, "ModelMatrix", modelMatrix);
+
+  GPU_clear_color(0.2f, 0.3f, 0.3f, 1.0f);
   GPU_batch_draw(batch);
 
-  /* Free resources */
+  /* ----- Free resources ----- */
   GPU_batch_discard(batch);
+
   GPU_blend(GPU_BLEND_NONE);
 }
 
