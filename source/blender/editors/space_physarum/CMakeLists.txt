@@ -38,7 +38,6 @@ set(INC
 
 set(SRC
   space_physarum.c
-  physarum_buttons.c
   physarum_ops.c
 
   physarum_intern.h
