@@ -20,16 +20,3 @@
 /** \file
  * \ingroup spphysarum
  */
-
-#pragma once
-
-/* internal exports only */
-struct ARegionType;
-
-/* operators */
-void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot);
-void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot);
-void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot);
-
-void physarum_buttons_register(struct ARegionType *art);
-

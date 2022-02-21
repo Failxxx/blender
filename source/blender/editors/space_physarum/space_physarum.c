@@ -50,7 +50,11 @@
 #include "UI_view2d.h"
 #include "../interface/interface_intern.h"
 
+
 #include "physarum_intern.h"
+
+extern char datatoc_gpu_shader_3D_debug_physarum_vs_glsl[];
+extern char datatoc_gpu_shader_3D_debug_physarum_fs_glsl[];
 
 static void physarum_init(struct wmWindowManager *wm, struct ScrArea *area)
 {
@@ -140,8 +144,8 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   uint col_comp_len = 4;
 
   GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(format, "pos", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(format, "color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
+  uint pos = GPU_vertformat_attr_add(format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+  uint color = GPU_vertformat_attr_add(format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
   GPU_vertbuf_data_alloc(vbo, verts_len);
@@ -158,7 +162,14 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
   // Init batch
   GPUBatch *batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
   // Set shaders
-  GPU_batch_program_set_builtin(batch, GPU_SHADER_3D_FLAT_COLOR);
+  //GPU_batch_program_set_builtin(batch, GPU_SHADER_3D_FLAT_COLOR);
+  //const DRWContextState *draw_ctx = DRW_context_state_get();
+  //const GPUShaderConfigData *sh_cfg = &GPU_shader_cfg_data[draw_ctx->sh_cfg];
+  GPUShader *shader = GPU_shader_create_from_arrays({
+    .vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
+    .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}
+  });
+  GPU_batch_set_shader(batch, shader);
 
   // Compute matrices
   float modelMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
@@ -171,7 +182,6 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
                             {0.0f, 0.0f, 1.0f, 0.0f},
                             {0.0f, 0.0f, 0.0f, 1.0f}};
   translate_m4(viewMatrix, 0.0f, 0.0f, -3.0f);
-  print_m4("View matrix = ", viewMatrix);
 
   float projectionMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
                                   {0.0f, 1.0f, 0.0f, 0.0f},
@@ -179,22 +189,17 @@ static void physarum_main_region_draw(const bContext *C, ARegion *region)
                                   {0.0f, 0.0f, 0.0f, 1.0f}};
 
   perspective_m4(projectionMatrix, - 0.5f, 0.5f, -0.5f, 0.5f, 1.0f, 100.f);
-  print_m4("Projection matrix = ", projectionMatrix);
-
-  float modelViewProjectionMatrix[4][4];
-  float viewProjectionMatrix[4][4];
-  mul_m4_m4m4(viewProjectionMatrix, projectionMatrix, viewMatrix);
-  mul_m4_m4m4(modelViewProjectionMatrix, viewProjectionMatrix, modelMatrix);
-  print_m4("modelViewProjectionMatrix = ", modelViewProjectionMatrix);
 
   // Send uniforms to matrices
-  GPU_batch_uniform_mat4(batch, "ModelViewProjectionMatrix", modelViewProjectionMatrix);
-  GPU_batch_uniform_mat4(batch, "ModelMatrix", modelMatrix);
+  GPU_batch_uniform_mat4(batch, "u_m4ModelMatrix", modelMatrix);
+  GPU_batch_uniform_mat4(batch, "u_m4ViewMatrix", viewMatrix);
+  GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", projectionMatrix);
 
-  GPU_clear_color(0.2f, 0.3f, 0.3f, 1.0f);
+  GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
   GPU_batch_draw(batch);
 
-  /* ----- Free resources ----- */
+  /* ----- Free resources ----- */  
+  GPU_shader_free(shader);
   GPU_batch_discard(batch);
 
   GPU_blend(GPU_BLEND_NONE);
