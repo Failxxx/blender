@@ -451,6 +451,7 @@ typedef struct wmNotifier {
 #define ND_SPACE_NLA (16 << 16)
 #define ND_SPACE_SEQUENCER (17 << 16)
 #define ND_SPACE_NODE_VIEW (18 << 16)
+#define ND_SPACE_PHYSARUM (19 << 16)
 /* Sent to a new editor type after it's replaced an old one. */
 #define ND_SPACE_CHANGED (19 << 16)
 #define ND_SPACE_CLIP (20 << 16)

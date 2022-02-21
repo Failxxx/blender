@@ -31,12 +31,54 @@ class PHYSARUM_HT_header(Header):
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
-    bl_category = "Physarum_Properties"
-    bl_label = "Properties"
+    bl_category = "Properties"
+    bl_label = "Physarum properties"
 
     def draw(self, context):
         layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        st = context.space_data
 
+        col = layout.column(align=False, heading="Sense Spread")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "sense_spread", text="")
+
+        col = layout.column(align=False, heading="Sense Distance")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "sense_distance", text="")
+        
+        col = layout.column(align=False, heading="Turn Angle")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "turn_angle", text="")
+
+        col = layout.column(align=False, heading="Move Distance")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "move_distance", text="")
+
+        col = layout.column(align=False, heading="Deposit Value")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "deposit_value", text="")
+
+        col = layout.column(align=False, heading="Decay Factor")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "decay_factor", text="")
+
+        col = layout.column(align=False, heading="Spawn Radius")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "spawn_radius", text="")
+
+        col = layout.column(align=False, heading="Center Attraction")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "center_attraction", text="")
 
 classes = (
     PHYSARUM_HT_header,

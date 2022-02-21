@@ -76,6 +76,16 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->regiontype = RGN_TYPE_UI;
   ar->alignment = RGN_ALIGN_RIGHT;
 
+  /* Physarum Properties */
+  sphys->sense_spread = 0.48;
+  sphys->sense_distance = 23.0;
+  sphys->turn_angle = 0.63;
+  sphys->move_distance = 2.77;
+  sphys->deposit_value = 50;
+  sphys->decay_factor = 0.32;
+  sphys->spawn_radius = 50.0;
+  sphys->center_attraction = 1.0;
+
   /* main region */
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
   BLI_addtail(&sphys->regionbase, ar);
@@ -248,8 +258,6 @@ void ED_spacetype_physarum(void)
   art->draw = physarum_buttons_region_draw;
 
   BLI_addhead(&st->regiontypes, art);
-
-  physarum_buttons_register(art);
 
   art = ED_area_type_hud(st->spaceid);
   BLI_addhead(&st->regiontypes, art);

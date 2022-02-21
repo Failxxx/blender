@@ -87,9 +87,10 @@ static void physarum_panel_properties_header(const bContext *C, Panel *panel)
   RNA_id_pointer_create(&scene->id, &sceneptr);
   RNA_pointer_create(&screen->id, &RNA_SpaceGraphEditor, sphys, &spaceptr);
 
-  /* 2D-Cursor */
+  /*
   col = uiLayoutColumn(panel->layout, false);
   uiItemR(col, &spaceptr, "Physarum_Properties", 0, "", ICON_NONE);
+  */
 }
 
 static void physarum_panel_properties(const bContext *C, Panel *panel)
@@ -103,17 +104,19 @@ static void physarum_panel_properties(const bContext *C, Panel *panel)
 
   /* get RNA pointers for use when creating the UI elements */
   RNA_id_pointer_create(&scene->id, &sceneptr);
-  RNA_pointer_create(&screen->id, &RNA_SpaceGraphEditor, sphys, &spaceptr);
+  RNA_pointer_create(&scene->id, &RNA_SpaceGraphEditor, sphys, &spaceptr);
 
   uiLayoutSetPropSep(layout, true);
   uiLayoutSetPropDecorate(layout, false);
 
   /* 2D-Cursor */
   col = uiLayoutColumn(layout, false);
-
   sub = uiLayoutColumn(col, true);
 
-  uiItemR(sub, &sceneptr, "frame_current", 0, IFACE_("Propertie A"), ICON_NONE);
+  /*
+  uiItemR(sub, &spaceptr, "sense_spread", 0, IFACE_("Sense Spread"), ICON_NONE);
+
+  uiItemR(sub, &sceneptr, "sense_distance", 0, IFACE_("Sense Distance"), ICON_NONE);
 
   uiItemR(sub, &sceneptr, "frame_current", 0, IFACE_("Propertie B"), ICON_NONE);
 
@@ -121,6 +124,8 @@ static void physarum_panel_properties(const bContext *C, Panel *panel)
 
   sub = uiLayoutColumn(col, true);
   uiItemO(sub, IFACE_("Begin"), ICON_NONE, "GRAPH_OT_frame_jump");
+  */
+  
 }
 
 
