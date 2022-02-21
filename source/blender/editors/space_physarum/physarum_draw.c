@@ -54,11 +54,6 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 
   /* ----- Setup ----- */
 
-  // Only for information
-  float viewport[4];
-  GPU_viewport_size_get_f(viewport);
-  print_v4("Viewport:", viewport);
-
   // Colors
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
   float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -120,7 +115,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
                                   {0.0f, 0.0f, 1.0f, 0.0f},
                                   {0.0f, 0.0f, 0.0f, 1.0f}};
 
-  perspective_m4(projectionMatrix, -0.5f, 0.5f, -0.5f, 0.5f, 1.0f, 100.f);
+  adapt_projection_matrix_window_rescale(projectionMatrix);
 
   // Send uniforms to matrices
   GPU_batch_uniform_mat4(batch, "u_m4ModelMatrix", modelMatrix);
@@ -135,4 +130,29 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_batch_discard(batch);
 
   GPU_blend(GPU_BLEND_NONE);
+}
+
+/*void initialize_rendering_settings(PRenderingSettings *prs)
+{
+
+}*/
+
+/* Updates the projection matrix to adapt to the new aspect ration of the screen space */
+void adapt_projection_matrix_window_rescale(float projectionMatrix[4][4])
+{
+  /* Get viewport information */
+  rctf viewport;
+  float viewportData[4];
+  GPU_viewport_size_get_f(viewportData);
+  BLI_rctf_init(&viewport, viewportData[0], viewportData[2], viewportData[1], viewportData[3]);
+
+  /* Adapt projection matrix */
+  float aspectRatio = BLI_rctf_size_x(&viewport) / BLI_rctf_size_y(&viewport);
+  perspective_m4(projectionMatrix,
+                 -0.5f * aspectRatio,
+                 0.5f * aspectRatio,
+                 -0.5f,
+                 0.5f,
+                 1.0f,
+                 100.f);
 }
