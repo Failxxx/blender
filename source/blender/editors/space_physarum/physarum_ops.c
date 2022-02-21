@@ -45,7 +45,7 @@ int set_background_red_in_main_region(struct bContext *C, struct wmOperator *ope
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = 0;
+  //sphys->color = 0;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
@@ -75,7 +75,7 @@ int set_background_green_in_main_region(struct bContext *C, struct wmOperator *o
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = 1;
+  //sphys->color = 1;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));
@@ -104,7 +104,7 @@ int set_background_blue_in_main_region(struct bContext *C, struct wmOperator *op
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
-  sphys->color = 2;
+  //sphys->color = 2;
 
   ED_region_tag_redraw(ar);
   ED_area_tag_redraw(CTX_wm_area(C));

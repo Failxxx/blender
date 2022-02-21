@@ -24,12 +24,18 @@
 #pragma once
 
 /* internal exports only */
-struct ARegionType;
+
+/* Physarum custom shaders */
+extern char datatoc_gpu_shader_3D_debug_physarum_vs_glsl[];
+extern char datatoc_gpu_shader_3D_debug_physarum_fs_glsl[];
 
 /* operators */
 void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot);
 void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot);
 void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot);
+
+/* physarum draw functions */
+void physarum_draw_view(const bContext *C, ARegion *region);
 
 void physarum_buttons_register(struct ARegionType *art);
 

@@ -2024,11 +2024,7 @@ typedef struct SpacePhysarum {
   /* Storage of regions for inactive spaces. */
   ListBase regionbase;
   char spacetype;
-
   char _pad0[7];
-  int color;
-
-  char _pad1[12];
   /* End 'SpaceLink' header. */
 } SpacePhysarum;
 
