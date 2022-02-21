@@ -35,7 +35,8 @@ void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot);
 void SPACE_PHYSARUM_OT_blue_region(wmOperatorType *ot);
 
 /* physarum draw functions */
-void adapt_projection_matrix_window_rescale(float projectionMatrix[4][4]);
+void initialize_physarum_rendering_settings(PRenderingSettings *prs);
+void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
 
 void physarum_buttons_register(struct ARegionType *art);

@@ -42,7 +42,7 @@ bool test_context_for_button_operator(struct bContext *C)
 
 int set_background_red_in_main_region(struct bContext *C, struct wmOperator *oper)
 {
-  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  //SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
   //sphys->color = 0;
@@ -72,7 +72,7 @@ void SPACE_PHYSARUM_OT_red_region(wmOperatorType *ot)
 
 int set_background_green_in_main_region(struct bContext *C, struct wmOperator *oper)
 {
-  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  //SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
   //sphys->color = 1;
@@ -101,7 +101,7 @@ void SPACE_PHYSARUM_OT_green_region(wmOperatorType *ot)
 
 int set_background_blue_in_main_region(struct bContext *C, struct wmOperator *oper)
 {
-  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  //SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   ARegion *ar = CTX_wm_region(C);
 
   //sphys->color = 2;

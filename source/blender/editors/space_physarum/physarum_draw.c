@@ -50,9 +50,11 @@
 void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  View2D *v2d = &region->v2d;
+  PhysarumRenderingSettings *prs = sphys->prs;
 
   /* ----- Setup ----- */
+  prs->screen_width  = BLI_rcti_size_x(&region->winrct);
+  prs->screen_height = BLI_rcti_size_y(&region->winrct);
 
   // Colors
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -63,22 +65,19 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   float colors[3][4] = {{UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)}};
   float verts[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
   uint verts_len = 3;
-  print_v4("Colors = ", colors[0]);
 
   // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
   uint pos_comp_len = 3;
   uint col_comp_len = 4;
 
   GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
-      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(
-      format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
+  uint pos = GPU_vertformat_attr_add(format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+  uint color = GPU_vertformat_attr_add(format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
   GPU_vertbuf_data_alloc(vbo, verts_len);
 
-  // Fill the vertex buffer with positions
+  // Fill the vertex buffer with vertices data
   for (int i = 0; i < verts_len; i++) {
     GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
     GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
@@ -90,37 +89,17 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Init batch
   GPUBatch *batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
   // Set shaders
-  // GPU_batch_program_set_builtin(batch, GPU_SHADER_3D_FLAT_COLOR);
-  // const DRWContextState *draw_ctx = DRW_context_state_get();
-  // const GPUShaderConfigData *sh_cfg = &GPU_shader_cfg_data[draw_ctx->sh_cfg];
   GPUShader *shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}});
   GPU_batch_set_shader(batch, shader);
 
-  // Compute matrices
-  float modelMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
-                             {0.0f, 1.0f, 0.0f, 0.0f},
-                             {0.0f, 0.0f, 1.0f, 0.0f},
-                             {0.0f, 0.0f, 0.0f, 1.0f}};
+  adapt_projection_matrix_window_rescale(prs);
 
-  float viewMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
-                            {0.0f, 1.0f, 0.0f, 0.0f},
-                            {0.0f, 0.0f, 1.0f, 0.0f},
-                            {0.0f, 0.0f, 0.0f, 1.0f}};
-  translate_m4(viewMatrix, 0.0f, 0.0f, -3.0f);
-
-  float projectionMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
-                                  {0.0f, 1.0f, 0.0f, 0.0f},
-                                  {0.0f, 0.0f, 1.0f, 0.0f},
-                                  {0.0f, 0.0f, 0.0f, 1.0f}};
-
-  adapt_projection_matrix_window_rescale(projectionMatrix);
-
-  // Send uniforms to matrices
-  GPU_batch_uniform_mat4(batch, "u_m4ModelMatrix", modelMatrix);
-  GPU_batch_uniform_mat4(batch, "u_m4ViewMatrix", viewMatrix);
-  GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", projectionMatrix);
+  // Send uniforms to shaders
+  GPU_batch_uniform_mat4(batch, "u_m4ModelMatrix", prs->modelMatrix);
+  GPU_batch_uniform_mat4(batch, "u_m4ViewMatrix", prs->viewMatrix);
+  GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
 
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
   GPU_batch_draw(batch);
@@ -132,27 +111,54 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_blend(GPU_BLEND_NONE);
 }
 
-/*void initialize_rendering_settings(PRenderingSettings *prs)
+/* Initializes the PhysarumRenderingSettings struct with default values */
+void initialize_physarum_rendering_settings(PRenderingSettings *prs)
 {
+  const float idMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                                {0.0f, 1.0f, 0.0f, 0.0f},
+                                {0.0f, 0.0f, 1.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
-}*/
+  prs->texcoord_map = 0; // Default value ?
+  prs->show_grid = 0; // Default value ?
+  prs->dof_size = 0.1f;
+  prs->dof_distribution = 1.0f;
+
+  prs->focal_distance = 2.0f;
+  prs->focal_depth = 1.0f;
+  prs->iterations = 1;
+  prs->break_distance = 10.0f;
+
+  prs->world_width = 480.0f;
+  prs->world_height = 480.0f;
+  prs->world_depth = 480.0f;
+  prs->screen_width = 1280.0f;
+  prs->screen_height = 720.0f;
+
+  prs->sample_weight = 1.0f / 32.0f;
+
+  prs->filler1 = 0; // Default value ?
+  prs->filler2 = 1; // Default value ?
+
+  // Projection matrix
+  adapt_projection_matrix_window_rescale(prs);
+  // Model matrix
+  copy_m4_m4(prs->modelMatrix, idMatrix);
+  // View matrix
+  copy_m4_m4(prs->viewMatrix, idMatrix);
+  translate_m4(prs->viewMatrix, 0.0f, 0.0f, -3.0f);
+}
 
 /* Updates the projection matrix to adapt to the new aspect ration of the screen space */
-void adapt_projection_matrix_window_rescale(float projectionMatrix[4][4])
+void adapt_projection_matrix_window_rescale(PRenderingSettings *prs)
 {
-  /* Get viewport information */
-  rctf viewport;
-  float viewportData[4];
-  GPU_viewport_size_get_f(viewportData);
-  BLI_rctf_init(&viewport, viewportData[0], viewportData[2], viewportData[1], viewportData[3]);
-
   /* Adapt projection matrix */
-  float aspectRatio = BLI_rctf_size_x(&viewport) / BLI_rctf_size_y(&viewport);
-  perspective_m4(projectionMatrix,
+  float aspectRatio = prs->screen_width / prs->screen_height;
+  perspective_m4(prs->projectionMatrix,
                  -0.5f * aspectRatio,
                  0.5f * aspectRatio,
                  -0.5f,
                  0.5f,
                  1.0f,
-                 100.f);
+                 1000.0f);
 }

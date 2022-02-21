@@ -86,7 +86,18 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
 
+  /* Allocate memory for PhysarumRenderingSettings */
+  sphys->prs = MEM_callocN(sizeof(PhysarumRenderingSettings), "physarum rendering settings");
+  initialize_physarum_rendering_settings(sphys->prs);
+
   return (SpaceLink *)sphys;
+}
+
+static void physarum_free(SpaceLink *sl)
+{
+  SpacePhysarum *sphys = (SpacePhysarum *)sl;
+  /* Free memory for PhysarumRenderingSettings */
+  MEM_freeN(sphys->prs);
 }
 
 /* function which initializes the header region of the editor */
@@ -178,6 +189,7 @@ void ED_spacetype_physarum(void)
   strncpy(st->name, "Physarum", BKE_ST_MAXNAME);
   st->init = physarum_init;
   st->create = physarum_create;
+  st->free = physarum_free;
   st->operatortypes = physarum_operatortypes;
 
   /* regions: main window */
