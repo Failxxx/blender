@@ -2046,6 +2046,11 @@ typedef struct PhysarumRenderingSettings {
   int filler2;
 } PhysarumRenderingSettings, PRenderingSettings;
 
+typedef struct PhysarumGPUData {
+  struct GPUBatch *batch;
+  struct GPUShader *shader;
+} PhysarumGPUData;
+
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
   /* Storage of regions for inactive spaces. */
@@ -2055,6 +2060,7 @@ typedef struct SpacePhysarum {
   /* End 'SpaceLink' header. */
 
   PRenderingSettings *prs;
+  PhysarumGPUData *pgd;
 } SpacePhysarum;
 
 /** \} */

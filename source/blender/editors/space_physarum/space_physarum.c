@@ -35,14 +35,6 @@
 #include "ED_screen.h"
 #include "ED_space_api.h"
 
-#include "GPU_immediate.h"
-#include "GPU_immediate_util.h"
-#include "GPU_capabilities.h"
-#include "GPU_context.h"
-#include "GPU_framebuffer.h"
-#include "GPU_matrix.h"
-#include "GPU_glew.h"
-
 #include "WM_api.h"
 
 #include "UI_interface.h"
@@ -50,12 +42,11 @@
 #include "UI_view2d.h"
 #include "../interface/interface_intern.h"
 
-
 #include "physarum_intern.h"
 
 static void physarum_init(struct wmWindowManager *wm, struct ScrArea *area)
 {
-  SpacePhysarum *sphys = (SpacePhysarum *)area->spacedata.first;
+  //SpacePhysarum *sphys = (SpacePhysarum *)area->spacedata.first;
 }
 
 /* function which is called when a new instance of the editor is created by the user */
@@ -90,6 +81,9 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->prs = MEM_callocN(sizeof(PhysarumRenderingSettings), "physarum rendering settings");
   initialize_physarum_rendering_settings(sphys->prs);
 
+  /* Allocate memory fo PhysarumGPUData */
+  sphys->pgd = MEM_callocN(sizeof(PhysarumGPUData), "physarum gpu data");
+  initialize_physarum_gpu_data(sphys->pgd);
   return (SpaceLink *)sphys;
 }
 
@@ -98,6 +92,9 @@ static void physarum_free(SpaceLink *sl)
   SpacePhysarum *sphys = (SpacePhysarum *)sl;
   /* Free memory for PhysarumRenderingSettings */
   MEM_freeN(sphys->prs);
+  /* Free memory for PhysarumGPUData */
+  free_gpu_data(sphys);
+  MEM_freeN(sphys->pgd);
 }
 
 /* function which initializes the header region of the editor */
