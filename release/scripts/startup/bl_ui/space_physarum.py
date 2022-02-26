@@ -80,6 +80,11 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "center_attraction", text="")
 
+        col = layout.column(align=False, heading="Collision")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "collision", text="")
+
 classes = (
     PHYSARUM_HT_header,
     PHYSARUM_PT_properties,

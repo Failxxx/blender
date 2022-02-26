@@ -8008,17 +8008,10 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   RNA_def_property_ui_text(prop, "Center Attraction", "" );
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
-  /*
   prop = RNA_def_property(srna, "collision", PROP_BOOLEAN, PROP_NONE);
-  RNA_def_property_boolean_sdna(prop, NULL, "collision", 0);
-  RNA_def_property_ui_text(prop, "Collision", "");
-  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
-
-  prop = RNA_def_property(srna, "show_margin", PROP_BOOLEAN, PROP_NONE);
-  RNA_def_property_boolean_sdna(prop, NULL, "flags", ST_SHOW_MARGIN);
-  RNA_def_property_ui_text(prop, "Show Margin", "Show right margin");
+  RNA_def_property_boolean_sdna(prop, NULL, "flags", ST_FLAG_COLLISION);
+  RNA_def_property_ui_text(prop, "collision", "collision");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_TEXT, NULL);
-  */
 }
 
 void RNA_def_space(BlenderRNA *brna)
