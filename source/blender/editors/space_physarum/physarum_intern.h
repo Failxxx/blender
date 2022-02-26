@@ -24,6 +24,7 @@
 #pragma once
 
 /* internal exports only */
+float randf(const float a, const float b);
 
 /* Physarum custom shaders */
 // Debug
