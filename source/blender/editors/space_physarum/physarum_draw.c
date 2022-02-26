@@ -80,19 +80,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     GPU_batch_draw(pgd->batch);
   }
   else if (physarum_2d) {
-    // Set shaders
-    GPU_batch_set_shader(pdata_2d->diffuse_decay_batch, pdata_2d->post_process_shader);
-
-    // Compute model view projection matrix
-    physarum_2d_compute_matrix(pdata_2d, prs->projectionMatrix);
-
-    // Send uniforms to shaders
-    GPU_batch_uniform_mat4(pdata_2d->diffuse_decay_batch,
-                           "u_m4ModelViewProjectionMatrix",
-                           pdata_2d->modelViewProjectionMatrix);
-
-    // Draw vertices
-    GPU_batch_draw(pdata_2d->diffuse_decay_batch);
+    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix);
   }
 
   GPU_blend(GPU_BLEND_NONE);

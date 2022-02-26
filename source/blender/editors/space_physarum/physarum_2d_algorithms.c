@@ -85,6 +85,35 @@ GPUVertBuf *make_new_quad_mesh()
   return vbo;
 }
 
+/* Generate geometry data for a points mesh */
+GPUVertBuf *make_new_points_mesh(float *points, float *uvs, int nb_points)
+{
+  /* Points contain 3D positions */
+
+  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
+  uint pos_comp_len = 3;
+  uint uvs_comp_len = 2;
+
+  GPUVertFormat *format = immVertexFormat();
+  uint pos = GPU_vertformat_attr_add(
+      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+  uint uv = GPU_vertformat_attr_add(
+      format, "v_in_f2UV", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
+
+  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
+  GPU_vertbuf_data_alloc(vbo, nb_points);
+
+  // Fill the vertex buffer with vertices data
+  for (int i = 0; i < nb_points; i++) {
+    float position[3] = {points[i], points[i + 1], points[i + 2]};
+    float uv_coord[2] = {uvs[i], uvs[i + 1]};
+    GPU_vertbuf_attr_set(vbo, pos, i, position);
+    GPU_vertbuf_attr_set(vbo, uv, i, uv_coord);
+  }
+
+  return vbo;
+}
+
 /* Compute the modelViewProjectionMatrix from the given projection matrix */
 void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
 {
@@ -93,14 +122,26 @@ void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix
   mul_m4_m4m4(pdata_2d->modelViewProjectionMatrix, viewProjectionMatrix, pdata_2d->modelMatrix);
 }
 
-void physarum_2d_draw_view(PhysarumData2D *pdata_2d)
+void physarum_2d_draw_view(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
 {
-  return;
+  // Set shaders
+  GPU_batch_set_shader(pdata_2d->diffuse_decay_batch, pdata_2d->post_process_shader);
+
+  // Compute model view projection matrix
+  physarum_2d_compute_matrix(pdata_2d, projectionMatrix);
+
+  // Send uniforms to shaders
+  GPU_batch_uniform_mat4(pdata_2d->diffuse_decay_batch,
+                         "u_m4ModelViewProjectionMatrix",
+                         pdata_2d->modelViewProjectionMatrix);
+
+  // Draw vertices
+  GPU_batch_draw(pdata_2d->diffuse_decay_batch);
 }
 
-void physarum_data_2d_free_texture_data(PhysarumData2D *pdata_2d)
+void physarum_data_2d_free_particles(PhysarumData2D *pdata_2d)
 {
-  printf("Physarum2D: free texture data\n");
+  printf("Physarum2D: free particles\n");
   MEM_freeN(pdata_2d->particle_positions);
   MEM_freeN(pdata_2d->particle_uvs);
   MEM_freeN(pdata_2d->particle_texdata);
@@ -109,8 +150,12 @@ void physarum_data_2d_free_texture_data(PhysarumData2D *pdata_2d)
 void physarum_data_2d_free_textures(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: free textures\n");
-  /* Free particle data buffers */
-  physarum_data_2d_free_texture_data(pdata_2d);
+  /* Free textures */
+  GPU_texture_free(pdata_2d->diffuse_decay_tex_current);
+  GPU_texture_free(pdata_2d->diffuse_decay_tex_next);
+  GPU_texture_free(pdata_2d->update_agents_tex_current);
+  GPU_texture_free(pdata_2d->update_agents_tex_next);
+  GPU_texture_free(pdata_2d->render_agents_tex);
 }
 
 void physarum_data_2d_free_shaders(PhysarumData2D *pdata_2d)
@@ -126,13 +171,13 @@ void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
   printf("Physarum2D: free batches\n");
   GPU_batch_discard(pdata_2d->diffuse_decay_batch);
   //GPU_batch_discard(pdata_2d->update_agents_batch);
-  //GPU_batch_discard(pdata_2d->render_agents_batch);
+  GPU_batch_discard(pdata_2d->render_agents_batch);
   //GPU_batch_discard(pdata_2d->post_process_batch);
 }
 
-void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
+void physarum_data_2d_gen_particles(PhysarumData2D *pdata_2d)
 {
-  printf("Physarum2D: gen texture data\n");
+  printf("Physarum2D: gen particles\n");
   /* Allocate memory for particle data buffers */
   int size = floor(sqrt(pdata_2d->nb_particles));
   int particles_count = size * size;
@@ -146,7 +191,7 @@ void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
   bytes = sizeof(float) * 4 * particles_count;
   pdata_2d->particle_texdata = MEM_callocN(bytes, "physarum 2d particle texture data");
 
-  /* Fill texture data arrays */
+  /* Fill buffers */
   int id = 0;
   int u = 0;
   int v = 0;
@@ -176,7 +221,25 @@ void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
 void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: gen textures\n");
-  physarum_data_2d_gen_texture_data(pdata_2d);
+  /* Generate textures */
+  // Textures sizes
+  int size = floor(sqrt(pdata_2d->nb_particles));
+
+  // Diffuse/Decay textures
+  pdata_2d->diffuse_decay_tex_current = GPU_texture_create_2d(
+      "phys2d diffuse decay current", size, size, 1, GPU_RGBA16F, NULL);
+  pdata_2d->diffuse_decay_tex_next = GPU_texture_create_2d(
+      "phys2d diffuse decay next", size, size, 1, GPU_RGBA16F, NULL);
+
+  // Update agents textures
+  pdata_2d->update_agents_tex_current = GPU_texture_create_2d(
+      "phys2d update agents current", size, size, 1, GPU_RGBA16F, pdata_2d->particle_texdata);
+  pdata_2d->update_agents_tex_next = GPU_texture_create_2d(
+      "phys2d update agents next", size, size, 1, GPU_RGBA16F, pdata_2d->particle_texdata);
+
+  // Render agents texture
+  pdata_2d->render_agents_tex = GPU_texture_create_2d(
+      "phys2d render agents", size, size, 1, GPU_RGBA16F, NULL);
 }
 
 void physarum_data_2d_gen_shaders(PhysarumData2D *pdata_2d)
@@ -192,19 +255,24 @@ void physarum_data_2d_gen_batches(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: gen batches\n");
   /* Generate geometry data (3d render targets) */
-  GPUVertBuf *vbo = make_new_quad_mesh();
+  int size = floor(sqrt(pdata_2d->nb_particles));
+  GPUVertBuf *quad_vbo = make_new_quad_mesh();
+  GPUVertBuf *points_vbo = make_new_points_mesh(
+      pdata_2d->particle_positions, pdata_2d->particle_uvs, size * size);
 
   /* Create batches */
-  pdata_2d->diffuse_decay_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
-  //pdata_2d->update_agents_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
-  //pdata_2d->render_agents_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
-  //pdata_2d->post_process_batch  = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  pdata_2d->diffuse_decay_batch = GPU_batch_create_ex(
+      GPU_PRIM_TRIS, quad_vbo, NULL, GPU_BATCH_OWNS_VBO);
+  //pdata_2d->update_agents_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, quad_vbo, NULL, GPU_BATCH_OWNS_VBO);
+  pdata_2d->render_agents_batch = GPU_batch_create_ex(
+      GPU_PRIM_POINTS, points_vbo, NULL, GPU_BATCH_OWNS_VBO);
+  //pdata_2d->post_process_batch  = GPU_batch_create_ex(GPU_PRIM_TRIS, quad_vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
 
 void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: initialize data\n");
-  pdata_2d->nb_particles = 1e4;
+  pdata_2d->nb_particles = 512 * 512;
 
   const float idMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
                                 {0.0f, 1.0f, 0.0f, 0.0f},
@@ -217,6 +285,7 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
   copy_m4_m4(pdata_2d->viewMatrix, idMatrix);
   translate_m4(pdata_2d->viewMatrix, 0.0f, 0.0f, -3.0f);
 
+  physarum_data_2d_gen_particles(pdata_2d);
   physarum_data_2d_gen_textures(pdata_2d);
   physarum_data_2d_gen_batches(pdata_2d);
   physarum_data_2d_gen_shaders(pdata_2d);
@@ -225,6 +294,7 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
 void free_physarum_data_2d(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: free data\n");
+  physarum_data_2d_free_particles(pdata_2d);
   physarum_data_2d_free_textures(pdata_2d);
   physarum_data_2d_free_batches(pdata_2d);
   physarum_data_2d_free_shaders(pdata_2d);
