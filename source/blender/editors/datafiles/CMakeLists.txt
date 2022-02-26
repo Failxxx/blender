@@ -151,6 +151,7 @@ set(ICON_NAMES
   editmode_hlt
   uv
   uv_data
+  physarum
   vpaint_hlt
   tpaint_hlt
   wpaint_hlt

@@ -377,6 +377,10 @@ data_to_c_simple(shaders/gpu_shader_colorspace_lib.glsl SRC)
 
 data_to_c_simple(shaders/gpu_shader_common_obinfos_lib.glsl SRC)
 
+# Physarum
+data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.fs.glsl SRC)
+
 
 if(WITH_MOD_FLUID)
   add_definitions(-DWITH_FLUID)

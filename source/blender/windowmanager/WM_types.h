@@ -451,12 +451,12 @@ typedef struct wmNotifier {
 #define ND_SPACE_NLA (16 << 16)
 #define ND_SPACE_SEQUENCER (17 << 16)
 #define ND_SPACE_NODE_VIEW (18 << 16)
-#define ND_SPACE_PHYSARUM (19 << 16)
 /* Sent to a new editor type after it's replaced an old one. */
 #define ND_SPACE_CHANGED (19 << 16)
 #define ND_SPACE_CLIP (20 << 16)
 #define ND_SPACE_FILE_PREVIEW (21 << 16)
 #define ND_SPACE_SPREADSHEET (22 << 16)
+#define ND_SPACE_PHYSARUM (23 << 16)
 
 /* NC_ASSET */
 /* Denotes that the AssetList is done reading some previews. NOT that the preview generation of

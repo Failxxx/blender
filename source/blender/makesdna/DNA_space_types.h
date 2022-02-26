@@ -2019,16 +2019,47 @@ typedef enum eSpreadsheetColumnValueType {
 /** \name Space Physarum
  * \{ */
 
+typedef struct PhysarumRenderingSettings {
+  float projectionMatrix[4][4];
+  float viewMatrix[4][4];
+  float modelMatrix[4][4];
+
+  int texcoord_map;
+  int show_grid;
+  float dof_size;
+  float dof_distribution;
+
+  float focal_distance;
+  float focal_depth;
+  int iterations;
+  float break_distance;
+
+  float world_width;
+  float world_height;
+  float world_depth;
+  float screen_width;
+  float screen_height;
+
+  float sample_weight;
+
+  int filler1;
+  int filler2;
+} PhysarumRenderingSettings, PRenderingSettings;
+
+typedef struct PhysarumGPUData {
+  struct GPUBatch *batch;
+  struct GPUShader *shader;
+} PhysarumGPUData;
+
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
   /* Storage of regions for inactive spaces. */
   ListBase regionbase;
   char spacetype;
-
   char _pad0[7];
-  int color;
+  /* End 'SpaceLink' header. */
 
-  /* Parameters */
+  /* Physarum properties */
   float sense_spread;
   float sense_distance;
   float turn_angle;
@@ -2039,8 +2070,8 @@ typedef struct SpacePhysarum {
   float spawn_radius;
   float center_attraction;
 
-  char _pad1[12];
-  /* End 'SpaceLink' header. */
+  PRenderingSettings *prs;
+  PhysarumGPUData *pgd;
 } SpacePhysarum;
 
 /** \} */

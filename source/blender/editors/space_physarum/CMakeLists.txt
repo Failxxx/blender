@@ -39,6 +39,7 @@ set(INC
 set(SRC
   space_physarum.c
   physarum_ops.c
+  physarum_draw.c
 
   physarum_intern.h
 )
