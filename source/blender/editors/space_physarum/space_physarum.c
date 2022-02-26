@@ -37,19 +37,19 @@
 
 #include "WM_api.h"
 
+#include "../interface/interface_intern.h"
 #include "UI_interface.h"
 #include "UI_resources.h"
 #include "UI_view2d.h"
-#include "../interface/interface_intern.h"
 
 #include "physarum_intern.h"
 
 static void physarum_init(struct wmWindowManager *wm, struct ScrArea *area)
 {
-  //SpacePhysarum *sphys = (SpacePhysarum *)area->spacedata.first;
+  // SpacePhysarum *sphys = (SpacePhysarum *)area->spacedata.first;
 }
 
-/* function which is called when a new instance of the editor is created by the user */
+/* Called when a new instance of the editor is created by the user */
 static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUSED(scene))
 {
   ARegion *ar;
@@ -66,14 +66,26 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->alignment = RGN_ALIGN_BOTTOM;
 
   /* properties region */
-  ar = MEM_callocN(sizeof(ARegion), "properties region for physarum");
+  ar = MEM_callocN(sizeof(ARegion), "properties region (sidebar) for physarum");
 
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_UI;
   ar->alignment = RGN_ALIGN_RIGHT;
 
+  /* Initialize physarum properties */
+  sphys->sense_spread = 0.48;
+  sphys->sense_distance = 23.0;
+  sphys->turn_angle = 0.63;
+  sphys->move_distance = 2.77;
+  sphys->deposit_value = 50;
+  sphys->decay_factor = 0.32;
+  sphys->spawn_radius = 50.0;
+  sphys->center_attraction = 1.0;
+
   /* main region */
+  // WARNING! Keep this here, do not move on top or bottom. Order matters.
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
+
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
 
@@ -97,53 +109,27 @@ static void physarum_free(SpaceLink *sl)
   MEM_freeN(sphys->pgd);
 }
 
-/* function which initializes the header region of the editor */
-static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
+void physarum_operatortypes(void)
 {
-  ED_region_header_init(region);
 }
 
-/* function which initializes the main region of the editor */
+/****************** Main region ******************/
+
 static void physarum_main_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
 {
   UI_view2d_region_reinit(&region->v2d, V2D_COMMONVIEW_CUSTOM, region->winx, region->winy);
 }
 
-/* function which initializes the ui region of the editor */
-static void physarum_ui_region_init(wmWindowManager *wm, ARegion *region)
-{
-  ED_region_panels_init(wm, region);
-}
-
-static void physarum_ui_region_draw(const bContext *C, ARegion *region)
-{
-  ED_region_panels_draw(C, region);
-}
-
-/* draw function of the main region */
 static void physarum_main_region_draw(const bContext *C, ARegion *region)
 {
   physarum_draw_view(C, region);
 }
 
-static void draw_buttons(uiBlock *block, uiLayout *layout)
+/****************** Header region ******************/
+
+static void physarum_header_region_init(wmWindowManager *UNUSED(wm), ARegion *region)
 {
-  static int value = 100;
-
-  struct wmOperatorType *ot = WM_operatortype_find("SPACE_PHYSARUM_OT_red_region", true);
-  struct uiBut *but = uiDefBut(
-      block, UI_BTYPE_BUT_TOGGLE, 1, "RED", 100, 2, 30, 19, (void *)&value, 0., 0., 0., 0., "");
-  but->optype = ot;
-
-  ot = WM_operatortype_find("SPACE_PHYSARUM_OT_green_region", true);
-  but = uiDefBut(
-      block, UI_BTYPE_BUT_TOGGLE, 1, "GREEN", 200, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
-  but->optype = ot;
-
-  ot = WM_operatortype_find("SPACE_PHYSARUM_OT_blue_region", true);
-  but = uiDefBut(
-      block, UI_BTYPE_BUT_TOGGLE, 1, "BLUE", 300, 5, 75, 19, (void *)&value, 0., 0., 0., 0., "");
-  but->optype = ot;
+  ED_region_header_init(region);
 }
 
 static void physarum_header_region_draw(const bContext *C, ARegion *region)
@@ -151,32 +137,20 @@ static void physarum_header_region_draw(const bContext *C, ARegion *region)
   ED_region_header(C, region);
 }
 
-void physarum_operatortypes(void)
-{
-  WM_operatortype_append(SPACE_PHYSARUM_OT_red_region);
-  WM_operatortype_append(SPACE_PHYSARUM_OT_green_region);
-  WM_operatortype_append(SPACE_PHYSARUM_OT_blue_region);
-}
-
-/****************** properties region ******************/
+/****************** Properties region ******************/
 
 /* add handlers, stuff you only do once or on area/region changes */
-static void physarum_buttons_region_init(wmWindowManager *wm, ARegion *region)
+static void physarum_properties_region_init(wmWindowManager *wm, ARegion *region)
 {
-  wmKeyMap *keymap;
-
   ED_region_panels_init(wm, region);
-
-  keymap = WM_keymap_ensure(wm->defaultconf, "Graph Editor Generic", SPACE_GRAPH, 0);
-  WM_event_add_keymap_handler_v2d_mask(&region->handlers, keymap);
 }
 
-static void physarum_buttons_region_draw(const bContext *C, ARegion *region)
+static void physarum_properties_region_draw(const bContext *C, ARegion *region)
 {
   ED_region_panels(C, region);
 }
 
- /* only called once, from space/spacetypes.c */
+/* only called once, from space/spacetypes.c */
 void ED_spacetype_physarum(void)
 {
   SpaceType *st = MEM_callocN(sizeof(SpaceType), "spacetype physarum");
@@ -207,28 +181,19 @@ void ED_spacetype_physarum(void)
 
   BLI_addhead(&st->regiontypes, art);
 
-  /* regions: header */
-  art = MEM_callocN(sizeof(ARegionType), "spacetype physarum buttons region");
-  art->regionid = RGN_TYPE_UI;
-  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
-  art->init = physarum_ui_region_init;
-  art->draw = physarum_ui_region_draw;
-  art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
-  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
-
-  /* regions: UI buttons */
-  art = MEM_callocN(sizeof(ARegionType), "spacetype graphedit region");
+  /* regions: sidebar */
+  art = MEM_callocN(sizeof(ARegionType), "spacetype physarum sidebar region");
   art->regionid = RGN_TYPE_UI;
   art->prefsizex = UI_SIDEBAR_PANEL_WIDTH;
   art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_FRAMES;
-  art->init = physarum_buttons_region_init;
-  art->draw = physarum_buttons_region_draw;
+  art->init = physarum_properties_region_init;
+  art->draw = physarum_properties_region_draw;
 
   BLI_addhead(&st->regiontypes, art);
 
-  physarum_buttons_register(art);
-
+  /* regions: hud */
   art = ED_area_type_hud(st->spaceid);
+
   BLI_addhead(&st->regiontypes, art);
 
   BKE_spacetype_register(st);

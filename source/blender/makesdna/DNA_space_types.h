@@ -2059,6 +2059,17 @@ typedef struct SpacePhysarum {
   char _pad0[7];
   /* End 'SpaceLink' header. */
 
+  /* Physarum properties */
+  float sense_spread;
+  float sense_distance;
+  float turn_angle;
+  float move_distance;
+
+  float deposit_value;
+  float decay_factor;
+  float spawn_radius;
+  float center_attraction;
+
   PRenderingSettings *prs;
   PhysarumGPUData *pgd;
 } SpacePhysarum;

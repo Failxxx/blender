@@ -7956,8 +7956,69 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   RNA_def_struct_ui_text(srna, "Space Physarum Editor", "Physarum editor space data");
 
   rna_def_space_generic_show_region_toggles(srna,
-                                            ((1 << RGN_TYPE_TOOL_HEADER) | (1 << RGN_TYPE_TOOLS) |
-                                             (1 << RGN_TYPE_UI) | (1 << RGN_TYPE_HUD)));
+                                          ((1 << RGN_TYPE_TOOL_HEADER) | (1 << RGN_TYPE_TOOLS) |
+                                            (1 << RGN_TYPE_UI) | (1 << RGN_TYPE_HUD)));
+
+  /* Physarum Properties */
+  prop = RNA_def_property(srna, "sense_spread", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "sense_spread");
+  RNA_def_property_range(prop, 0.0, 90.0);
+  RNA_def_property_ui_text(prop, "Sense Spread", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "sense_distance", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "sense_distance");
+  RNA_def_property_range(prop, 0.0, 100.0);
+  RNA_def_property_ui_text(prop, "Sense Distance", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "turn_angle", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "turn_angle");
+  RNA_def_property_range(prop, 0.0, 90.0);
+  RNA_def_property_ui_text(prop, "Turn Angle", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "move_distance", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "move_distance");
+  RNA_def_property_range(prop, 0.0, 20.0);
+  RNA_def_property_ui_text(prop, "Move Distance", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "deposit_value", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "deposit_value");
+  RNA_def_property_range(prop, 0.0, 5.0);
+  RNA_def_property_ui_text(prop, "Deposit Value", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "decay_factor", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "decay_factor");
+  RNA_def_property_range(prop, 0.0, 1.0);
+  RNA_def_property_ui_text(prop, "Decay Factor", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "spawn_radius", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "spawn_radius");
+  RNA_def_property_range(prop, 0.0, 240.0);
+  RNA_def_property_ui_text(prop, "Spawn Radius", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "center_attraction", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "center_attraction");
+  RNA_def_property_range(prop, 0.0, 5.0);
+  RNA_def_property_ui_text(prop, "Center Attraction", "" );
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  /*
+  prop = RNA_def_property(srna, "collision", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "collision", 0);
+  RNA_def_property_ui_text(prop, "Collision", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "show_margin", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "flags", ST_SHOW_MARGIN);
+  RNA_def_property_ui_text(prop, "Show Margin", "Show right margin");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_TEXT, NULL);
+  */
 }
 
 void RNA_def_space(BlenderRNA *brna)
