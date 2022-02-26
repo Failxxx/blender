@@ -162,8 +162,10 @@ void physarum_data_2d_free_shaders(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: free shaders\n");
   /* Free shaders */
+  GPU_shader_free(pdata_2d->diffuse_decay_shader);
+  GPU_shader_free(pdata_2d->update_agents_shader);
+  GPU_shader_free(pdata_2d->render_agents_shader);
   GPU_shader_free(pdata_2d->post_process_shader);
-  
 }
 
 void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
@@ -246,6 +248,18 @@ void physarum_data_2d_gen_shaders(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: load shaders\n");
   /* Load shaders */
+  pdata_2d->diffuse_decay_shader = GPU_shader_create_from_arrays(
+      {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
+       .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_diffuse_decay_fs_glsl, NULL}});
+
+  pdata_2d->update_agents_shader = GPU_shader_create_from_arrays(
+      {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
+       .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_update_agents_fs_glsl, NULL}});
+
+  pdata_2d->render_agents_shader = GPU_shader_create_from_arrays(
+      {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_render_agents_vs_glsl, NULL},
+       .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_render_agents_fs_glsl, NULL}});
+
   pdata_2d->post_process_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl, NULL}});
