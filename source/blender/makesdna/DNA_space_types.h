@@ -2052,6 +2052,11 @@ typedef struct PhysarumGPUData {
 } PhysarumGPUData;
 
 typedef struct PhysarumData2D {
+  /* Matrices */
+  float modelViewProjectionMatrix[4][4];
+  float viewMatrix[4][4];
+  float modelMatrix[4][4];
+
   /* Batches, hold VBOs */
   struct GPUBatch *diffuse_decay_batch;
   struct GPUBatch *update_agents_batch;

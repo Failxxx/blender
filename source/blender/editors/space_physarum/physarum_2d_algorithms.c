@@ -70,7 +70,7 @@ GPUVertBuf *make_new_quad_mesh()
   GPUVertFormat *format = immVertexFormat();
   uint pos = GPU_vertformat_attr_add(
       format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(
+  uint uv = GPU_vertformat_attr_add(
       format, "v_in_f2UV", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
@@ -79,10 +79,55 @@ GPUVertBuf *make_new_quad_mesh()
   // Fill the vertex buffer with vertices data
   for (int i = 0; i < verts_len; i++) {
     GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-    GPU_vertbuf_attr_set(vbo, color, i, uvs[i]);
+    GPU_vertbuf_attr_set(vbo, uv, i, uvs[i]);
   }
 
   return vbo;
+}
+
+/* Compute the modelViewProjectionMatrix from the given projection matrix */
+void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
+{
+  float viewProjectionMatrix[4][4];
+  mul_m4_m4m4(viewProjectionMatrix, projectionMatrix, pdata_2d->viewMatrix);
+  mul_m4_m4m4(pdata_2d->modelViewProjectionMatrix, viewProjectionMatrix, pdata_2d->modelMatrix);
+}
+
+void physarum_2d_draw_view(PhysarumData2D *pdata_2d)
+{
+  return;
+}
+
+void physarum_data_2d_free_texture_data(PhysarumData2D *pdata_2d)
+{
+  printf("Physarum2D: free texture data\n");
+  MEM_freeN(pdata_2d->particle_positions);
+  MEM_freeN(pdata_2d->particle_uvs);
+  MEM_freeN(pdata_2d->particle_texdata);
+}
+
+void physarum_data_2d_free_textures(PhysarumData2D *pdata_2d)
+{
+  printf("Physarum2D: free textures\n");
+  /* Free particle data buffers */
+  physarum_data_2d_free_texture_data(pdata_2d);
+}
+
+void physarum_data_2d_free_shaders(PhysarumData2D *pdata_2d)
+{
+  printf("Physarum2D: free shaders\n");
+  /* Free shaders */
+  GPU_shader_free(pdata_2d->post_process_shader);
+  
+}
+
+void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
+{
+  printf("Physarum2D: free batches\n");
+  GPU_batch_discard(pdata_2d->diffuse_decay_batch);
+  //GPU_batch_discard(pdata_2d->update_agents_batch);
+  //GPU_batch_discard(pdata_2d->render_agents_batch);
+  //GPU_batch_discard(pdata_2d->post_process_batch);
 }
 
 void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
@@ -128,28 +173,19 @@ void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
   }
 }
 
-void physarum_data_2d_free_texture_data(PhysarumData2D *pdata_2d)
+void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
 {
-  printf("Physarum2D: free texture data\n");
-  MEM_freeN(pdata_2d->particle_positions);
-  MEM_freeN(pdata_2d->particle_uvs);
-  MEM_freeN(pdata_2d->particle_texdata);
+  printf("Physarum2D: gen textures\n");
+  physarum_data_2d_gen_texture_data(pdata_2d);
 }
 
-void physarum_data_2d_free_textures(PhysarumData2D *pdata_2d)
+void physarum_data_2d_gen_shaders(PhysarumData2D *pdata_2d)
 {
-  printf("Physarum2D: free textures\n");
-  /* Free particle data buffers */
-  physarum_data_2d_free_texture_data(pdata_2d);
-}
-
-void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
-{
-  printf("Physarum2D: free batches\n");
-  GPU_batch_discard(pdata_2d->diffuse_decay_batch);
-  //GPU_batch_discard(pdata_2d->update_agents_batch);
-  //GPU_batch_discard(pdata_2d->render_agents_batch);
-  //GPU_batch_discard(pdata_2d->post_process_batch);
+  printf("Physarum2D: load shaders\n");
+  /* Load shaders */
+  pdata_2d->post_process_shader = GPU_shader_create_from_arrays(
+      {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
+       .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl, NULL}});
 }
 
 void physarum_data_2d_gen_batches(PhysarumData2D *pdata_2d)
@@ -165,19 +201,25 @@ void physarum_data_2d_gen_batches(PhysarumData2D *pdata_2d)
   //pdata_2d->post_process_batch  = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
 
-void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
-{
-  printf("Physarum2D: gen textures\n");
-  physarum_data_2d_gen_texture_data(pdata_2d);
-}
-
 void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: initialize data\n");
   pdata_2d->nb_particles = 1e4;
 
+  const float idMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                                {0.0f, 1.0f, 0.0f, 0.0f},
+                                {0.0f, 0.0f, 1.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
+
+  copy_m4_m4(pdata_2d->modelViewProjectionMatrix, idMatrix);
+  // Here, model and view matrices are the identiy matrix
+  copy_m4_m4(pdata_2d->modelMatrix, idMatrix);
+  copy_m4_m4(pdata_2d->viewMatrix, idMatrix);
+  translate_m4(pdata_2d->viewMatrix, 0.0f, 0.0f, -3.0f);
+
   physarum_data_2d_gen_textures(pdata_2d);
   physarum_data_2d_gen_batches(pdata_2d);
+  physarum_data_2d_gen_shaders(pdata_2d);
 }
 
 void free_physarum_data_2d(PhysarumData2D *pdata_2d)
@@ -185,4 +227,5 @@ void free_physarum_data_2d(PhysarumData2D *pdata_2d)
   printf("Physarum2D: free data\n");
   physarum_data_2d_free_textures(pdata_2d);
   physarum_data_2d_free_batches(pdata_2d);
+  physarum_data_2d_free_shaders(pdata_2d);
 }

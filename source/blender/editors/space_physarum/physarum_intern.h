@@ -44,5 +44,6 @@ void physarum_draw_view(const bContext *C, ARegion *region);
 void free_gpu_data(SpacePhysarum *sphys);
 
 /* Physarum 2D algorithms functions */
+void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix[4][4]);
 void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
 void free_physarum_data_2d(PhysarumData2D *pdata_2d);
