@@ -380,6 +380,8 @@ data_to_c_simple(shaders/gpu_shader_common_obinfos_lib.glsl SRC)
 # Physarum
 data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.vs.glsl SRC)
 data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_quad.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_post_process.fs.glsl SRC)
 
 
 if(WITH_MOD_FLUID)

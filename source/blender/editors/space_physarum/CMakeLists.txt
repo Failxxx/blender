@@ -40,6 +40,7 @@ set(SRC
   space_physarum.c
   physarum_ops.c
   physarum_draw.c
+  physarum_2d_algorithms.c
 
   physarum_intern.h
 )

@@ -26,8 +26,12 @@
 /* internal exports only */
 
 /* Physarum custom shaders */
+// Debug
 extern char datatoc_gpu_shader_3D_debug_physarum_vs_glsl[];
 extern char datatoc_gpu_shader_3D_debug_physarum_fs_glsl[];
+// Physarum 2D
+extern char datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl[];
 
 /* Operators */
 
@@ -37,3 +41,7 @@ void initialize_physarum_gpu_data(PhysarumGPUData *pgd);
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
 void free_gpu_data(SpacePhysarum *sphys);
+
+/* Physarum 2D algorithms functions */
+void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
+void free_physarum_data_2d(PhysarumData2D *pdata_2d);

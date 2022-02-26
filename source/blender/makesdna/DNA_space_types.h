@@ -2051,6 +2051,37 @@ typedef struct PhysarumGPUData {
   struct GPUShader *shader;
 } PhysarumGPUData;
 
+typedef struct PhysarumData2D {
+  /* Batches, hold VBOs */
+  struct GPUBatch *diffuse_decay_batch;
+  struct GPUBatch *update_agents_batch;
+  struct GPUBatch *render_agents_batch;
+  struct GPUBatch *post_process_batch;
+
+  /* Shaders */
+  struct GPUShader *diffuse_decay_shader;
+  struct GPUShader *update_agents_shader;
+  struct GPUShader *render_agents_shader;
+  struct GPUShader *post_process_shader;
+
+  /* Textures */
+  struct GPUTexture *diffuse_decay_tex_current;
+  struct GPUTexture *diffuse_decay_tex_next;
+  struct GPUTexture *update_agents_tex_current;
+  struct GPUTexture *update_agents_tex_next;
+  struct GPUTexture *render_agents_tex;
+
+  /* Simulation data parameters */
+  float *particle_positions;
+  float *particle_uvs;
+  float *particle_texdata;
+
+  /* Simulation parameters */
+  float nb_particles;
+
+  char _pad0[4];
+} PhysarumData2D;
+
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
   /* Storage of regions for inactive spaces. */
@@ -2072,6 +2103,7 @@ typedef struct SpacePhysarum {
 
   PRenderingSettings *prs;
   PhysarumGPUData *pgd;
+  PhysarumData2D *pdata_2d;
 } SpacePhysarum;
 
 /** \} */

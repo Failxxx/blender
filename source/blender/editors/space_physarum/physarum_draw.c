@@ -137,9 +137,11 @@ void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
   float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
 
   // Geometry data
-  float colors[3][4] = {{UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)}};
-  float verts[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
-  uint verts_len = 3;
+  float colors[6][4] = {{UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)},
+                        {UNPACK4(white)}, {UNPACK4(red)}, {UNPACK4(blue)}};
+  float verts[6][3] = {{-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, // First triangle
+                       {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}};  // Second triangle
+  uint verts_len = 6;
 
   // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
   uint pos_comp_len = 3;
