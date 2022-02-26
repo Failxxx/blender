@@ -2082,6 +2082,7 @@ typedef struct PhysarumData2D {
   float *particle_texdata;
 
   /* Simulation parameters */
+  struct timespec *start_time;
   float nb_particles;
 
   char _pad0[4];

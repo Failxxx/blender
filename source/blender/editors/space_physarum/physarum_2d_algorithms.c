@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "MEM_guardedalloc.h"
 
@@ -122,21 +123,53 @@ void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix
   mul_m4_m4m4(pdata_2d->modelViewProjectionMatrix, viewProjectionMatrix, pdata_2d->modelMatrix);
 }
 
+void physarum_2d_swap_textures(PhysarumData2D* pdata_2d)
+{
+  // Swap diffuse / decay textures
+  GPUTexture *diffuse_decay_current = pdata_2d->diffuse_decay_tex_current;
+  pdata_2d->diffuse_decay_tex_current = pdata_2d->diffuse_decay_tex_next;
+  pdata_2d->diffuse_decay_tex_next = diffuse_decay_current;
+
+  // Swap update agents textures
+  GPUTexture *update_agents_current = pdata_2d->update_agents_tex_current;
+  pdata_2d->update_agents_tex_current = pdata_2d->update_agents_tex_next;
+  pdata_2d->update_agents_tex_next = update_agents_current;
+}
+
 void physarum_2d_draw_view(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
 {
-  // Set shaders
-  GPU_batch_set_shader(pdata_2d->diffuse_decay_batch, pdata_2d->post_process_shader);
+  GPUBatch *batch;
+  struct timespec now;
+  timespec_get(&now, TIME_UTC);
+  float time = now.tv_sec - pdata_2d->start_time->tv_sec;
+  printf("TIME = %f\n", time);
 
   // Compute model view projection matrix
   physarum_2d_compute_matrix(pdata_2d, projectionMatrix);
+  float *modelViewProjMatrix = pdata_2d->modelViewProjectionMatrix;
 
-  // Send uniforms to shaders
-  GPU_batch_uniform_mat4(pdata_2d->diffuse_decay_batch,
-                         "u_m4ModelViewProjectionMatrix",
-                         pdata_2d->modelViewProjectionMatrix);
+  /* ----- Compute trails ----- */
+  batch = pdata_2d->diffuse_decay_batch;
+  // Set shader
+  GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
+
+  // Send uniforms to shader
+  GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+
+  GPU_batch_texture_bind(batch, "u_s2Points", pdata_2d->render_agents_tex);
+  GPU_batch_uniform_1i(batch, "u_s2Points", 0);
+
+  GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->diffuse_decay_tex_current);
+  GPU_batch_uniform_1i(batch, "u_s2InputTexture", 1);
+
+  GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
+  GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
 
   // Draw vertices
   GPU_batch_draw(pdata_2d->diffuse_decay_batch);
+
+  // Swap textures
+  physarum_2d_swap_textures(pdata_2d);
 }
 
 void physarum_data_2d_free_particles(PhysarumData2D *pdata_2d)
@@ -303,6 +336,10 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
   physarum_data_2d_gen_textures(pdata_2d);
   physarum_data_2d_gen_batches(pdata_2d);
   physarum_data_2d_gen_shaders(pdata_2d);
+
+  // timespec struct : time_t tv_sec, long tv_nsec
+  pdata_2d->start_time = MEM_callocN(sizeof(time_t) + sizeof(long), "pysarum 2d start time");
+  timespec_get(pdata_2d->start_time, TIME_UTC);
 }
 
 void free_physarum_data_2d(PhysarumData2D *pdata_2d)
@@ -312,4 +349,5 @@ void free_physarum_data_2d(PhysarumData2D *pdata_2d)
   physarum_data_2d_free_textures(pdata_2d);
   physarum_data_2d_free_batches(pdata_2d);
   physarum_data_2d_free_shaders(pdata_2d);
+  MEM_freeN(pdata_2d->start_time);
 }
