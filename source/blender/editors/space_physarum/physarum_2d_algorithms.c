@@ -50,6 +50,41 @@ float randf(const float a, const float b)
   return a + (float)rand() / (float)(RAND_MAX / (b - a));
 }
 
+/* Generate geometry data for a quad mesh */
+GPUVertBuf *make_new_quad_mesh()
+{
+  float verts[6][3] = {{-1.0f, -1.0f, 0.0f},  // First triangle
+                       {1.0f, -1.0f, 0.0f},
+                       {-1.0f, 1.0f, 0.0f},
+                       {1.0f, -1.0f, 0.0f},  // Second triangle
+                       {-1.0f, 1.0f, 0.0f},
+                       {1.0f, 1.0f, 0.0f}};
+  float uvs[6][2] = {
+      {0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}};
+  uint verts_len = 6;
+
+  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
+  uint pos_comp_len = 3;
+  uint uvs_comp_len = 2;
+
+  GPUVertFormat *format = immVertexFormat();
+  uint pos = GPU_vertformat_attr_add(
+      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+  uint color = GPU_vertformat_attr_add(
+      format, "v_in_f2UV", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
+
+  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
+  GPU_vertbuf_data_alloc(vbo, verts_len);
+
+  // Fill the vertex buffer with vertices data
+  for (int i = 0; i < verts_len; i++) {
+    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
+    GPU_vertbuf_attr_set(vbo, color, i, uvs[i]);
+  }
+
+  return vbo;
+}
+
 void physarum_data_2d_gen_texture_data(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: gen texture data\n");
@@ -111,48 +146,23 @@ void physarum_data_2d_free_textures(PhysarumData2D *pdata_2d)
 void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: free batches\n");
+  GPU_batch_discard(pdata_2d->diffuse_decay_batch);
+  //GPU_batch_discard(pdata_2d->update_agents_batch);
+  //GPU_batch_discard(pdata_2d->render_agents_batch);
+  //GPU_batch_discard(pdata_2d->post_process_batch);
 }
 
 void physarum_data_2d_gen_batches(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: gen batches\n");
-  /* Load texture data */
+  /* Generate geometry data (3d render targets) */
+  GPUVertBuf *vbo = make_new_quad_mesh();
 
-  //// Geometry data
-  // float colors[6][4] = {{UNPACK4(white)},
-  //                      {UNPACK4(red)},
-  //                      {UNPACK4(blue)},
-  //                      {UNPACK4(white)},
-  //                      {UNPACK4(red)},
-  //                      {UNPACK4(blue)}};
-  // float verts[6][3] = {{-1.0f, -1.0f, 0.0f},
-  //                     {1.0f, -1.0f, 0.0f},
-  //                     {-1.0f, 1.0f, 0.0f},  // First triangle
-  //                     {1.0f, -1.0f, 0.0f},
-  //                     {-1.0f, 1.0f, 0.0f},
-  //                     {1.0f, 1.0f, 0.0f}};  // Second triangle
-  // uint verts_len = 6;
-
-  //// Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
-  // uint pos_comp_len = 3;
-  // uint col_comp_len = 4;
-
-  // GPUVertFormat *format = immVertexFormat();
-  // uint pos = GPU_vertformat_attr_add(
-  //    format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  // uint color = GPU_vertformat_attr_add(
-  //    format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
-
-  // GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  // GPU_vertbuf_data_alloc(vbo, verts_len);
-
-  //// Fill the vertex buffer with vertices data
-  // for (int i = 0; i < verts_len; i++) {
-  //  GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-  //  GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
-  //}
-
-  // pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  /* Create batches */
+  pdata_2d->diffuse_decay_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  //pdata_2d->update_agents_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  //pdata_2d->render_agents_batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+  //pdata_2d->post_process_batch  = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
 
 void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)

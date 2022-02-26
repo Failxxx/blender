@@ -60,16 +60,23 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_blend(GPU_BLEND_ALPHA);
 
   // Set shaders
-  GPU_batch_set_shader(pgd->batch, pgd->shader);
+  //GPU_batch_set_shader(pgd->batch, pgd->shader);
+  GPU_batch_set_shader(sphys->pdata_2d->diffuse_decay_batch, pgd->shader);
 
   // Send uniforms to shaders
-  GPU_batch_uniform_mat4(pgd->batch, "u_m4ModelMatrix", prs->modelMatrix);
-  GPU_batch_uniform_mat4(pgd->batch, "u_m4ViewMatrix", prs->viewMatrix);
-  GPU_batch_uniform_mat4(pgd->batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
+  //GPU_batch_uniform_mat4(pgd->shader, "u_m4ModelMatrix", prs->modelMatrix);
+  //GPU_batch_uniform_mat4(pgd->shader, "u_m4ViewMatrix", prs->viewMatrix);
+  //GPU_batch_uniform_mat4(pgd->shader, "u_m4ProjectionMatrix", prs->projectionMatrix);
+  float modelViewProjectionMatrix[4][4];
+
+  GPU_batch_uniform_mat4(sphys->pdata_2d->diffuse_decay_batch, "u_m4ModelMatrix", prs->modelMatrix);
+  GPU_batch_uniform_mat4(sphys->pdata_2d->diffuse_decay_batch, "u_m4ViewMatrix", prs->viewMatrix);
+  GPU_batch_uniform_mat4(sphys->pdata_2d->diffuse_decay_batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
 
   // Draw vertices
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
-  GPU_batch_draw(pgd->batch);
+  //GPU_batch_draw(pgd->batch);
+  GPU_batch_draw(sphys->pdata_2d->diffuse_decay_batch);
 
   GPU_blend(GPU_BLEND_NONE);
 }
