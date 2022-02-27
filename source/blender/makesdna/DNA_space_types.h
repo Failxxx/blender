@@ -2076,6 +2076,9 @@ typedef struct PhysarumData2D {
   struct GPUTexture *update_agents_tex_next;
   struct GPUTexture *render_agents_tex;
 
+  /* Frame buffer */
+  struct GPUFrameBuffer *fb;
+
   /* Simulation data parameters */
   float *particle_positions;
   float *particle_uvs;

@@ -1,6 +1,6 @@
 
-uniform sampler2D u_s2Points;
 uniform sampler2D u_s2InputTexture;
+uniform sampler2D u_s2Points;
 uniform vec2 u_f2Resolution;
 uniform float u_fDecay;
 
