@@ -180,17 +180,6 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
   }
 
-  // See partial results
-  if (1) {
-    batch = debug_data->batch;
-    GPU_batch_set_shader(batch, debug_data->shader);
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
-    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->update_agents_tex_current);
-    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
-    GPU_framebuffer_bind(initial_fb);
-    GPU_batch_draw(batch);
-  }
-
   /* ----- Update agents ----- */
   {
     batch = pdata_2d->update_agents_batch;
@@ -232,6 +221,7 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
 
     // Send uniforms tho shaders
     // Vertex shader
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
     GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
 
@@ -241,6 +231,17 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_bind(pdata_2d->fb);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
+  }
+
+  // See partial results
+  if (1) {
+    batch = debug_data->batch;
+    GPU_batch_set_shader(batch, debug_data->shader);
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->render_agents_tex);
+    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
+    GPU_framebuffer_bind(initial_fb);
+    GPU_batch_draw(batch);
   }
 
   /* ----- Render final result using post-process ----- */
