@@ -1,6 +1,6 @@
 
-uniform sampler2D u_s2InputTexture;
-uniform sampler2D u_s2Data;
+uniform sampler2D u_s2InputTexture; // Current agents texture
+uniform sampler2D u_s2Data; // Trails texture
 
 uniform vec2 u_f2Resolution;
 uniform float u_fTime;
@@ -20,13 +20,15 @@ const float PHI = 1.61803398874989484820459 * .1; // Golden Ratio
 const float SQ2 = 1.41421356237309504880169 * 1000.; // Square Root of Two
 
 float rand(in vec2 coordinate){
-  return fract(tan(distance(coordinate * (u_fTime + PHI), vec2(PHI, PI * .1))) * SQ2);
+  return fract(tan(distance(coordinate * (u_fTime + PHI), vec2(PHI, PI * 0.1f))) * SQ2);
 }
 
+/* Return the position of the current agent in the agents texture */
 float getDataValue(vec2 uv){
-  return texture2D(u_s2Data, fract(uv) ).r;
+  return texture2D(u_s2Data, fract(uv)).r;
 }
 
+/* Return the trail value of the given pixel */
 float getTrailValue(vec2 uv){
   return texture2D(u_s2Data,fract(uv)).g;
 }
@@ -50,9 +52,9 @@ void main(){
   float angle = val.z * PI2;
 
   // Compute the sensors positions 
-  vec2 uvFL=val.xy + vec2(cos(angle - SA), sin(angle - SA)) * SO;
-  vec2 uvF =val.xy + vec2(cos(angle), sin(angle)) * SO;
-  vec2 uvFR=val.xy + vec2(cos(angle + SA), sin(angle + SA)) * SO;
+  vec2 uvFL = val.xy + vec2(cos(angle - SA), sin(angle - SA)) * SO;
+  vec2 uvF  = val.xy + vec2(cos(angle), sin(angle)) * SO;
+  vec2 uvFR = val.xy + vec2(cos(angle + SA), sin(angle + SA)) * SO;
 
   // Get the values unders the sensors 
   float FL = getTrailValue(uvFL);
@@ -63,7 +65,7 @@ void main(){
   // TODO remove the conditions
   if(F > FL && F > FR){}
   else if(F < FL && F < FR){
-    if(rand(val.xy) > .5){ angle += RA; }
+    if(rand(val.xy) > 0.5f){ angle += RA; }
     else{ angle -= RA; }
   }
   else if(FL < FR){ angle += RA; }
@@ -81,7 +83,7 @@ void main(){
   // Warps the coordinates so they remains in the [0-1] interval
   val.xy = fract(val.xy);
 
-  //converts the angle back to [0-1]
+  // Converts the angle back to [0-1]
   val.z = (angle / PI2);
     
   fragColor = val;

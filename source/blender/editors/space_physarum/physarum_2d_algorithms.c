@@ -48,6 +48,13 @@
 
 #include "physarum_intern.h"
 
+float get_elapsed_time(struct timespec *start)
+{
+  struct timespec now;
+  timespec_get(&now, TIME_UTC);
+  return (now.tv_sec + now.tv_nsec / 1e9) - (start->tv_sec + start->tv_sec / 1e9);
+}
+
 /* Generate geometry data for a quad mesh */
 GPUVertBuf *make_new_quad_mesh()
 {
@@ -142,9 +149,7 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
   GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
   GPUBatch *batch;  // Used for convenience
 
-  struct timespec now;
-  timespec_get(&now, TIME_UTC);
-  float time = now.tv_sec - pdata_2d->start_time->tv_sec;
+  float time = get_elapsed_time(pdata_2d->start_time);
   printf("TIME = %f\n", time);
 
   // Compute model view projection matrix
@@ -178,6 +183,17 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_bind(pdata_2d->fb);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
+  }
+
+  // See partial results
+  if (0) {
+    batch = debug_data->batch;
+    GPU_batch_set_shader(batch, debug_data->shader);
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->diffuse_decay_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
+    GPU_framebuffer_bind(initial_fb);
+    GPU_batch_draw(batch);
   }
 
   /* ----- Update agents ----- */
@@ -233,19 +249,8 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
   }
 
-  // See partial results
-  if (1) {
-    batch = debug_data->batch;
-    GPU_batch_set_shader(batch, debug_data->shader);
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
-    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->render_agents_tex);
-    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
-    GPU_framebuffer_bind(initial_fb);
-    GPU_batch_draw(batch);
-  }
-
   /* ----- Render final result using post-process ----- */
-  if(0){
+  if(1){
     batch = pdata_2d->post_process_batch;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
