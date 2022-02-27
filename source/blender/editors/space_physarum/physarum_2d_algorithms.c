@@ -149,13 +149,15 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
   GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
   GPUBatch *batch;  // Used for convenience
 
+  // Elapsed time since the beginning of the simulation
   float time = get_elapsed_time(pdata_2d->start_time);
-  printf("TIME = %f\n", time);
+  float resolution[2] = {prs->screen_width, prs->screen_height};
 
   // Compute model view projection matrix
   float modelViewProjMatrix[4][4];
   physarum_2d_compute_matrix(pdata_2d, projectionMatrix);
   copy_m4_m4(modelViewProjMatrix, pdata_2d->modelViewProjectionMatrix);
+
 
   /* ----- Compute trails ----- */
   {
@@ -173,27 +175,17 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_texture_bind(batch, "u_s2Points", pdata_2d->render_agents_tex);
     GPU_batch_uniform_1i(batch, "u_s2Points", 1);
 
-    GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
+    GPU_batch_uniform_2f(batch, "u_f2Resolution", resolution[0], resolution[1]);
     GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
 
     // Render to the "diffuse_decay_next" texture
     GPU_framebuffer_ensure_config(
         &pdata_2d->fb,
         {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->diffuse_decay_tex_next)});
+    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
     GPU_framebuffer_bind(pdata_2d->fb);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
-  }
-
-  // See partial results
-  if (0) {
-    batch = debug_data->batch;
-    GPU_batch_set_shader(batch, debug_data->shader);
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
-    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->diffuse_decay_tex_current);
-    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
-    GPU_framebuffer_bind(initial_fb);
-    GPU_batch_draw(batch);
   }
 
   /* ----- Update agents ----- */
@@ -213,7 +205,7 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2Data", 1);
 
-    GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
+    GPU_batch_uniform_2f(batch, "u_f2Resolution", resolution[0], resolution[1]);
     GPU_batch_uniform_1f(batch, "u_fTime", time);
     GPU_batch_uniform_1f(batch, "u_fSA", 2.0f);
     GPU_batch_uniform_1f(batch, "u_fRA", 4.0f);
@@ -225,6 +217,7 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
         &pdata_2d->fb,
         {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->update_agents_tex_next)});
     GPU_framebuffer_bind(pdata_2d->fb);
+    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->update_agents_tex_next);
   }
@@ -245,12 +238,24 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_ensure_config(
         &pdata_2d->fb, {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
     GPU_framebuffer_bind(pdata_2d->fb);
+    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
   }
 
+  // See partial results
+  if (1) {
+    batch = debug_data->batch;
+    GPU_batch_set_shader(batch, debug_data->shader);
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->render_agents_tex);
+    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
+    GPU_framebuffer_bind(initial_fb);
+    GPU_batch_draw(batch);
+  }
+
   /* ----- Render final result using post-process ----- */
-  if(1){
+  if(0){
     batch = pdata_2d->post_process_batch;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->post_process_shader);

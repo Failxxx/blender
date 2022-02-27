@@ -80,7 +80,9 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     GPU_batch_draw(pgd->batch);
   }
   else if (physarum_2d) {
-    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
+    float projMatrixPhysarum2D[4][4];
+    orthographic_m4(projMatrixPhysarum2D, -1.0f, 1.0f, 1.0f, -1.0f, -100.0f, 100.0f);
+    physarum_2d_draw_view(pdata_2d, projMatrixPhysarum2D, pgd, prs);
   }
 
   GPU_blend(GPU_BLEND_NONE);
