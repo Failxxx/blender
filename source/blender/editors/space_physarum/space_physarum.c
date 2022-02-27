@@ -162,8 +162,6 @@ static void physarum_properties_region_draw(const bContext *C, ARegion *region)
 /* only called once, from space/spacetypes.c */
 void ED_spacetype_physarum(void)
 {
-  srand(time(NULL)); // Init seed for random values
-
   SpaceType *st = MEM_callocN(sizeof(SpaceType), "spacetype physarum");
   ARegionType *art;
 

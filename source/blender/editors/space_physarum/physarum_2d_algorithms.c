@@ -29,6 +29,7 @@
 
 #include "BLI_blenlib.h"
 #include "BLI_utildefines.h"
+#include "BLI_rand.h"
 
 #include "BKE_context.h"
 #include "BKE_screen.h"
@@ -46,11 +47,6 @@
 #include "WM_api.h"
 
 #include "physarum_intern.h"
-
-float randf(const float a, const float b)
-{
-  return a + (float)rand() / (float)(RAND_MAX / (b - a));
-}
 
 /* Generate geometry data for a quad mesh */
 GPUVertBuf *make_new_quad_mesh()
@@ -157,33 +153,46 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
   copy_m4_m4(modelViewProjMatrix, pdata_2d->modelViewProjectionMatrix);
 
   /* ----- Compute trails ----- */
-  batch = pdata_2d->diffuse_decay_batch;
-  // Set shader
-  GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
-  // Send uniforms to shaders
-  // Vertex shader
-  GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+  {
+    batch = pdata_2d->diffuse_decay_batch;
+    // Set shader
+    GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
+    // Send uniforms to shaders
+    // Vertex shader
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
 
-  // Pixel / Fragment shader
-  GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->diffuse_decay_tex_current);
-  GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
+    // Pixel / Fragment shader
+    GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->diffuse_decay_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
 
-  GPU_batch_texture_bind(batch, "u_s2Points", pdata_2d->render_agents_tex);
-  GPU_batch_uniform_1i(batch, "u_s2Points", 1);
+    GPU_batch_texture_bind(batch, "u_s2Points", pdata_2d->render_agents_tex);
+    GPU_batch_uniform_1i(batch, "u_s2Points", 1);
 
-  GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
-  GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
+    GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
+    GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
 
-  // Render to the "diffuse_decay_next" texture
-  GPU_framebuffer_ensure_config(
-      &pdata_2d->fb,
-      {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->diffuse_decay_tex_next)});
-  GPU_framebuffer_bind(pdata_2d->fb);
-  GPU_batch_draw(batch);
-  GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
+    // Render to the "diffuse_decay_next" texture
+    GPU_framebuffer_ensure_config(
+        &pdata_2d->fb,
+        {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->diffuse_decay_tex_next)});
+    GPU_framebuffer_bind(pdata_2d->fb);
+    GPU_batch_draw(batch);
+    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
+  }
 
+  // See partial results
   if (1) {
-    /* ----- Update agents ----- */
+    batch = debug_data->batch;
+    GPU_batch_set_shader(batch, debug_data->shader);
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->update_agents_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
+    GPU_framebuffer_bind(initial_fb);
+    GPU_batch_draw(batch);
+  }
+
+  /* ----- Update agents ----- */
+  {
     batch = pdata_2d->update_agents_batch;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->update_agents_shader);
@@ -213,8 +222,10 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_framebuffer_bind(pdata_2d->fb);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->update_agents_tex_next);
+  }
 
-    /* ----- Render agents ----- */
+  /* ----- Render agents ----- */
+  {
     batch = pdata_2d->render_agents_batch;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->render_agents_shader);
@@ -226,13 +237,14 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
 
     // Render to the "render_agents" texture
     GPU_framebuffer_ensure_config(
-        &pdata_2d->fb,
-        {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
+        &pdata_2d->fb, {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
     GPU_framebuffer_bind(pdata_2d->fb);
     GPU_batch_draw(batch);
     GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
+  }
 
-    /* ----- Render using post-process ----- */
+  /* ----- Render final result using post-process ----- */
+  if(0){
     batch = pdata_2d->post_process_batch;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
@@ -245,13 +257,13 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2Data", 0);
 
-    // Draw
+    // Draw final result
     GPU_framebuffer_bind(initial_fb);
     GPU_batch_draw(pdata_2d->post_process_batch);
-
-    // Swap textures
-    physarum_2d_swap_textures(pdata_2d);
   }
+
+  // Swap textures
+  physarum_2d_swap_textures(pdata_2d);
 }
 
 void physarum_data_2d_free_particles(PhysarumData2D *pdata_2d)
@@ -295,6 +307,7 @@ void physarum_data_2d_free_batches(PhysarumData2D *pdata_2d)
 void physarum_data_2d_gen_particles(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: gen particles\n");
+  RNG *rng = BLI_rng_new_srandom(5831); // Arbitrary, random values generator
   /* Allocate memory for particle data buffers */
   int size = floor(sqrt(pdata_2d->nb_particles));
   int particles_count = size * size;
@@ -328,11 +341,12 @@ void physarum_data_2d_gen_particles(PhysarumData2D *pdata_2d)
 
     // Particle texture values (agents)
     id = i * 4;
-    pdata_2d->particle_texdata[id++] = randf(0.0, 1.0); // Normalized position X
-    pdata_2d->particle_texdata[id++] = randf(0.0, 1.0); // Normalized position Y
-    pdata_2d->particle_texdata[id++] = randf(0.0, 1.0); // Normalized angle
+    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position X
+    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position Y
+    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized angle
     pdata_2d->particle_texdata[id++] = 1.0f;
   }
+  BLI_rng_free(rng);
 }
 
 void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
