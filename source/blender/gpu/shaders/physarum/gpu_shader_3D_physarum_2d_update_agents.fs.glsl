@@ -9,13 +9,15 @@ uniform float u_fRA;
 uniform float u_fSO;
 uniform float u_fSS;
 
+in vec2 v_out_f2UV;
+
+out vec4 fragColor;
+
 const float PI  = 3.14159265358979323846264; // PI
 const float PI2 = PI * 2.;
 const float RAD = 1./PI;
 const float PHI = 1.61803398874989484820459 * .1; // Golden Ratio   
 const float SQ2 = 1.41421356237309504880169 * 1000.; // Square Root of Two
-
-in vec2 v_out_f2UV;
 
 float rand(in vec2 coordinate){
   return fract(tan(distance(coordinate * (u_fTime + PHI), vec2(PHI, PI * .1))) * SQ2);
@@ -82,5 +84,5 @@ void main(){
   //converts the angle back to [0-1]
   val.z = (angle / PI2);
     
-  gl_FragColor = val;
+  fragColor = val;
 }

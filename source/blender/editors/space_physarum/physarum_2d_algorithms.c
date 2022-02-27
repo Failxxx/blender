@@ -41,6 +41,7 @@
 #include "GPU_capabilities.h"
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
+#include "GPU_viewport.h"
 
 #include "WM_api.h"
 
@@ -136,11 +137,14 @@ void physarum_2d_swap_textures(PhysarumData2D* pdata_2d)
   pdata_2d->update_agents_tex_next = update_agents_current;
 }
 
-void physarum_2d_draw_view(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
+void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
+                           float projectionMatrix[4][4],
+                           PhysarumGPUData *debug_data,
+                           PhysarumRenderingSettings *prs)
 {
   /* Get current framebuffer to be able to switch between frame buffers */
   GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
-  GPUBatch *batch; // Used for convenience
+  GPUBatch *batch;  // Used for convenience
 
   struct timespec now;
   timespec_get(&now, TIME_UTC);
@@ -156,7 +160,6 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d, float projectionMatrix[4][4
   batch = pdata_2d->diffuse_decay_batch;
   // Set shader
   GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
-
   // Send uniforms to shaders
   // Vertex shader
   GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
@@ -168,86 +171,87 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d, float projectionMatrix[4][4
   GPU_batch_texture_bind(batch, "u_s2Points", pdata_2d->render_agents_tex);
   GPU_batch_uniform_1i(batch, "u_s2Points", 1);
 
-
   GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
   GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
 
-  // Render to the "diffuse_decay_next texture"
-  GPU_framebuffer_texture_attach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next, 0, 1);
+  // Render to the "diffuse_decay_next" texture
+  GPU_framebuffer_ensure_config(
+      &pdata_2d->fb,
+      {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->diffuse_decay_tex_next)});
   GPU_framebuffer_bind(pdata_2d->fb);
+  GPU_batch_draw(batch);
   GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
 
-  // Draw
-  GPU_batch_draw(batch);
+  if (1) {
+    /* ----- Update agents ----- */
+    batch = pdata_2d->update_agents_batch;
+    // Set shader
+    GPU_batch_set_shader(batch, pdata_2d->update_agents_shader);
 
-  /* ----- Update agents ----- */
-  batch = pdata_2d->update_agents_batch;
-  // Set shader
-  GPU_batch_set_shader(batch, pdata_2d->update_agents_shader);
+    // Send uniforms tho shaders
+    // Vertex shader
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
 
-  // Send uniforms tho shaders
-  // Vertex shader
-  GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    // Pixel / Fragment shader
+    GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
 
-  // Pixel / Fragment shader
-  GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
-  GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
+    GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2Data", 1);
 
-  GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
-  GPU_batch_uniform_1i(batch, "u_s2Data", 1);
+    GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
+    GPU_batch_uniform_1f(batch, "u_fTime", time);
+    GPU_batch_uniform_1f(batch, "u_fSA", 2.0f);
+    GPU_batch_uniform_1f(batch, "u_fRA", 4.0f);
+    GPU_batch_uniform_1f(batch, "u_fSO", 12.0f);
+    GPU_batch_uniform_1f(batch, "u_fSS", 1.1f);
 
-  GPU_batch_uniform_2f(batch, "u_f2Resolution", 512.0f, 512.0f);
-  GPU_batch_uniform_1f(batch, "u_fTime", time);
-  GPU_batch_uniform_1f(batch, "u_fSA", 2.0f);
-  GPU_batch_uniform_1f(batch, "u_fRA", 4.0f);
-  GPU_batch_uniform_1f(batch, "u_fSO", 12.0f);
-  GPU_batch_uniform_1f(batch, "u_fSS", 1.1f);
+    // Render to the "update_agents_next" texture
+    GPU_framebuffer_ensure_config(
+        &pdata_2d->fb,
+        {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->update_agents_tex_next)});
+    GPU_framebuffer_bind(pdata_2d->fb);
+    GPU_batch_draw(batch);
+    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->update_agents_tex_next);
 
-  // Render to the "update_agents_next texture"
-  GPU_framebuffer_texture_attach(pdata_2d->fb, pdata_2d->update_agents_tex_next, 0, 1);
-  GPU_framebuffer_bind(pdata_2d->fb);
-  GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->update_agents_tex_next);
+    /* ----- Render agents ----- */
+    batch = pdata_2d->render_agents_batch;
+    // Set shader
+    GPU_batch_set_shader(batch, pdata_2d->render_agents_shader);
 
-  // Draw
-  GPU_batch_draw(batch);
+    // Send uniforms tho shaders
+    // Vertex shader
+    GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
 
-  /* ----- Render agents ----- */
-  batch = pdata_2d->render_agents_batch;
-  // Set shader
-  GPU_batch_set_shader(batch, pdata_2d->render_agents_shader);
+    // Render to the "render_agents" texture
+    GPU_framebuffer_ensure_config(
+        &pdata_2d->fb,
+        {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
+    GPU_framebuffer_bind(pdata_2d->fb);
+    GPU_batch_draw(batch);
+    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
 
-  // Send uniforms tho shaders
-  // Vertex shader
-  GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
-  GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
+    /* ----- Render using post-process ----- */
+    batch = pdata_2d->post_process_batch;
+    // Set shader
+    GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
 
-  // Render to the "render_agents texture"
-  GPU_framebuffer_texture_attach(pdata_2d->fb, pdata_2d->render_agents_tex, 0, 1);
-  GPU_framebuffer_bind(pdata_2d->fb);
-  GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
+    // Send uniforms tho shaders
+    // Vertex shader
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
 
-  // Draw
-  GPU_batch_draw(batch);
+    // Pixel / Fragment shader
+    GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
+    GPU_batch_uniform_1i(batch, "u_s2Data", 0);
 
-  /* ----- Render using post-process ----- */
-  batch = pdata_2d->post_process_batch;
-  // Set shader
-  GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
+    // Draw
+    GPU_framebuffer_bind(initial_fb);
+    GPU_batch_draw(pdata_2d->post_process_batch);
 
-  // Send uniforms tho shaders
-  // Vertex shader
-  GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
-
-  // Pixel / Fragment shader
-  GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
-  GPU_batch_uniform_1i(batch, "u_s2Data", 0);
-
-  // Draw
-  GPU_framebuffer_bind(initial_fb);
-  GPU_batch_draw(pdata_2d->post_process_batch);
-
-  // Swap textures
-  physarum_2d_swap_textures(pdata_2d);
+    // Swap textures
+    physarum_2d_swap_textures(pdata_2d);
+  }
 }
 
 void physarum_data_2d_free_particles(PhysarumData2D *pdata_2d)
@@ -337,6 +341,7 @@ void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
   /* Generate textures */
   // Textures sizes
   int size = floor(sqrt(pdata_2d->nb_particles));
+  printf("Texture size = %d\n", size);
 
   // Diffuse/Decay textures
   pdata_2d->diffuse_decay_tex_current = GPU_texture_create_2d(
