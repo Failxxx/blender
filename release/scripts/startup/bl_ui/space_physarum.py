@@ -104,14 +104,15 @@ class PHYSARUM_PT_render(Panel):
         sub.operator(PHYSARUM_Render_Frame.bl_idname, text="Render Frame")      
 
 class PHYSARUM_Render_Frame(bpy.types.Operator):
+    bl_space_type = 'PHYSARUM_EDITOR'
     bl_idname = "wm.hello_world"
     bl_label = "Minimal Operator"
 
     def execute(self, context):
         data_context = {"blend_data": bpy.context.blend_data, "scene": bpy.data.scenes['Scene']}
         bpy.context.scene.render.image_settings.file_format = 'JPEG'
-        bpy.context.scene.render.filepath = "/tmp\physarum.jpg"
-        bpy.ops.render.render(data_context,write_still=True)
+        bpy.context.scene.render.filepath = "\\tmp\\physarum.jpg"
+        bpy.ops.render.render(data_context,write_still=True, use_viewport = False)
         # data_context = {"blend_data": bpy.context.blend_data, "scene": bpy.data.scenes['Scene']}
         # bpy.context.scene.render.image_settings.file_format = 'JPEG'
         # bpy.context.scene.render.filepath = "/tmp\physarum.jpg"
