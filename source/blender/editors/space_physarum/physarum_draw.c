@@ -67,7 +67,6 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
   if (debug) {
-    physarum_2d_compute_matrix(pdata_2d, prs->projectionMatrix);
     // Set shaders
     GPU_batch_set_shader(pgd->batch, pgd->shader);
 
@@ -80,9 +79,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     GPU_batch_draw(pgd->batch);
   }
   else if (physarum_2d) {
-    float projMatrixPhysarum2D[4][4];
-    orthographic_m4(projMatrixPhysarum2D, -1.0f, 1.0f, 1.0f, -1.0f, -100.0f, 100.0f);
-    physarum_2d_draw_view(pdata_2d, projMatrixPhysarum2D, pgd, prs);
+    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
   }
 
   GPU_blend(GPU_BLEND_NONE);
@@ -92,7 +89,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs)
 {
   /* Adapt projection matrix */
-  float aspectRatio = prs->screen_width / prs->screen_height;
+  //float aspectRatio = prs->screen_width / prs->screen_height;
+  float aspectRatio = 1.0f;
   perspective_m4(
       prs->projectionMatrix, -0.5f * aspectRatio, 0.5f * aspectRatio, -0.5f, 0.5f, 1.0f, 1000.0f);
 }

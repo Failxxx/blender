@@ -119,12 +119,18 @@ GPUVertBuf *make_new_points_mesh(float *points, float *uvs, int nb_points)
   return vbo;
 }
 
-/* Compute the modelViewProjectionMatrix from the given projection matrix */
-void physarum_2d_compute_matrix(PhysarumData2D *pdata_2d, float projectionMatrix[4][4])
+/* Compute the model view projection matrices for physarum 2d */
+void physarum_2d_compute_matrices(PhysarumData2D *pdata_2d)
 {
+  float projectionMatrix[4][4];
+  perspective_m4(projectionMatrix, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1000.0f);
   float viewProjectionMatrix[4][4];
   mul_m4_m4m4(viewProjectionMatrix, projectionMatrix, pdata_2d->viewMatrix);
+  // Matrix for final 3D rendering
   mul_m4_m4m4(pdata_2d->modelViewProjectionMatrix, viewProjectionMatrix, pdata_2d->modelMatrix);
+  // Matrix for texture rendering in the framebuffer
+  mul_m4_m4m4(
+      pdata_2d->orthoModelViewProjectionMatrix, viewProjectionMatrix, pdata_2d->modelMatrix);
 }
 
 void physarum_2d_swap_textures(PhysarumData2D* pdata_2d)
@@ -145,28 +151,36 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
                            PhysarumGPUData *debug_data,
                            PhysarumRenderingSettings *prs)
 {
+  /* ----- Setup ----- */
+
   /* Get current framebuffer to be able to switch between frame buffers */
   GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
-  GPUBatch *batch;  // Used for convenience
+  // Used for convenience
+  GPUBatch *batch;
+  GPUFrameBuffer *frameBuffer;
 
   // Elapsed time since the beginning of the simulation
   float time = get_elapsed_time(pdata_2d->start_time);
-  float resolution[2] = {prs->screen_width, prs->screen_height};
+  // Texture sizes
+  float resolution[2] = {512.0f, 512.0f};
+  // Clear color framebuffer
+  const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-  // Compute model view projection matrix
-  float modelViewProjMatrix[4][4];
-  physarum_2d_compute_matrix(pdata_2d, projectionMatrix);
-  copy_m4_m4(modelViewProjMatrix, pdata_2d->modelViewProjectionMatrix);
-
+  // Compute two modelViewProjection matrices
+  // One with perspective --> used for final 3D rendering
+  // One with orthographic --> used for rendering textures in the framebuffer
+  physarum_2d_compute_matrices(pdata_2d);
 
   /* ----- Compute trails ----- */
   {
     batch = pdata_2d->diffuse_decay_batch;
+    frameBuffer = pdata_2d->fb;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
     // Send uniforms to shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_uniform_mat4(
+        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->orthoModelViewProjectionMatrix);
 
     // Pixel / Fragment shader
     GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->diffuse_decay_tex_current);
@@ -179,24 +193,30 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_uniform_1f(batch, "u_fDecay", 0.9f);
 
     // Render to the "diffuse_decay_next" texture
+    // Attach texture to framebuffer
     GPU_framebuffer_ensure_config(
-        &pdata_2d->fb,
+        &frameBuffer,
         {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->diffuse_decay_tex_next)});
-    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
-    GPU_framebuffer_bind(pdata_2d->fb);
+    // Bind framebuffer
+    GPU_framebuffer_bind(frameBuffer);
+    // Set its viewport to the texture size which we want to draw on
+    GPU_framebuffer_viewport_set(frameBuffer, 0, 0, (int)resolution[0], (int)resolution[1]);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);  // Don't forget to clear!
     GPU_batch_draw(batch);
-    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->diffuse_decay_tex_next);
+    GPU_framebuffer_texture_detach(frameBuffer, pdata_2d->diffuse_decay_tex_next);
   }
 
   /* ----- Update agents ----- */
   {
     batch = pdata_2d->update_agents_batch;
+    frameBuffer = pdata_2d->fb;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->update_agents_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_uniform_mat4(
+        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->orthoModelViewProjectionMatrix);
 
     // Pixel / Fragment shader
     GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
@@ -214,55 +234,63 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
 
     // Render to the "update_agents_next" texture
     GPU_framebuffer_ensure_config(
-        &pdata_2d->fb,
+        &frameBuffer,
         {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->update_agents_tex_next)});
-    GPU_framebuffer_bind(pdata_2d->fb);
-    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
+    GPU_framebuffer_bind(frameBuffer);
+    GPU_framebuffer_viewport_set(frameBuffer, 0, 0, resolution[0], resolution[1]);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
     GPU_batch_draw(batch);
-    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->update_agents_tex_next);
+    GPU_framebuffer_texture_detach(frameBuffer, pdata_2d->update_agents_tex_next);
   }
 
   /* ----- Render agents ----- */
   {
     batch = pdata_2d->render_agents_batch;
+    frameBuffer = pdata_2d->fb;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->render_agents_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_uniform_mat4(
+        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->orthoModelViewProjectionMatrix);
     GPU_batch_texture_bind(batch, "u_s2InputTexture", pdata_2d->update_agents_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2InputTexture", 0);
 
     // Render to the "render_agents" texture
     GPU_framebuffer_ensure_config(
-        &pdata_2d->fb, {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
-    GPU_framebuffer_bind(pdata_2d->fb);
-    GPU_framebuffer_viewport_set(pdata_2d->fb, 0, 0, resolution[0], resolution[1]);
+        &frameBuffer, {GPU_ATTACHMENT_NONE, GPU_ATTACHMENT_TEXTURE(pdata_2d->render_agents_tex)});
+    GPU_framebuffer_bind(frameBuffer);
+    GPU_framebuffer_viewport_set(frameBuffer, 0, 0, resolution[0], resolution[1]);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
     GPU_batch_draw(batch);
-    GPU_framebuffer_texture_detach(pdata_2d->fb, pdata_2d->render_agents_tex);
+    GPU_framebuffer_texture_detach(frameBuffer, pdata_2d->render_agents_tex);
   }
 
   // See partial results
   if (1) {
     batch = debug_data->batch;
+    frameBuffer = initial_fb;
     GPU_batch_set_shader(batch, debug_data->shader);
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
-    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->render_agents_tex);
+    GPU_batch_uniform_mat4(
+        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->modelViewProjectionMatrix);
+    GPU_batch_texture_bind(batch, "u_s2RenderedTexture", pdata_2d->diffuse_decay_tex_next);
     GPU_batch_uniform_1i(batch, "u_s2RenderedTexture", 0);
-    GPU_framebuffer_bind(initial_fb);
+    GPU_framebuffer_bind(frameBuffer);
     GPU_batch_draw(batch);
   }
 
   /* ----- Render final result using post-process ----- */
   if(0){
     batch = pdata_2d->post_process_batch;
+    frameBuffer = initial_fb;
     // Set shader
     GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", modelViewProjMatrix);
+    GPU_batch_uniform_mat4(
+        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->modelViewProjectionMatrix);
 
     // Pixel / Fragment shader
     GPU_batch_texture_bind(batch, "u_s2Data", pdata_2d->diffuse_decay_tex_current);
@@ -270,7 +298,8 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
 
     // Draw final result
     GPU_framebuffer_bind(initial_fb);
-    GPU_batch_draw(pdata_2d->post_process_batch);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
+    GPU_batch_draw(batch);
   }
 
   // Swap textures
@@ -370,19 +399,19 @@ void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
 
   // Diffuse/Decay textures
   pdata_2d->diffuse_decay_tex_current = GPU_texture_create_2d(
-      "phys2d diffuse decay current", size, size, 1, GPU_RGBA16F, NULL);
+      "phys2d diffuse decay current", size, size, 1, GPU_RGBA32F, NULL);
   pdata_2d->diffuse_decay_tex_next = GPU_texture_create_2d(
-      "phys2d diffuse decay next", size, size, 1, GPU_RGBA16F, NULL);
+      "phys2d diffuse decay next", size, size, 1, GPU_RGBA32F, NULL);
 
   // Update agents textures
   pdata_2d->update_agents_tex_current = GPU_texture_create_2d(
-      "phys2d update agents current", size, size, 1, GPU_RGBA16F, pdata_2d->particle_texdata);
+      "phys2d update agents current", size, size, 1, GPU_RGBA32F, pdata_2d->particle_texdata);
   pdata_2d->update_agents_tex_next = GPU_texture_create_2d(
-      "phys2d update agents next", size, size, 1, GPU_RGBA16F, pdata_2d->particle_texdata);
+      "phys2d update agents next", size, size, 1, GPU_RGBA32F, pdata_2d->particle_texdata);
 
   // Render agents texture
   pdata_2d->render_agents_tex = GPU_texture_create_2d(
-      "phys2d render agents", size, size, 1, GPU_RGBA16F, NULL);
+      "phys2d render agents", size, size, 1, GPU_RGBA32F, NULL);
 }
 
 void physarum_data_2d_gen_shaders(PhysarumData2D *pdata_2d)
@@ -438,11 +467,14 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
                                 {0.0f, 0.0f, 1.0f, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
+  // Perspective projection matrix used for final 3D rendering
   copy_m4_m4(pdata_2d->modelViewProjectionMatrix, idMatrix);
   // Here, model and view matrices are the identiy matrix
   copy_m4_m4(pdata_2d->modelMatrix, idMatrix);
   copy_m4_m4(pdata_2d->viewMatrix, idMatrix);
-  translate_m4(pdata_2d->viewMatrix, 0.0f, 0.0f, -3.0f);
+  translate_m4(pdata_2d->viewMatrix, 0.0f, 0.0f, -1.5f);
+  // Orthographic projection matrix used for texture rendering in the framebuffer
+  orthographic_m4(pdata_2d->orthoModelViewProjectionMatrix, -1.0f, 1.0f, 1.0f, -1.0f, -100.0f, 100.0f);
 
   physarum_data_2d_gen_particles(pdata_2d);
   physarum_data_2d_gen_textures(pdata_2d);

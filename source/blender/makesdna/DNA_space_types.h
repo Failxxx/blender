@@ -2054,6 +2054,7 @@ typedef struct PhysarumGPUData {
 typedef struct PhysarumData2D {
   /* Matrices */
   float modelViewProjectionMatrix[4][4];
+  float orthoModelViewProjectionMatrix[4][4]; // To render textures in the framebuffer
   float viewMatrix[4][4];
   float modelMatrix[4][4];
 

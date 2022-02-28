@@ -33,4 +33,11 @@ void main(){
   vec4 fin = vec4(pos * u_fDecay, col * u_fDecay, 0.5f, 1.0f);
   // Send final color
   fragColor = clamp(fin, 0.01f, 1.0f);
+
+  //if (length(vec2(0.5f, 0.5f) - v_out_f2UV) >= 0.2f) {
+  //  fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+  //}
+  //else {
+  //  fragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+  //}
 }
