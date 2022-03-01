@@ -134,9 +134,9 @@ static int physarum_single_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
-  char *imageFileName = (char *)"Physarum.bmp";
+  char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
   generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
-  printf("Image generated!!");
+  printf("Image generated!");
 }
 
 void PHYSARUM_OT_single_render(wmOperatorType *ot)
@@ -148,4 +148,30 @@ void PHYSARUM_OT_single_render(wmOperatorType *ot)
 
   /* api callbacks */
   ot->exec = physarum_single_render_exec;
+}
+
+/* -------------------------------------------------------------------- */
+/** \Render Animation
+ * \{ */
+
+static int physarum_animation_render_exec(bContext *C, wmOperator *op)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  PhysarumRenderingSettings *prs = sphys->prs;
+  for (int i = 0; i < sphys->number_frame; i++) {
+    char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
+    generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
+    printf("Image generated!");
+  }
+}
+
+void PHYSARUM_OT_animation_render(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Animation Render";
+  ot->idname = "PHYSARUM_OT_animation_render";
+  ot->description = "Render an animation of physarum";
+
+  /* api callbacks */
+  ot->exec = physarum_animation_render_exec;
 }

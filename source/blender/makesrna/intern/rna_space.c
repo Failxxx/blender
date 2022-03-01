@@ -8012,6 +8012,12 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   RNA_def_property_boolean_sdna(prop, NULL, "flags", ST_FLAG_COLLISION);
   RNA_def_property_ui_text(prop, "collision", "collision");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_TEXT, NULL);
+
+  prop = RNA_def_property(srna, "number_frame", PROP_INT, PROP_NONE);
+  RNA_def_property_int_sdna(prop, NULL, "number_frame");
+  RNA_def_property_range(prop, 1, 1000);
+  RNA_def_property_ui_text(prop, "Number of Frame", "Number of frame for animation rendering");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_IMAGE, NULL);
 }
 
 void RNA_def_space(BlenderRNA *brna)
