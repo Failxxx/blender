@@ -37,3 +37,6 @@ void initialize_physarum_gpu_data(PhysarumGPUData *pgd);
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
 void free_gpu_data(SpacePhysarum *sphys);
+
+/* Render Function */
+void PHYSARUM_OT_single_render(struct wmOperatorType *ot);

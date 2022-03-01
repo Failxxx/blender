@@ -2070,6 +2070,8 @@ typedef struct SpacePhysarum {
   float spawn_radius;
   float center_attraction;
 
+  unsigned char *image_data;
+
   /* Le flags permet l'implémentation du booléen collision */
   short flags;
   char _pad1[14];

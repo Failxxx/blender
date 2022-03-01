@@ -18,7 +18,7 @@
 
 # <pep8 compliant>
 import bpy
-from bpy.types import Header, Menu, Panel
+from bpy.types import Header, Menu, Panel, PropertyGroup
 
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -98,35 +98,24 @@ class PHYSARUM_PT_render(Panel):
         st = context.space_data
 
         # render frame
-        col = layout.column(align=False, heading="Sense Spread")
+        col = layout.column(align=False, heading="Rendering")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.operator(PHYSARUM_Render_Frame.bl_idname, text="Render Frame")      
-
-class PHYSARUM_Render_Frame(bpy.types.Operator):
-    bl_space_type = 'PHYSARUM_EDITOR'
-    bl_idname = "wm.hello_world"
-    bl_label = "Minimal Operator"
-
-    def execute(self, context):
-        data_context = {"blend_data": bpy.context.blend_data, "scene": bpy.data.scenes['Scene']}
-        bpy.context.scene.render.image_settings.file_format = 'JPEG'
-        bpy.context.scene.render.filepath = "\\tmp\\physarum.jpg"
-        bpy.ops.render.render(data_context,write_still=True, use_viewport = False)
-        # data_context = {"blend_data": bpy.context.blend_data, "scene": bpy.data.scenes['Scene']}
-        # bpy.context.scene.render.image_settings.file_format = 'JPEG'
-        # bpy.context.scene.render.filepath = "/tmp\physarum.jpg"
-        # bpy.ops.render.render(data_context)
-        #context.scene.render(use_viewport =True, write_still=True)
-        return {'FINISHED'}
-
+        row.operator("physarum.single_render", text="Single Frame Render")    
 
 classes = (
     PHYSARUM_HT_header,
     PHYSARUM_PT_properties,
     PHYSARUM_PT_render,
-    PHYSARUM_Render_Frame,
 )
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+                    
+def unregister():
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":  # only for live edit.
     from bpy.utils import register_class

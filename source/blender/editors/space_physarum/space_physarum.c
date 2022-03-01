@@ -111,6 +111,7 @@ static void physarum_free(SpaceLink *sl)
 
 void physarum_operatortypes(void)
 {
+  WM_operatortype_append(PHYSARUM_OT_single_render);
 }
 
 /****************** Main region ******************/

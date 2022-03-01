@@ -43,6 +43,8 @@
 
 #include "WM_api.h"
 
+#include "glew-mx.h"
+
 #include "physarum_intern.h"
 
 void physarum_draw_view(const bContext *C, ARegion *region)
@@ -70,6 +72,10 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Draw vertices
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
   GPU_batch_draw(pgd->batch);
+
+  // Pixel for frame export
+  sphys->image_data = (unsigned char *)malloc((int)(prs->screen_width * prs->screen_height * (3)));
+  glReadPixels(0, 0, prs->screen_width, prs->screen_height, GL_RGB, GL_UNSIGNED_BYTE, sphys->image_data);
 
   GPU_blend(GPU_BLEND_NONE);
 }
@@ -160,6 +166,7 @@ void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
 
   pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
+
 
 /* Free memory of the PhysarumGPUData strucure */
 void free_gpu_data(SpacePhysarum *sphys)
