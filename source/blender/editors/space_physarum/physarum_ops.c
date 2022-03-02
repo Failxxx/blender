@@ -22,6 +22,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "BKE_context.h"
@@ -159,9 +160,11 @@ static int physarum_animation_render_exec(bContext *C, wmOperator *op)
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
   for (int i = 0; i < sphys->number_frame; i++) {
-    char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
+    char *imageFileName = (char *) malloc(256);
+    snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", i);
     generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
     printf("Image generated!");
+    free(imageFileName);
   }
 }
 
