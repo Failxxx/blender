@@ -28,6 +28,28 @@ class PHYSARUM_HT_header(Header):
 
         layout.template_header()
 
+class PHYSARUM_MT_menu_mode(bpy.types.Menu):
+    bl_label = "Display Mode"
+    bl_idname = "PHYSARUM_MT_menu_mode"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("physarum.draw_2d")
+        layout.operator("physarum.draw_3d")
+
+class PHYSARUM_PT_mode(Panel):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Properties"
+    bl_label = "Physarum Display Mode"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.menu("PHYSARUM_MT_menu_mode")
+
+
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
@@ -128,20 +150,23 @@ class PHYSARUM_PT_animation_render(Panel):
 
 classes = (
     PHYSARUM_HT_header,
+    PHYSARUM_MT_menu_mode,
+    PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
     PHYSARUM_PT_single_render,
     PHYSARUM_PT_animation_render,
 )
 
 def register():
+    from bpy.utils import register_class
     for cls in classes:
         bpy.utils.register_class(cls)
+        
                     
 def unregister():
+    from bpy.utils import unregister_class
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":  # only for live edit.
-    from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
+    register()

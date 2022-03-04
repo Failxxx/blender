@@ -178,3 +178,43 @@ void PHYSARUM_OT_animation_render(wmOperatorType *ot)
   /* api callbacks */
   ot->exec = physarum_animation_render_exec;
 }
+
+/* -------------------------------------------------------------------- */
+/** \Choice of Physarum Mode
+ * \{ */
+
+static int physarum_2D_drawing_exec(bContext *C, wmOperator *op)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  PhysarumRenderingSettings *prs = sphys->prs;
+  printf("Physarum 2D!");
+}
+
+void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Physarum 2D";
+  ot->idname = "PHYSARUM_OT_draw_2d";
+  ot->description = "Render a Physarum in 2 dimensions";
+
+  /* api callbacks */
+  ot->exec = physarum_2D_drawing_exec;
+}
+
+static int physarum_3D_drawing_exec(bContext *C, wmOperator *op)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  PhysarumRenderingSettings *prs = sphys->prs;
+  printf("Physarum 3D!");
+}
+
+void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Physarum 3D";
+  ot->idname = "PHYSARUM_OT_draw_3d";
+  ot->description = "Render a Physarum in 3 dimensions";
+
+  /* api callbacks */
+  ot->exec = physarum_3D_drawing_exec;
+}
