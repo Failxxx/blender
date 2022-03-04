@@ -77,6 +77,10 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   sphys->image_data = (unsigned char *)malloc((int)(prs->screen_width * prs->screen_height * (3)));
   glReadPixels(0, 0, prs->screen_width, prs->screen_height, GL_RGB, GL_UNSIGNED_BYTE, sphys->image_data);
 
+  if (sphys->counter_rendering_frame > 0) {
+    PHYSARUM_animation_frame_render(C);
+  }
+
   GPU_blend(GPU_BLEND_NONE);
 }
 

@@ -159,13 +159,26 @@ static int physarum_animation_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
-  for (int i = 0; i < sphys->number_frame; i++) {
+  sphys->counter_rendering_frame = sphys->number_frame;
+  for (int i = 0; i < sphys->number_frame;i++) {
     char *imageFileName = (char *) malloc(256);
     snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", i);
     generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
     printf("Image generated!");
     free(imageFileName);
   }
+}
+
+void PHYSARUM_animation_frame_render(bContext *C)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  PhysarumRenderingSettings *prs = sphys->prs;
+
+  char *imageFileName = (char *)malloc(256);
+  snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", sphys->number_frame - sphys->counter_rendering_frame);
+  generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
+  printf("Image generated!");
+  free(imageFileName);
 }
 
 void PHYSARUM_OT_animation_render(wmOperatorType *ot)
