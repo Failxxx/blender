@@ -43,6 +43,8 @@
 
 #include "WM_api.h"
 
+#include "glew-mx.h"
+
 #include "physarum_intern.h"
 
 void physarum_draw_view(const bContext *C, ARegion *region)
@@ -80,6 +82,14 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   }
   else if (physarum_2d) {
     physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
+  }
+
+  // Pixel for frame export
+  sphys->image_data = (unsigned char *)malloc((int)(prs->screen_width * prs->screen_height * (3)));
+  glReadPixels(0, 0, prs->screen_width, prs->screen_height, GL_RGB, GL_UNSIGNED_BYTE, sphys->image_data);
+
+  if (sphys->counter_rendering_frame > 0) {
+    PHYSARUM_animation_frame_render(C);
   }
 
   GPU_blend(GPU_BLEND_NONE);
@@ -191,6 +201,7 @@ void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
   GPUVertBuf *vbo = make_new_quad_mesh();
   pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
+
 
 /* Free memory of the PhysarumGPUData strucure */
 void free_gpu_data(SpacePhysarum *sphys)

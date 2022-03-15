@@ -83,6 +83,8 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->spawn_radius = 50.0;
   sphys->center_attraction = 1.0;
 
+  sphys->number_frame = 50;
+
   /* main region */
   // WARNING! Keep this here, do not move on top or bottom. Order matters.
   ar = MEM_callocN(sizeof(ARegion), "main region of physarum");
@@ -120,6 +122,10 @@ static void physarum_free(SpaceLink *sl)
 
 void physarum_operatortypes(void)
 {
+  WM_operatortype_append(PHYSARUM_OT_single_render);
+  WM_operatortype_append(PHYSARUM_OT_animation_render);
+  WM_operatortype_append(PHYSARUM_OT_draw_2D);
+  WM_operatortype_append(PHYSARUM_OT_draw_3D);
 }
 
 /****************** Main region ******************/

@@ -2111,10 +2111,22 @@ typedef struct SpacePhysarum {
   float spawn_radius;
   float center_attraction;
 
+  unsigned char *image_data;
+
+  /* Le flags permet l'implémentation du booléen collision */
+  short flags;
+  char _pad1[30];
+  int number_frame;
+  int counter_rendering_frame;
   PRenderingSettings *prs;
   PhysarumGPUData *pgd;
   PhysarumData2D *pdata_2d;
 } SpacePhysarum;
+
+/* SpacePhysarum flags */
+typedef enum eSpacePhysarum_Flags {
+  ST_FLAG_COLLISION = (1 << 0),
+} eSpacePhysarum_Flags;
 
 /** \} */
 

@@ -54,3 +54,10 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
                            PhysarumRenderingSettings *prs);
 void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
 void free_physarum_data_2d(PhysarumData2D *pdata_2d);
+
+/* Render Function */
+void PHYSARUM_OT_single_render(struct wmOperatorType *ot);
+void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
+void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
+void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
+void PHYSARUM_animation_frame_render(bContext *C);

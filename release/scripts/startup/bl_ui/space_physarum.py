@@ -18,7 +18,7 @@
 
 # <pep8 compliant>
 import bpy
-from bpy.types import Header, Menu, Panel
+from bpy.types import Header, Menu, Panel, PropertyGroup
 
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -27,6 +27,28 @@ class PHYSARUM_HT_header(Header):
         layout = self.layout.row()
 
         layout.template_header()
+
+class PHYSARUM_MT_menu_mode(bpy.types.Menu):
+    bl_label = "Display Mode"
+    bl_idname = "PHYSARUM_MT_menu_mode"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("physarum.draw_2d")
+        layout.operator("physarum.draw_3d")
+
+class PHYSARUM_PT_mode(Panel):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Properties"
+    bl_label = "Physarum Display Mode"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.menu("PHYSARUM_MT_menu_mode")
+
 
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -80,12 +102,71 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "center_attraction", text="")
 
+        col = layout.column(align=False, heading="Collision")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "collision", text="")
+
+class PHYSARUM_PT_single_render(Panel):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Render"
+    bl_label = "Physarum Render"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        st = context.space_data
+
+        # render frame
+        col = layout.column(align=False, heading="Rendering")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        row.operator("physarum.single_render", text="Single Frame Render")   
+
+class PHYSARUM_PT_animation_render(Panel):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Render"
+    bl_label = "Physarum Animation Render"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        st = context.space_data
+
+        # render frame
+        col = layout.column(align=False, heading="Rendering")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "number_frame", text="number of frame for animation rendering")
+        
+        col = layout.column(align=False, heading="Rendering")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        row.operator("physarum.animation_render", text="Animation Render")     
+
 classes = (
     PHYSARUM_HT_header,
+    PHYSARUM_MT_menu_mode,
+    PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
+    PHYSARUM_PT_single_render,
+    PHYSARUM_PT_animation_render,
 )
 
-if __name__ == "__main__":  # only for live edit.
+def register():
     from bpy.utils import register_class
     for cls in classes:
-        register_class(cls)
+        bpy.utils.register_class(cls)
+        
+                    
+def unregister():
+    from bpy.utils import unregister_class
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+
+if __name__ == "__main__":  # only for live edit.
+    register()
