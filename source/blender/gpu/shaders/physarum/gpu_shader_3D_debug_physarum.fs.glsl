@@ -9,16 +9,15 @@
 //  fragColor = v_out_f4Color;
 //}
 
-// Textures
-uniform sampler2D u_s2RenderedTexture;
+uniform sampler2D u_s2Texture;
 
 in vec2 v_out_f2UV;
 
-out vec4 fragColor;
+out vec4 f4FragColor;
 
 void main()
 {
-  fragColor = texture(u_s2RenderedTexture, v_out_f2UV);
+  f4FragColor = texture(u_s2Texture, v_out_f2UV);
   //if (length(vec2(0.5f, 0.5f) - v_out_f2UV) >= 0.2f) {
   //  fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
   //}

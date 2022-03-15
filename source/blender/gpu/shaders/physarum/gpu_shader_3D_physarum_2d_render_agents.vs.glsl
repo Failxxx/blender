@@ -1,13 +1,14 @@
 
-uniform mat4 u_m4ModelViewProjectionMatrix;
-uniform sampler2D u_s2InputTexture;
+uniform mat4 u_m4ProjectionMatrix;
+uniform sampler2D u_s2AgentsData;
 
-in vec3 v_in_f3Position; // Unused
-in vec2 v_in_f2UV;
+layout(location = 0) in vec3 v_in_f3Position; // Unused
+layout(location = 1) in vec2 v_in_f2UV;
 
-void main(){
-  // The position of the current agent is defined in the red and green channels of the input texture
-  vec2 uv = texture2D(u_s2InputTexture, v_in_f2UV).xy;
-  gl_Position = u_m4ModelViewProjectionMatrix * vec4(uv * 2.0f - 1.0f, 0.0f, 1.0f);
-  gl_PointSize = 1.0f;
+void main()
+{
+  vec2 f2UV = texture(u_s2AgentsData, v_in_f2UV).xy; // (x,y) positions of agents are stored in the (r,g) channels
+  vec2 f2UVRemapped = f2UV * vec2(2.0) - vec2(1.0);
+  gl_Position = u_m4ProjectionMatrix * vec4(f2UVRemapped, 0.0, 1.0);
+  gl_PointSize = 1.0;
 }
