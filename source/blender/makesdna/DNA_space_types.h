@@ -2053,10 +2053,7 @@ typedef struct PhysarumGPUData {
 
 typedef struct PhysarumData2D {
   /* Matrices */
-  float modelViewProjectionMatrix[4][4];
-  float orthoModelViewProjectionMatrix[4][4]; // To render textures in the framebuffer
-  float viewMatrix[4][4];
-  float modelMatrix[4][4];
+  float projection_matrix[4][4]; // Orthographic projection matrix for 2D rendering
 
   /* Batches, hold VBOs */
   struct GPUBatch *diffuse_decay_batch;
@@ -2071,14 +2068,18 @@ typedef struct PhysarumData2D {
   struct GPUShader *post_process_shader;
 
   /* Textures */
-  struct GPUTexture *diffuse_decay_tex_current;
-  struct GPUTexture *diffuse_decay_tex_next;
-  struct GPUTexture *update_agents_tex_current;
-  struct GPUTexture *update_agents_tex_next;
-  struct GPUTexture *render_agents_tex;
+  struct GPUTexture *trails_tex_current;
+  struct GPUTexture *trails_tex_next;
+  struct GPUTexture *agents_data_tex_current;
+  struct GPUTexture *agents_data_tex_next;
+  struct GPUTexture *agents_tex;
 
-  /* Frame buffer */
-  struct GPUFrameBuffer *fb;
+  /* Frame buffers, one for each texture */
+  struct GPUFrameBuffer *trails_fb_current;
+  struct GPUFrameBuffer *trails_fb_next;
+  struct GPUFrameBuffer *agents_data_fb_current;
+  struct GPUFrameBuffer *agents_data_fb_next;
+  struct GPUFrameBuffer *agents_fb;
 
   /* Simulation data parameters */
   float *particle_positions;
