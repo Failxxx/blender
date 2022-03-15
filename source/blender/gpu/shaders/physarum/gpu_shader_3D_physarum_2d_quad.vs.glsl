@@ -1,8 +1,8 @@
 
 uniform mat4 u_m4ProjectionMatrix;
 
-in vec3 v_in_f3Position;
-in vec2 v_in_f2UV;
+layout(location = 0) in vec3 v_in_f3Position;
+layout(location = 1) in vec2 v_in_f2UV;
 
 out vec2 v_out_f2UV;
 

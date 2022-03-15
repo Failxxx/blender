@@ -43,6 +43,9 @@
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
 #include "GPU_viewport.h"
+#include "GPU_texture.h"
+
+#include "glew-mx.h"
 
 #include "WM_api.h"
 
@@ -163,7 +166,7 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
   // Elapsed time since the beginning of the simulation
   float time = get_elapsed_time(pdata_2d->start_time);
   // Texture sizes
-  float resolution[2] = {512.0f, 512.0f};
+  float resolution[2] = {1024.0f, 1024.0f};
   // Clear color framebuffer
   const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -247,24 +250,8 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_draw(batch);
   }
 
-  // See partial results
-  if (1) {
-    batch = debug_data->batch;
-    frameBuffer = initial_fb;
-    GPU_batch_set_shader(batch, debug_data->shader);
-
-    GPU_batch_uniform_mat4(
-        batch, "u_m4ModelViewProjectionMatrix", pdata_2d->projection_matrix);
-    GPU_batch_texture_bind(batch, "u_s2Texture", pdata_2d->agents_tex);
-    GPU_batch_uniform_1i(batch, "u_s2Texture", 0);
-
-    GPU_framebuffer_bind(frameBuffer);
-    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
-    GPU_batch_draw(batch);
-  }
-
   /* ----- Render final result using post-process ----- */
-  if(0){
+  {
     batch = pdata_2d->post_process_batch;
     frameBuffer = initial_fb;
     // Set shader
@@ -279,7 +266,23 @@ void physarum_2d_draw_view(PhysarumData2D *pdata_2d,
     GPU_batch_uniform_1i(batch, "u_s2TrailsData", 0);
 
     // Draw final result
-    GPU_framebuffer_bind(initial_fb);
+    GPU_framebuffer_bind(frameBuffer);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
+    GPU_batch_draw(batch);
+  }
+
+  // DEBUG: See partial results
+  if (0){
+    batch = debug_data->batch;
+    frameBuffer = initial_fb;
+    GPU_batch_set_shader(batch, debug_data->shader);
+
+    GPU_batch_uniform_mat4(batch, "u_m4ModelViewProjectionMatrix", pdata_2d->projection_matrix);
+    GPU_batch_texture_bind(batch, "u_s2Texture", pdata_2d->agents_tex);
+    GPU_batch_uniform_1i(batch, "u_s2Texture", 0);
+
+    GPU_framebuffer_bind(frameBuffer);
+    GPU_framebuffer_viewport_set(frameBuffer, 0, 0, prs->screen_width, prs->screen_height);
     GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
     GPU_batch_draw(batch);
   }
@@ -358,8 +361,8 @@ void physarum_data_2d_gen_particles(PhysarumData2D *pdata_2d)
   for (int i = 0; i < particles_count; ++i) {
     // Point cloud vertex
     id = i * 3;
-    pdata_2d->particle_positions[id++] = BLI_rng_get_float(rng);
-    pdata_2d->particle_positions[id++] = BLI_rng_get_float(rng);
+    pdata_2d->particle_positions[id++] = 0.0f;
+    pdata_2d->particle_positions[id++] = 0.0f;
     pdata_2d->particle_positions[id++] = 0.0f;
 
     // Compute UVs
@@ -389,19 +392,26 @@ void physarum_data_2d_gen_textures(PhysarumData2D *pdata_2d)
 
   // Trails textures
   pdata_2d->trails_tex_current = GPU_texture_create_2d(
-      "phys2d diffuse decay current", size, size, 1, GPU_RGBA32F, NULL);
+      "phys2d diffuse decay current", size, size, 0, GPU_RGBA32F, NULL);
+  GPU_texture_filter_mode(pdata_2d->trails_tex_current, false); // Use GL_TEXTURE_MAG_FILTER = GL_NEAREST
+
   pdata_2d->trails_tex_next = GPU_texture_create_2d(
-      "phys2d diffuse decay next", size, size, 1, GPU_RGBA32F, NULL);
+      "phys2d diffuse decay next", size, size, 0, GPU_RGBA32F, NULL);
+  GPU_texture_filter_mode(pdata_2d->trails_tex_next, false);
 
   // Agents data textures
   pdata_2d->agents_data_tex_current = GPU_texture_create_2d(
-      "phys2d update agents current", size, size, 1, GPU_RGBA32F, pdata_2d->particle_texdata);
+      "phys2d update agents current", size, size, 0, GPU_RGBA32F, pdata_2d->particle_texdata);
+  GPU_texture_filter_mode(pdata_2d->agents_data_tex_current, false);
+
   pdata_2d->agents_data_tex_next = GPU_texture_create_2d(
-      "phys2d update agents next", size, size, 1, GPU_RGBA32F, pdata_2d->particle_texdata);
+      "phys2d update agents next", size, size, 0, GPU_RGBA32F, pdata_2d->particle_texdata);
+  GPU_texture_filter_mode(pdata_2d->agents_data_tex_next, false);
 
   // Agents texture
   pdata_2d->agents_tex = GPU_texture_create_2d(
-      "phys2d render agents", size, size, 1, GPU_RGBA32F, NULL);
+      "phys2d render agents", size, size, 0, GPU_RGBA32F, NULL);
+  GPU_texture_filter_mode(pdata_2d->agents_tex, false);
 }
 
 void physarum_data_2d_gen_shaders(PhysarumData2D *pdata_2d)
@@ -471,9 +481,9 @@ void physarum_data_2d_gen_frame_buffers(PhysarumData2D *pdata_2d)
 void initialize_physarum_data_2d(PhysarumData2D *pdata_2d)
 {
   printf("Physarum2D: initialize data\n");
-  pdata_2d->nb_particles = 512 * 512;
+  pdata_2d->nb_particles = 1024 * 1024;
 
-  orthographic_m4(pdata_2d->projection_matrix, -1.0f, 1.0f, 1.0f, -1.0f, -0.1f, 100.0f);
+  orthographic_m4(pdata_2d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, -0.1f, 100.0f);
 
   physarum_data_2d_gen_particles(pdata_2d);
   physarum_data_2d_gen_textures(pdata_2d);
