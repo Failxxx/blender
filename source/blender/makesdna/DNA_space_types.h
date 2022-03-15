@@ -2075,10 +2075,8 @@ typedef struct PhysarumData2D {
   struct GPUTexture *agents_tex;
 
   /* Frame buffers, one for each texture */
-  struct GPUFrameBuffer *trails_fb_current;
-  struct GPUFrameBuffer *trails_fb_next;
-  struct GPUFrameBuffer *agents_data_fb_current;
-  struct GPUFrameBuffer *agents_data_fb_next;
+  struct GPUFrameBuffer *trails_fb;
+  struct GPUFrameBuffer *agents_data_fb;
   struct GPUFrameBuffer *agents_fb;
 
   /* Simulation data parameters */
