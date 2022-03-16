@@ -138,6 +138,7 @@ static int physarum_single_render_exec(bContext *C, wmOperator *op)
   char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
   generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
   printf("Image generated!");
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_single_render(wmOperatorType *ot)
@@ -167,6 +168,7 @@ static int physarum_animation_render_exec(bContext *C, wmOperator *op)
     printf("Image generated!");
     free(imageFileName);
   }
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_animation_frame_render(bContext *C)
@@ -198,9 +200,10 @@ void PHYSARUM_OT_animation_render(wmOperatorType *ot)
 
 static int physarum_2D_drawing_exec(bContext *C, wmOperator *op)
 {
-  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
+  //SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  //PhysarumRenderingSettings *prs = sphys->prs;
   printf("Physarum 2D!");
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
@@ -216,9 +219,10 @@ void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
 
 static int physarum_3D_drawing_exec(bContext *C, wmOperator *op)
 {
-  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
+  //SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  //PhysarumRenderingSettings *prs = sphys->prs;
   printf("Physarum 3D!");
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_draw_3D(wmOperatorType *ot)

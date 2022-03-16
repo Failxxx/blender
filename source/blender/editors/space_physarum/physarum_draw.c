@@ -51,10 +51,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
-  PhysarumGPUData *pgd = sphys->pgd;
-  PhysarumData2D *pdata_2d = sphys->pdata_2d;
+  Physarum2D *pdata_2d = sphys->pdata_2d;
 
-  int debug = 0;
   int physarum_2d = 1;
 
   /* ----- Setup ----- */
@@ -68,20 +66,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Background color
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
-  if (debug) {
-    // Set shaders
-    GPU_batch_set_shader(pgd->batch, pgd->shader);
-
-    // Send uniforms to shaders
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ModelMatrix", prs->modelMatrix);
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ViewMatrix", prs->viewMatrix);
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
-
-    // Draw vertices
-    GPU_batch_draw(pgd->batch);
-  }
-  else if (physarum_2d) {
-    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
+  if(physarum_2d) {
+    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, prs);
   }
 
   // Pixel for frame export
@@ -186,26 +172,4 @@ GPUVertBuf *make_new_triangle_mesh()
   }
 
   return vbo;
-}
-
-/* Initializes GPU data (VBOs and shaders) */
-void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
-{
-  /* Load shaders */
-  pgd->shader = GPU_shader_create_from_arrays({
-    .vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
-    .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}
-  });
-
-  //GPUVertBuf *vbo = make_new_triangle_mesh();
-  GPUVertBuf *vbo = make_new_quad_mesh();
-  pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
-}
-
-
-/* Free memory of the PhysarumGPUData strucure */
-void free_gpu_data(SpacePhysarum *sphys)
-{
-  GPU_shader_free(sphys->pgd->shader);
-  GPU_batch_discard(sphys->pgd->batch);
 }

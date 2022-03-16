@@ -2046,12 +2046,7 @@ typedef struct PhysarumRenderingSettings {
   int filler2;
 } PhysarumRenderingSettings, PRenderingSettings;
 
-typedef struct PhysarumGPUData {
-  struct GPUBatch *batch;
-  struct GPUShader *shader;
-} PhysarumGPUData;
-
-typedef struct PhysarumData2D {
+typedef struct Physarum2D {
   /* Matrices */
   float projection_matrix[4][4]; // Orthographic projection matrix for 2D rendering
 
@@ -2089,7 +2084,7 @@ typedef struct PhysarumData2D {
   float nb_particles;
 
   char _pad0[4];
-} PhysarumData2D;
+} Physarum2D;
 
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
@@ -2118,8 +2113,7 @@ typedef struct SpacePhysarum {
   int number_frame;
   int counter_rendering_frame;
   PRenderingSettings *prs;
-  PhysarumGPUData *pgd;
-  PhysarumData2D *pdata_2d;
+  Physarum2D *pdata_2d;
 } SpacePhysarum;
 
 /* SpacePhysarum flags */
