@@ -125,34 +125,32 @@ GPUVertBuf *make_new_points_mesh(float *points, float *uvs, int nb_points)
   return vbo;
 }
 
-void physarum_2d_swap_textures(Physarum2D* pdata_2d)
+void physarum_2d_swap_textures(Physarum2D* p2d)
 {
   // Swap trails frame buffers
-  GPUTexture *trails_tex_current_temp = pdata_2d->trails_tex_current;
-  pdata_2d->trails_tex_current = pdata_2d->trails_tex_next;
-  pdata_2d->trails_tex_next = trails_tex_current_temp;
+  GPUTexture *trails_tex_current_temp = p2d->trails_tex_current;
+  p2d->trails_tex_current = p2d->trails_tex_next;
+  p2d->trails_tex_next = trails_tex_current_temp;
 
   // Swap agents data frame buffers
-  GPUTexture *agents_data_tex_current_temp = pdata_2d->agents_data_tex_current;
-  pdata_2d->agents_data_tex_current = pdata_2d->agents_data_tex_next;
-  pdata_2d->agents_data_tex_next = agents_data_tex_current_temp;
+  GPUTexture *agents_data_tex_current_temp = p2d->agents_data_tex_current;
+  p2d->agents_data_tex_current = p2d->agents_data_tex_next;
+  p2d->agents_data_tex_next = agents_data_tex_current_temp;
 
   // Attach texture to frame buffers
-  GPU_framebuffer_ensure_config(&pdata_2d->trails_fb,
+  GPU_framebuffer_ensure_config(&p2d->diffuse_decay_fb,
                                 {
                                     GPU_ATTACHMENT_NONE,
-                                    GPU_ATTACHMENT_TEXTURE(pdata_2d->trails_tex_next),
+                                    GPU_ATTACHMENT_TEXTURE(p2d->trails_tex_next),
                                 });
-  GPU_framebuffer_ensure_config(&pdata_2d->agents_data_fb,
+  GPU_framebuffer_ensure_config(&p2d->update_agents_fb,
                                 {
                                     GPU_ATTACHMENT_NONE,
-                                    GPU_ATTACHMENT_TEXTURE(pdata_2d->agents_data_tex_next),
+                                    GPU_ATTACHMENT_TEXTURE(p2d->agents_data_tex_next),
                                 });
 }
 
-void physarum_2d_draw_view(Physarum2D *pdata_2d,
-                           float projectionMatrix[4][4],
-                           PhysarumRenderingSettings *prs)
+void physarum_2d_draw_view(Physarum2D *p2d)
 {
   /* ----- Setup ----- */
 
@@ -163,7 +161,7 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
   GPUFrameBuffer *frameBuffer;
 
   // Elapsed time since the beginning of the simulation
-  float time = get_elapsed_time(pdata_2d->start_time);
+  float time = get_elapsed_time(p2d->start_time);
   // Texture sizes
   float resolution[2] = {1024.0f, 1024.0f};
   // Clear color framebuffer
@@ -171,20 +169,20 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
 
   /* ----- Compute trails ----- */
   {
-    batch = pdata_2d->diffuse_decay_batch;
-    frameBuffer = pdata_2d->trails_fb;
+    batch = p2d->diffuse_decay_batch;
+    frameBuffer = p2d->diffuse_decay_fb;
     // Set shader
-    GPU_batch_set_shader(batch, pdata_2d->diffuse_decay_shader);
+    GPU_batch_set_shader(batch, p2d->diffuse_decay_shader);
 
     // Send uniforms to shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", pdata_2d->projection_matrix);
+    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", p2d->projection_matrix);
 
     // Pixel / Fragment shader
-    GPU_batch_texture_bind(batch, "u_s2TrailsData", pdata_2d->trails_tex_current);
+    GPU_batch_texture_bind(batch, "u_s2TrailsData", p2d->trails_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2TrailsData", 0);
 
-    GPU_batch_texture_bind(batch, "u_s2Agents", pdata_2d->agents_tex);
+    GPU_batch_texture_bind(batch, "u_s2Agents", p2d->agents_tex);
     GPU_batch_uniform_1i(batch, "u_s2Agents", 1);
 
     GPU_batch_uniform_2f(batch, "u_f2Resolution", resolution[0], resolution[1]);
@@ -199,20 +197,20 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
 
   /* ----- Update agents ----- */
   {
-    batch = pdata_2d->update_agents_batch;
-    frameBuffer = pdata_2d->agents_data_fb;
+    batch = p2d->update_agents_batch;
+    frameBuffer = p2d->update_agents_fb;
     // Set shader
-    GPU_batch_set_shader(batch, pdata_2d->update_agents_shader);
+    GPU_batch_set_shader(batch, p2d->update_agents_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", pdata_2d->projection_matrix);
+    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", p2d->projection_matrix);
 
     // Pixel / Fragment shader
-    GPU_batch_texture_bind(batch, "u_s2AgentsData", pdata_2d->agents_data_tex_current);
+    GPU_batch_texture_bind(batch, "u_s2AgentsData", p2d->agents_data_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2AgentsData", 0);
 
-    GPU_batch_texture_bind(batch, "u_s2TrailsData", pdata_2d->trails_tex_current);
+    GPU_batch_texture_bind(batch, "u_s2TrailsData", p2d->trails_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2TrailsData", 1);
 
     GPU_batch_uniform_2f(batch, "u_f2Resolution", resolution[0], resolution[1]);
@@ -231,15 +229,15 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
 
   /* ----- Render agents ----- */
   {
-    batch = pdata_2d->render_agents_batch;
-    frameBuffer = pdata_2d->agents_fb;
+    batch = p2d->render_agents_batch;
+    frameBuffer = p2d->render_agents_fb;
     // Set shader
-    GPU_batch_set_shader(batch, pdata_2d->render_agents_shader);
+    GPU_batch_set_shader(batch, p2d->render_agents_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", pdata_2d->projection_matrix);
-    GPU_batch_texture_bind(batch, "u_s2AgentsData", pdata_2d->agents_data_tex_current);
+    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", p2d->projection_matrix);
+    GPU_batch_texture_bind(batch, "u_s2AgentsData", p2d->agents_data_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2AgentsData", 0);
 
     // Render to the agents texture
@@ -251,17 +249,17 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
 
   /* ----- Render final result using post-process ----- */
   {
-    batch = pdata_2d->post_process_batch;
+    batch = p2d->post_process_batch;
     frameBuffer = initial_fb;
     // Set shader
-    GPU_batch_set_shader(batch, pdata_2d->post_process_shader);
+    GPU_batch_set_shader(batch, p2d->post_process_shader);
 
     // Send uniforms tho shaders
     // Vertex shader
-    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", pdata_2d->projection_matrix);
+    GPU_batch_uniform_mat4(batch, "u_m4ProjectionMatrix", p2d->projection_matrix);
 
     // Pixel / Fragment shader
-    GPU_batch_texture_bind(batch, "u_s2TrailsData", pdata_2d->trails_tex_current);
+    GPU_batch_texture_bind(batch, "u_s2TrailsData", p2d->trails_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2TrailsData", 0);
 
     // Draw final result
@@ -271,71 +269,71 @@ void physarum_2d_draw_view(Physarum2D *pdata_2d,
   }
 
   // Swap textures
-  physarum_2d_swap_textures(pdata_2d);
+  physarum_2d_swap_textures(p2d);
 }
 
-void physarum_data_2d_free_particles(Physarum2D *pdata_2d)
+void physarum_2d_free_particles(Physarum2D *p2d)
 {
   printf("Physarum2D: free particles\n");
-  MEM_freeN(pdata_2d->particle_positions);
-  MEM_freeN(pdata_2d->particle_uvs);
-  MEM_freeN(pdata_2d->particle_texdata);
+  MEM_freeN(p2d->particle_positions);
+  MEM_freeN(p2d->particle_uvs);
+  MEM_freeN(p2d->particle_texdata);
 }
 
-void physarum_data_2d_free_textures(Physarum2D *pdata_2d)
+void physarum_2d_free_textures(Physarum2D *p2d)
 {
   printf("Physarum2D: free textures\n");
   /* Free textures */
-  GPU_texture_free(pdata_2d->trails_tex_current);
-  GPU_texture_free(pdata_2d->trails_tex_next);
-  GPU_texture_free(pdata_2d->agents_data_tex_current);
-  GPU_texture_free(pdata_2d->agents_data_tex_next);
-  GPU_texture_free(pdata_2d->agents_tex);
+  GPU_texture_free(p2d->trails_tex_current);
+  GPU_texture_free(p2d->trails_tex_next);
+  GPU_texture_free(p2d->agents_data_tex_current);
+  GPU_texture_free(p2d->agents_data_tex_next);
+  GPU_texture_free(p2d->agents_tex);
 }
 
-void physarum_data_2d_free_shaders(Physarum2D *pdata_2d)
+void physarum_2d_free_shaders(Physarum2D *p2d)
 {
   printf("Physarum2D: free shaders\n");
   /* Free shaders */
-  GPU_shader_free(pdata_2d->diffuse_decay_shader);
-  GPU_shader_free(pdata_2d->update_agents_shader);
-  GPU_shader_free(pdata_2d->render_agents_shader);
-  GPU_shader_free(pdata_2d->post_process_shader);
+  GPU_shader_free(p2d->diffuse_decay_shader);
+  GPU_shader_free(p2d->update_agents_shader);
+  GPU_shader_free(p2d->render_agents_shader);
+  GPU_shader_free(p2d->post_process_shader);
 }
 
-void physarum_data_2d_free_batches(Physarum2D *pdata_2d)
+void physarum_2d_free_batches(Physarum2D *p2d)
 {
   printf("Physarum2D: free batches\n");
-  GPU_batch_discard(pdata_2d->diffuse_decay_batch);
-  GPU_batch_discard(pdata_2d->update_agents_batch);
-  GPU_batch_discard(pdata_2d->render_agents_batch);
-  GPU_batch_discard(pdata_2d->post_process_batch);
+  GPU_batch_discard(p2d->diffuse_decay_batch);
+  GPU_batch_discard(p2d->update_agents_batch);
+  GPU_batch_discard(p2d->render_agents_batch);
+  GPU_batch_discard(p2d->post_process_batch);
 }
 
-void physarum_data_2d_free_frame_buffers(Physarum2D *pdata_2d)
+void physarum_2d_free_frame_buffers(Physarum2D *p2d)
 {
   printf("Physarum2D: free frame buffers\n");
-  GPU_framebuffer_free(pdata_2d->trails_fb);
-  GPU_framebuffer_free(pdata_2d->agents_data_fb);
-  GPU_framebuffer_free(pdata_2d->agents_fb);
+  GPU_framebuffer_free(p2d->diffuse_decay_fb);
+  GPU_framebuffer_free(p2d->update_agents_fb);
+  GPU_framebuffer_free(p2d->render_agents_fb);
 }
 
-void physarum_data_2d_gen_particles(Physarum2D *pdata_2d)
+void physarum_2d_gen_particles(Physarum2D *p2d)
 {
   printf("Physarum2D: gen particles\n");
   RNG *rng = BLI_rng_new_srandom(5831); // Arbitrary, random values generator
   /* Allocate memory for particle data buffers */
-  int size = floor(sqrt(pdata_2d->nb_particles));
+  int size = floor(sqrt(p2d->nb_particles));
   int particles_count = size * size;
 
   int bytes = sizeof(float) * 3 * particles_count;
-  pdata_2d->particle_positions = MEM_callocN(bytes, "physarum 2d particle pos data");
+  p2d->particle_positions = MEM_callocN(bytes, "physarum 2d particle pos data");
 
   bytes = sizeof(float) * 2 * particles_count;
-  pdata_2d->particle_uvs = MEM_callocN(bytes, "physarum 2d particle UVs data");
+  p2d->particle_uvs = MEM_callocN(bytes, "physarum 2d particle UVs data");
 
   bytes = sizeof(float) * 4 * particles_count;
-  pdata_2d->particle_texdata = MEM_callocN(bytes, "physarum 2d particle texture data");
+  p2d->particle_texdata = MEM_callocN(bytes, "physarum 2d particle texture data");
 
   /* Fill buffers */
   int id = 0;
@@ -344,150 +342,152 @@ void physarum_data_2d_gen_particles(Physarum2D *pdata_2d)
   for (int i = 0; i < particles_count; ++i) {
     // Point cloud vertex
     id = i * 3;
-    pdata_2d->particle_positions[id++] = 0.0f;
-    pdata_2d->particle_positions[id++] = 0.0f;
-    pdata_2d->particle_positions[id++] = 0.0f;
+    p2d->particle_positions[id++] = 0.0f;
+    p2d->particle_positions[id++] = 0.0f;
+    p2d->particle_positions[id++] = 0.0f;
 
     // Compute UVs
     u = (i % size) / (float)size;
     v = ~~(i / size) / (float)size; // ~ --> bitwise not operator (invert bits of the operand)
     id = i * 2;
-    pdata_2d->particle_uvs[id++] = u;
-    pdata_2d->particle_uvs[id++] = v;
+    p2d->particle_uvs[id++] = u;
+    p2d->particle_uvs[id++] = v;
 
     // Particle texture values (agents)
     id = i * 4;
-    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position X
-    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position Y
-    pdata_2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized angle
-    pdata_2d->particle_texdata[id++] = 1.0f;
+    p2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position X
+    p2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized position Y
+    p2d->particle_texdata[id++] = BLI_rng_get_float(rng);  // Normalized angle
+    p2d->particle_texdata[id++] = 1.0f;
   }
   BLI_rng_free(rng);
 }
 
-void physarum_data_2d_gen_textures(Physarum2D *pdata_2d)
+void physarum_2d_gen_textures(Physarum2D *p2d)
 {
   printf("Physarum2D: gen textures\n");
   /* Generate textures */
   // Textures sizes
-  int size = floor(sqrt(pdata_2d->nb_particles));
+  int size = floor(sqrt(p2d->nb_particles));
   printf("Texture size = %d\n", size);
 
   // Trails textures
-  pdata_2d->trails_tex_current = GPU_texture_create_2d(
+  p2d->trails_tex_current = GPU_texture_create_2d(
       "phys2d diffuse decay current", size, size, 0, GPU_RGBA32F, NULL);
-  GPU_texture_filter_mode(pdata_2d->trails_tex_current, false); // Use GL_TEXTURE_MAG_FILTER = GL_NEAREST
+  GPU_texture_filter_mode(p2d->trails_tex_current, false); // Use GL_TEXTURE_MAG_FILTER = GL_NEAREST
 
-  pdata_2d->trails_tex_next = GPU_texture_create_2d(
+  p2d->trails_tex_next = GPU_texture_create_2d(
       "phys2d diffuse decay next", size, size, 0, GPU_RGBA32F, NULL);
-  GPU_texture_filter_mode(pdata_2d->trails_tex_next, false);
+  GPU_texture_filter_mode(p2d->trails_tex_next, false);
 
   // Agents data textures
-  pdata_2d->agents_data_tex_current = GPU_texture_create_2d(
-      "phys2d update agents current", size, size, 0, GPU_RGBA32F, pdata_2d->particle_texdata);
-  GPU_texture_filter_mode(pdata_2d->agents_data_tex_current, false);
+  p2d->agents_data_tex_current = GPU_texture_create_2d(
+      "phys2d update agents current", size, size, 0, GPU_RGBA32F, p2d->particle_texdata);
+  GPU_texture_filter_mode(p2d->agents_data_tex_current, false);
 
-  pdata_2d->agents_data_tex_next = GPU_texture_create_2d(
-      "phys2d update agents next", size, size, 0, GPU_RGBA32F, pdata_2d->particle_texdata);
-  GPU_texture_filter_mode(pdata_2d->agents_data_tex_next, false);
+  p2d->agents_data_tex_next = GPU_texture_create_2d(
+      "phys2d update agents next", size, size, 0, GPU_RGBA32F, p2d->particle_texdata);
+  GPU_texture_filter_mode(p2d->agents_data_tex_next, false);
 
   // Agents texture
-  pdata_2d->agents_tex = GPU_texture_create_2d(
+  p2d->agents_tex = GPU_texture_create_2d(
       "phys2d render agents", size, size, 0, GPU_RGBA32F, NULL);
-  GPU_texture_filter_mode(pdata_2d->agents_tex, false);
+  GPU_texture_filter_mode(p2d->agents_tex, false);
 }
 
-void physarum_data_2d_gen_shaders(Physarum2D *pdata_2d)
+void physarum_2d_gen_shaders(Physarum2D *p2d)
 {
   printf("Physarum2D: load shaders\n");
   /* Load shaders */
-  pdata_2d->diffuse_decay_shader = GPU_shader_create_from_arrays(
+  p2d->diffuse_decay_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_diffuse_decay_fs_glsl, NULL}});
 
-  pdata_2d->update_agents_shader = GPU_shader_create_from_arrays(
+  p2d->update_agents_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_update_agents_fs_glsl, NULL}});
 
-  pdata_2d->render_agents_shader = GPU_shader_create_from_arrays(
+  p2d->render_agents_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_render_agents_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_render_agents_fs_glsl, NULL}});
 
-  pdata_2d->post_process_shader = GPU_shader_create_from_arrays(
+  p2d->post_process_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
        .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl, NULL}});
 }
 
-void physarum_data_2d_gen_batches(Physarum2D *pdata_2d)
+void physarum_2d_gen_batches(Physarum2D *p2d)
 {
   printf("Physarum2D: gen batches\n");
   /* Generate geometry data (3d render targets) */
-  int size = floor(sqrt(pdata_2d->nb_particles));
+  int size = floor(sqrt(p2d->nb_particles));
   GPUVertBuf *quad_vbo_1 = make_new_quad_mesh();
   GPUVertBuf *quad_vbo_2 = make_new_quad_mesh();
   GPUVertBuf *quad_vbo_3 = make_new_quad_mesh();
   GPUVertBuf *points_vbo = make_new_points_mesh(
-      pdata_2d->particle_positions, pdata_2d->particle_uvs, size * size);
+      p2d->particle_positions, p2d->particle_uvs, size * size);
 
   /* Create batches */
-  pdata_2d->diffuse_decay_batch = GPU_batch_create_ex(
+  p2d->diffuse_decay_batch = GPU_batch_create_ex(
       GPU_PRIM_TRIS, quad_vbo_1, NULL, GPU_BATCH_OWNS_VBO);
-  pdata_2d->update_agents_batch = GPU_batch_create_ex(
+  p2d->update_agents_batch = GPU_batch_create_ex(
       GPU_PRIM_TRIS, quad_vbo_2, NULL, GPU_BATCH_OWNS_VBO);
-  pdata_2d->render_agents_batch = GPU_batch_create_ex(
+  p2d->render_agents_batch = GPU_batch_create_ex(
       GPU_PRIM_POINTS, points_vbo, NULL, GPU_BATCH_OWNS_VBO);
-  pdata_2d->post_process_batch = GPU_batch_create_ex(
+  p2d->post_process_batch = GPU_batch_create_ex(
       GPU_PRIM_TRIS, quad_vbo_3, NULL, GPU_BATCH_OWNS_VBO);
 }
 
-void physarum_data_2d_gen_frame_buffers(Physarum2D *pdata_2d)
+void physarum_2d_gen_frame_buffers(Physarum2D *p2d)
 {
   printf("Physarum2D: gen frame buffers\n");
   /* Generate frame buffers */
-  GPU_framebuffer_ensure_config(&pdata_2d->trails_fb,
+  GPU_framebuffer_ensure_config(&p2d->diffuse_decay_fb,
                                 {
                                     GPU_ATTACHMENT_NONE,
-                                    GPU_ATTACHMENT_TEXTURE(pdata_2d->trails_tex_next),
+                                    GPU_ATTACHMENT_TEXTURE(p2d->trails_tex_next),
                                 });
-  GPU_framebuffer_ensure_config(&pdata_2d->agents_data_fb,
+  GPU_framebuffer_ensure_config(&p2d->update_agents_fb,
                                 {
                                     GPU_ATTACHMENT_NONE,
-                                    GPU_ATTACHMENT_TEXTURE(pdata_2d->agents_data_tex_next),
+                                    GPU_ATTACHMENT_TEXTURE(p2d->agents_data_tex_next),
                                 });
-  GPU_framebuffer_ensure_config(&pdata_2d->agents_fb,
+  GPU_framebuffer_ensure_config(&p2d->render_agents_fb,
                                 {
                                     GPU_ATTACHMENT_NONE,
-                                    GPU_ATTACHMENT_TEXTURE(pdata_2d->agents_tex),
+                                    GPU_ATTACHMENT_TEXTURE(p2d->agents_tex),
                                 });
 }
 
-void initialize_physarum_data_2d(Physarum2D *pdata_2d)
+void initialize_physarum_2d(Physarum2D *p2d)
 {
   printf("Physarum2D: initialize data\n");
-  pdata_2d->nb_particles = 1024 * 1024;
+  //p2d->tex_width = 
+  p2d->nb_particles = 1024 * 1024;
+  //p2d->max_particles = 
 
-  orthographic_m4(pdata_2d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, -0.1f, 100.0f);
+  orthographic_m4(p2d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, -0.1f, 100.0f);
 
-  physarum_data_2d_gen_particles(pdata_2d);
-  physarum_data_2d_gen_textures(pdata_2d);
-  physarum_data_2d_gen_batches(pdata_2d);
-  physarum_data_2d_gen_shaders(pdata_2d);
-  physarum_data_2d_gen_frame_buffers(pdata_2d);
+  physarum_2d_gen_particles(p2d);
+  physarum_2d_gen_textures(p2d);
+  physarum_2d_gen_batches(p2d);
+  physarum_2d_gen_shaders(p2d);
+  physarum_2d_gen_frame_buffers(p2d);
 
   // timespec struct : time_t tv_sec, long tv_nsec
-  pdata_2d->start_time = MEM_callocN(sizeof(time_t) + sizeof(long), "pysarum 2d start time");
-  timespec_get(pdata_2d->start_time, TIME_UTC);
+  p2d->start_time = MEM_callocN(sizeof(time_t) + sizeof(long), "pysarum 2d start time");
+  timespec_get(p2d->start_time, TIME_UTC);
   printf("Physarum2D: initialization complete\n");
 }
 
-void free_physarum_data_2d(Physarum2D *pdata_2d)
+void free_physarum_2d(Physarum2D *p2d)
 {
   printf("Physarum2D: free data\n");
-  physarum_data_2d_free_particles(pdata_2d);
-  physarum_data_2d_free_textures(pdata_2d);
-  physarum_data_2d_free_batches(pdata_2d);
-  physarum_data_2d_free_shaders(pdata_2d);
-  physarum_data_2d_free_frame_buffers(pdata_2d);
-  MEM_freeN(pdata_2d->start_time);
+  physarum_2d_free_particles(p2d);
+  physarum_2d_free_textures(p2d);
+  physarum_2d_free_batches(p2d);
+  physarum_2d_free_shaders(p2d);
+  physarum_2d_free_frame_buffers(p2d);
+  MEM_freeN(p2d->start_time);
   printf("Physarum2D: free complete\n");
 }

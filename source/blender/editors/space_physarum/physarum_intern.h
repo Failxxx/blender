@@ -46,11 +46,9 @@ void physarum_draw_view(const bContext *C, ARegion *region);
 
 /* Physarum 2D algorithms functions */
 struct GPUVertBuf *make_new_quad_mesh();
-void physarum_2d_draw_view(Physarum2D *pdata_2d,
-                           float projectionMatrix[4][4],
-                           PhysarumRenderingSettings *prs);
-void initialize_physarum_data_2d(Physarum2D *pdata_2d);
-void free_physarum_data_2d(Physarum2D *pdata_2d);
+void physarum_2d_draw_view(Physarum2D *p2d);
+void initialize_physarum_2d(Physarum2D *p2d);
+void free_physarum_2d(Physarum2D *p2d);
 
 /* Render Function */
 void PHYSARUM_OT_single_render(struct wmOperatorType *ot);

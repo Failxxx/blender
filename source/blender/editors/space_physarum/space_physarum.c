@@ -97,8 +97,8 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   initialize_physarum_rendering_settings(sphys->prs);
 
   /* Allocate memory fo Physarum2D */
-  sphys->pdata_2d = MEM_callocN(sizeof(Physarum2D), "physarum 2d simulation data");
-  initialize_physarum_data_2d(sphys->pdata_2d);
+  sphys->p2d = MEM_callocN(sizeof(Physarum2D), "physarum 2d simulation data");
+  initialize_physarum_2d(sphys->p2d);
 
   return (SpaceLink *)sphys;
 }
@@ -109,8 +109,8 @@ static void physarum_free(SpaceLink *sl)
   /* Free memory for PhysarumRenderingSettings */
   MEM_freeN(sphys->prs);
   /* Free memory for Physarum2D */
-  free_physarum_data_2d(sphys->pdata_2d);
-  MEM_freeN(sphys->pdata_2d);
+  free_physarum_2d(sphys->p2d);
+  MEM_freeN(sphys->p2d);
 }
 
 void physarum_operatortypes(void)

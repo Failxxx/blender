@@ -51,7 +51,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
-  Physarum2D *pdata_2d = sphys->pdata_2d;
+  Physarum2D *p2d = sphys->p2d;
 
   int physarum_2d = 1;
 
@@ -67,7 +67,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
   if(physarum_2d) {
-    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, prs);
+    physarum_2d_draw_view(p2d);
   }
 
   // Pixel for frame export
