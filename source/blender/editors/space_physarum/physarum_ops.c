@@ -110,6 +110,7 @@ void generateBitmapImage(unsigned char *image, int height, int width, char *imag
   int widthInBytes = width * BYTES_PER_PIXEL;
 
   unsigned char padding[3] = {0, 0, 0};
+
   int paddingSize = (4 - (widthInBytes) % 4) % 4;
 
   int stride = (widthInBytes) + paddingSize;
@@ -122,12 +123,10 @@ void generateBitmapImage(unsigned char *image, int height, int width, char *imag
   unsigned char *infoHeader = createBitmapInfoHeader(height, width);
   fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
 
-  int i;
-  for (i = 0; i < height; i++) {
+  for (int i = 0; i < height; i++) {
     fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
     fwrite(padding, 1, paddingSize, imageFile);
   }
-
   fclose(imageFile);
 }
 
@@ -137,7 +136,7 @@ static int physarum_single_render_exec(bContext *C, wmOperator *op)
   PhysarumRenderingSettings *prs = sphys->prs;
   char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
   generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
-  printf("Image generated!");
+  printf("\n Image Generated ! YOUHOU \n");
 }
 
 void PHYSARUM_OT_single_render(wmOperatorType *ot)
