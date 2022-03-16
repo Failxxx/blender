@@ -2054,7 +2054,7 @@ typedef struct PhysarumGPUData {
 typedef struct PhysarumData2D {
   /* Matrices */
   float modelViewProjectionMatrix[4][4];
-  float orthoModelViewProjectionMatrix[4][4]; // To render textures in the framebuffer
+  float orthoModelViewProjectionMatrix[4][4];  // To render textures in the framebuffer
   float viewMatrix[4][4];
   float modelMatrix[4][4];
 
@@ -2088,9 +2088,37 @@ typedef struct PhysarumData2D {
   /* Simulation parameters */
   struct timespec *start_time;
   float nb_particles;
-
   char _pad0[4];
 } PhysarumData2D;
+
+typedef struct Physarum3DParticle {
+  float x;
+  float y;
+  float z;
+  float phi;
+  float theta;
+  float pair;
+
+} Physarum3DParticle;
+
+typedef struct Physarum3D {
+
+  struct PhysarumRenderingSettings *rendering_settings;
+
+  int particules_amount;
+  float spawn_radius;
+
+  /* Batches, hold VBOs */
+  struct GPUBatch *batch;
+  /* Shaders */
+  struct GPUShader *shader;
+  /* Textures */
+  struct GPUTexture *texture;
+  /* Frame buffer */
+  struct GPUFrameBuffer *frame_buffer;
+  //struct Physarum3DParticle *particles[];
+
+} Physarum3D;
 
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
@@ -2114,6 +2142,7 @@ typedef struct SpacePhysarum {
   PRenderingSettings *prs;
   PhysarumGPUData *pgd;
   PhysarumData2D *pdata_2d;
+  Physarum3D *physarum3d;
 } SpacePhysarum;
 
 /** \} */

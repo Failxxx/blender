@@ -35,11 +35,11 @@
 #include "ED_screen.h"
 #include "ED_space_api.h"
 
-#include "GPU_immediate.h"
-#include "GPU_immediate_util.h"
 #include "GPU_capabilities.h"
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
+#include "GPU_immediate.h"
+#include "GPU_immediate_util.h"
 
 #include "WM_api.h"
 
@@ -51,12 +51,13 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   PhysarumRenderingSettings *prs = sphys->prs;
   PhysarumGPUData *pgd = sphys->pgd;
   PhysarumData2D *pdata_2d = sphys->pdata_2d;
+  Physarum3D *physarum3d = sphys->physarum3d;
+  // physarum3d->rendering_settings = prs;
 
-  int debug = 0;
-  int physarum_2d = 1;
+  int debug = 4;
 
   /* ----- Setup ----- */
-  prs->screen_width  = BLI_rcti_size_x(&region->winrct);
+  prs->screen_width = BLI_rcti_size_x(&region->winrct);
   prs->screen_height = BLI_rcti_size_y(&region->winrct);
   adapt_projection_matrix_window_rescale(prs);
 
@@ -66,7 +67,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Background color
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
-  if (debug) {
+  if (debug == 1) {
     // Set shaders
     GPU_batch_set_shader(pgd->batch, pgd->shader);
 
@@ -78,8 +79,16 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     // Draw vertices
     GPU_batch_draw(pgd->batch);
   }
-  else if (physarum_2d) {
+  else if (debug == 2) {
     physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
+  }
+  else if (debug == 3) {
+    // physarum3D_draw_view(prs->projectionMatrix, pgd, prs);
+    // PHYS3D_draw_view(physarum3d, prs);
+  }
+  else if (debug == 4) {
+    printf("Physarum3DTest: Draw call\n");
+    physarum3DTest_draw_view(physarum3d, prs);
   }
 
   GPU_blend(GPU_BLEND_NONE);
@@ -89,7 +98,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs)
 {
   /* Adapt projection matrix */
-  //float aspectRatio = prs->screen_width / prs->screen_height;
+  // float aspectRatio = prs->screen_width / prs->screen_height;
   float aspectRatio = 1.0f;
   perspective_m4(
       prs->projectionMatrix, -0.5f * aspectRatio, 0.5f * aspectRatio, -0.5f, 0.5f, 1.0f, 1000.0f);
@@ -103,8 +112,8 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
                                 {0.0f, 0.0f, 1.0f, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-  prs->texcoord_map = 0; // Default value ?
-  prs->show_grid = 0; // Default value ?
+  prs->texcoord_map = 0;  // Default value ?
+  prs->show_grid = 0;     // Default value ?
   prs->dof_size = 0.1f;
   prs->dof_distribution = 1.0f;
 
@@ -121,8 +130,8 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
 
   prs->sample_weight = 1.0f / 32.0f;
 
-  prs->filler1 = 0; // Default value ?
-  prs->filler2 = 1; // Default value ?
+  prs->filler1 = 0;  // Default value ?
+  prs->filler2 = 1;  // Default value ?
 
   // Projection matrix
   adapt_projection_matrix_window_rescale(prs);
@@ -182,13 +191,12 @@ GPUVertBuf *make_new_triangle_mesh()
 void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
 {
   /* Load shaders */
-  pgd->shader = GPU_shader_create_from_arrays({
-    .vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
-    .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}
-  });
+  pgd->shader = GPU_shader_create_from_arrays(
+      {.vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
+       .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}});
 
-  //GPUVertBuf *vbo = make_new_triangle_mesh();
-  GPUVertBuf *vbo = make_new_quad_mesh();
+  GPUVertBuf *vbo = make_new_triangle_mesh();
+  // GPUVertBuf *vbo = make_new_quad_mesh();
   pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
 }
 
