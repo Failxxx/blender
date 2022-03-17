@@ -1,12 +1,3 @@
-int vec4 gl_FragCoord;
-
-out vec4 fragColor;
-
-void main()
-{
-  fragColor = blender_srgb_to_framebuffer_space(fragColor);
-}
-
 
 /*
 struct PixelInput {

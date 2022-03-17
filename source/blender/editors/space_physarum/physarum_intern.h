@@ -71,3 +71,5 @@ void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size);
 void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs);
 void P3D_free(Physarum3D *p3d);
 void P3D_particles_generate(Physarum3D *p3d);
+struct GPUVertBuf *P3D_get_display_VBO();
+struct GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d);

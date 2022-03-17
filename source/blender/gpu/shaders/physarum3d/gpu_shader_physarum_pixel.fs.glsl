@@ -5,7 +5,7 @@ out vec4 fragColor;
 void main()
 {
   fragColor = texture(u_s2RenderedTexture, finalColor);
-  fragColor = blender_srgb_to_framebuffer_space(fragColor);
+  //fragColor = blender_srgb_to_framebuffer_space(fragColor);
 }
 
 /*
