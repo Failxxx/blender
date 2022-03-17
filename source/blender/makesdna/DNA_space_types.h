@@ -2046,13 +2046,7 @@ typedef struct PhysarumRenderingSettings {
   int filler2;
 } PhysarumRenderingSettings, PRenderingSettings;
 
-typedef struct PhysarumGPUData {
-  struct GPUBatch *batch;
-  struct GPUShader *shader;
-} PhysarumGPUData;
-
-typedef struct PhysarumData2D {
-  /* Matrices */
+typedef struct Physarum2D {
   float projection_matrix[4][4]; // Orthographic projection matrix for 2D rendering
 
   /* Batches, hold VBOs */
@@ -2074,22 +2068,29 @@ typedef struct PhysarumData2D {
   struct GPUTexture *agents_data_tex_next;
   struct GPUTexture *agents_tex;
 
-  /* Frame buffers, one for each texture */
-  struct GPUFrameBuffer *trails_fb;
-  struct GPUFrameBuffer *agents_data_fb;
-  struct GPUFrameBuffer *agents_fb;
-
-  /* Simulation data parameters */
-  float *particle_positions;
-  float *particle_uvs;
-  float *particle_texdata;
+  /* Frame buffers, one for each texture type */
+  struct GPUFrameBuffer *diffuse_decay_fb;
+  struct GPUFrameBuffer *update_agents_fb;
+  struct GPUFrameBuffer *render_agents_fb;
 
   /* Simulation parameters */
   struct timespec *start_time;
-  float nb_particles;
+  int screen_width;
+  int screen_height;
+  int tex_width;
+  int tex_height;
 
-  char _pad0[4];
-} PhysarumData2D;
+  int nb_particles;
+  int max_particles;
+  int min_particles;
+
+  float sensor_angle;
+  float sensor_distance;
+  float move_distance;
+  float rotation_angle;
+  float decay;
+
+} Physarum2D;
 
 typedef struct SpacePhysarum {
   SpaceLink *next, *prev;
@@ -2099,35 +2100,47 @@ typedef struct SpacePhysarum {
   char _pad0[7];
   /* End 'SpaceLink' header. */
 
+  PRenderingSettings *prs;
+  Physarum2D *p2d;
+
+  int mode; // SP_PHYSARUM_2D or SP_PHYSARUM_3D
+
   /* Physarum properties */
-  float sense_spread;
-  float sense_distance;
-  float turn_angle;
+  float particles_population_factor;
+
+  float sensor_angle;
+  float sensor_distance;
+  float rotation_angle;
   float move_distance;
+  float decay_factor;
 
   float deposit_value;
-  float decay_factor;
   float spawn_radius;
   float center_attraction;
 
-  unsigned char *image_data;
-  char *filepath;
-
-
   /* Le flags permet l'implémentation du booléen collision */
   short flags;
-  char _pad2[30];
-  int number_frame;
-  int counter_rendering_frame;
-  PRenderingSettings *prs;
-  PhysarumGPUData *pgd;
-  PhysarumData2D *pdata_2d;
+
+  /* Rendering */
+  char _pad1[2];
+  int nb_frames_to_render;
+  int render_frames_counter;
+  char _pad2[4];
+  unsigned char *output_image_data;
+  char *output_path;
+  char *file_name;
+
 } SpacePhysarum;
 
 /* SpacePhysarum flags */
 typedef enum eSpacePhysarum_Flags {
   ST_FLAG_COLLISION = (1 << 0),
 } eSpacePhysarum_Flags;
+
+typedef enum eSpacePhysarum_Mode {
+  SP_PHYSARUM_2D = 0,
+  SP_PHYSARUM_3D = 1,
+} eSpacePhysarum_Mode;
 
 /** \} */
 

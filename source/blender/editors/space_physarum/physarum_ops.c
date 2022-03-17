@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "BKE_context.h"
 
@@ -34,16 +35,24 @@
 
 #include "physarum_intern.h"
 
+static const char default_output_file_name[64] = "physarum_output";
+static const int BYTES_PER_PIXEL = 3;
+static const int FILE_HEADER_SIZE = 14;
+static const int INFO_HEADER_SIZE = 40;
+static const int DEFAULT_BYTES_STIRNG = 1024;
+
+typedef struct Path {
+  char folder[1024];
+  char file_name[1024];
+  char full_path[2048];
+  char extension[128];
+} Path;
 
 /* -------------------------------------------------------------------- */
 /** \Render Single Frame
  * \{ */
 
-const int BYTES_PER_PIXEL = 3;
-const int FILE_HEADER_SIZE = 14;
-const int INFO_HEADER_SIZE = 40;
-
-unsigned char *createBitmapFileHeader(int height, int stride)
+unsigned char *create_bitmap_file_header(int height, int stride)
 {
   int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
@@ -75,7 +84,7 @@ unsigned char *createBitmapFileHeader(int height, int stride)
   return fileHeader;
 }
 
-unsigned char *createBitmapInfoHeader(int height, int width)
+unsigned char *create_bitmap_info_header(int height, int width)
 {
   static unsigned char infoHeader[] = {
       0, 0, 0, 0,  /// header size
@@ -106,57 +115,146 @@ unsigned char *createBitmapInfoHeader(int height, int width)
   return infoHeader;
 }
 
-void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
+void get_file_name_from_raw_path(char *dest, const char *raw_path)
 {
-  int widthInBytes = width * BYTES_PER_PIXEL;
-  printf("\n width OK \n");
+  char *path = (char *)malloc(1024);
+  strcpy(path, raw_path);
 
-  unsigned char padding[3] = {0, 0, 0};
-  printf("\n Padding ok \n");
-  
-  int paddingSize = (4 - (widthInBytes) % 4) % 4;
-  printf("\n paddingSize OK \n");
-  
-  int stride = (widthInBytes) + paddingSize;
-  printf("\n Stride Ok \n");
-  
-  FILE *imageFile = fopen(imageFileName, "wb");
-  if (imageFile == NULL) {
-    perror("Failed: ");
+  if (path[strlen(path) - 1] != '\\') {
+    // Remove extension of file
+    char *last_dot_pos = strrchr(path, '.');
+    if (last_dot_pos != NULL)
+      *last_dot_pos = '\0';
+
+    const char delimiter[2] = "\\";
+    char *token = strtok(path, delimiter);
+    while (token != NULL) {
+      strcpy(dest, token);
+      token = strtok(NULL, delimiter);
+    }
   }
   else {
-    unsigned char *fileHeader = createBitmapFileHeader(height, stride);
-    fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
-
-    unsigned char *infoHeader = createBitmapInfoHeader(height, width);
-    fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
-
-    for (int i = 0; i < height; i++) {
-      fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
-      fwrite(padding, 1, paddingSize, imageFile);
-    }
-    fclose(imageFile);
+    strcpy(dest, default_output_file_name);
   }
+
+  free(path);
 }
 
-char* Replace_AllOccurrence(char *str)
+void get_folder_from_raw_path(char *dest, const char *raw_path)
 {
-  int j = 0;
+  char *path = (char *)malloc(1024);
+  strcpy(path, raw_path);
 
-  char *FilePathReplace[500];
+  if (path[strlen(path) - 1] != '\\') {
+    // Get complete file name
+    const char delimiter_slash[2] = "\\";
+    char *complete_file_name = (char *)malloc(1024);
+    char *token = strtok(path, delimiter_slash);
+    while (token != NULL) {
+      strcpy(complete_file_name, token);
+      token = strtok(NULL, delimiter_slash);
+    }
 
-  for (int i = 0; str[i] != '\0'; i++) {
-    if (str[i] == '\\' ) {
-      FilePathReplace[j] = '\\\\';
-      j += 2;
+    // Get folder
+    char *folder = (char *)malloc(1024);
+    strcpy(path, raw_path);
+    token = strtok(path, delimiter_slash);
+    while (token != NULL) {
+      if (strcmp(token, complete_file_name)) {
+        strcat(folder, token);
+        strcat(folder, "\\");
+      }
+      token = strtok(NULL, "\\");
     }
-    else {
-      FilePathReplace[j] = str[i];
-      j += 1;
-    }
+
+    strcpy(dest, folder);
+
+    free(folder);
+    free(complete_file_name);
   }
-  FilePathReplace[j + 1] = '.bmp';
-  return FilePathReplace;
+  else {
+    strcpy(dest, path);
+  }
+
+  free(path);
+}
+
+Path get_path_from_raw_path(const char *raw_path)
+{
+  Path path;
+  strcpy(path.extension, ".bmp");
+  get_file_name_from_raw_path(path.file_name, raw_path);
+  get_folder_from_raw_path(path.folder, raw_path);
+  // Construct full path
+  strcpy(path.full_path, path.folder);
+  strcat(path.full_path, path.file_name);
+  strcat(path.full_path, path.extension);
+  return path;
+}
+
+int path_may_be_ok(const char *raw_path) {
+  // Check if given path is empty
+  if (strlen(raw_path) <= 0) {
+    printf("ERROR::Physarum, the given path is empty!\n");
+    return 0;
+  }
+
+  // Check if folder exists
+  char *path = (char *)malloc(1024);
+  get_folder_from_raw_path(path, raw_path);
+  printf("Path = %s\n", path);
+  struct stat info;
+
+  if (stat(path, &info) != 0) {
+    printf("ERROR::Physarum, the given path does not exists!\n");
+    printf("Path = %s\n", raw_path);
+    free(path);
+    return 0;
+  }
+  else if (info.st_mode & S_IFDIR) {
+    free(path);
+    return 1;
+  }
+
+  free(path);
+  printf("ERROR::Physarum, the given path does not seem correct...\n");
+  printf("Path = %s\n", raw_path);
+  return 0;
+}
+
+void export_bitmap_image(unsigned char *image, const int height, const int width, const char *output_path)
+{
+  int width_in_bytes = width * BYTES_PER_PIXEL;
+  unsigned char padding[3] = {0, 0, 0};
+  int padding_size = (4 - (width_in_bytes) % 4) % 4;
+  int stride = (width_in_bytes) + padding_size;
+  
+  FILE *output_file = fopen(output_path, "wb");
+  if (output_file == NULL) {
+    printf("ERROR::Physarum::export_bitmap_image, error when creating the output_file.\n");
+    printf("Path = %s\n", output_path);
+  }
+  else {
+    unsigned char *file_header = create_bitmap_file_header(height, stride);
+    size_t written_blocks = fwrite(file_header, 1, FILE_HEADER_SIZE, output_file);
+    if (written_blocks != FILE_HEADER_SIZE) {
+      printf("ERROR::Physarum::export_bitmap_image, error when writting the file header.");
+    }
+
+    unsigned char *info_header = create_bitmap_info_header(height, width);
+    written_blocks = fwrite(info_header, 1, INFO_HEADER_SIZE, output_file);
+    if (written_blocks != INFO_HEADER_SIZE) {
+      printf("ERROR::Physarum::export_bitmap_image, error when writting the header information.");
+    }
+
+    for (int i = 0; i < height; i++) {
+      fwrite(image + (i * width_in_bytes), BYTES_PER_PIXEL, width, output_file);
+      fwrite(padding, 1, padding_size, output_file);
+    }
+
+    printf("Image saved at: %s\n", output_path);
+    fclose(output_file);
+  }
 }
 
 static int physarum_single_render_exec(bContext *C, wmOperator *op)
@@ -164,24 +262,21 @@ static int physarum_single_render_exec(bContext *C, wmOperator *op)
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
 
-  /* Render Data 
-  RenderData *rd = &CTX_data_scene(C)->r;
-  char *imageFileName = (char *)"C:\\Users\\theba\\Documents\\Physarum_Single_Frame.bmp";
-  
-  char *imageFileName = Replace_AllOccurrence(sphys->filepath);
-  */
+  if (path_may_be_ok(sphys->output_path)) {
+    Path path = get_path_from_raw_path(sphys->output_path);
+    export_bitmap_image(
+        sphys->output_image_data, prs->screen_height, prs->screen_width, path.full_path);
+  }
 
-  char *imageFileName = sphys->filepath; 
-  generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
-  printf("\n Image Generated ! YOUHOU \n");
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_single_render(wmOperatorType *ot)
 {
   /* identifiers */
-  ot->name = "Single Render";
+  ot->name = "Render one frame";
   ot->idname = "PHYSARUM_OT_single_render";
-  ot->description = "Render a single frame of physarum";
+  ot->description = "Render a unique frame";
 
   /* api callbacks */
   ot->exec = physarum_single_render_exec;
@@ -194,32 +289,35 @@ void PHYSARUM_OT_single_render(wmOperatorType *ot)
 static int physarum_animation_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-
   PhysarumRenderingSettings *prs = sphys->prs;
-  sphys->counter_rendering_frame = sphys->number_frame;
-  for (int i = 0; i < sphys->number_frame;i++) {
-    char *imageFileName = (char *) malloc(strlen(sphys->filepath));
-    strcpy(imageFileName, sphys->filepath);
+  sphys->render_frames_counter = sphys->nb_frames_to_render;
+
+
+  for (int i = 0; i < sphys->nb_frames_to_render; ++i) {
+    char *output_path = (char *) malloc(strlen(sphys->output_path) + 200);
+    strcpy(output_path, sphys->output_path);
     char *imageCount = (char *) malloc(256);
     snprintf(imageCount, 256, "_%d.bmp", i);
-    strcat(imageFileName, imageCount);
-    generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
+    strcat(output_path, imageCount);
+    export_bitmap_image(sphys->output_image_data, prs->screen_height, prs->screen_width, output_path);
     printf("Image generated!\n");
     free(imageCount);
     printf("Free 1 ok\n");
-    free(imageFileName);
+    free(output_path);
     printf("Free 2 ok\n");
   }
+
+  return OPERATOR_FINISHED;
 }
 
-void PHYSARUM_animation_frame_render(bContext *C)
+void PHYSARUM_animation_frame_render(const bContext *C)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
 
   char *imageFileName = (char *)malloc(256);
-  snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", sphys->number_frame - sphys->counter_rendering_frame);
-  generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
+  snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", sphys->nb_frames_to_render - sphys->render_frames_counter);
+  export_bitmap_image(sphys->output_image_data, prs->screen_height, prs->screen_width, imageFileName);
   printf("Image generated!");
   free(imageFileName);
 }
@@ -242,8 +340,8 @@ void PHYSARUM_OT_animation_render(wmOperatorType *ot)
 static int physarum_2D_drawing_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
-  printf("Physarum 2D!");
+  sphys->mode = SP_PHYSARUM_2D;
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
@@ -251,7 +349,7 @@ void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
   /* identifiers */
   ot->name = "Physarum 2D";
   ot->idname = "PHYSARUM_OT_draw_2d";
-  ot->description = "Render a Physarum in 2 dimensions";
+  ot->description = "Choose physarum 2D rendering mode";
 
   /* api callbacks */
   ot->exec = physarum_2D_drawing_exec;
@@ -260,8 +358,8 @@ void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
 static int physarum_3D_drawing_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
-  printf("Physarum 3D!");
+  sphys->mode = SP_PHYSARUM_3D;
+  return OPERATOR_FINISHED;
 }
 
 void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
@@ -269,7 +367,7 @@ void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
   /* identifiers */
   ot->name = "Physarum 3D";
   ot->idname = "PHYSARUM_OT_draw_3d";
-  ot->description = "Render a Physarum in 3 dimensions";
+  ot->description = "Choose physarum 3D rendering mode";
 
   /* api callbacks */
   ot->exec = physarum_3D_drawing_exec;
