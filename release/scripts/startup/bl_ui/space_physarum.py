@@ -18,7 +18,10 @@
 
 # <pep8 compliant>
 import bpy
-from bpy.types import Header, Menu, Panel, PropertyGroup
+from bpy.types import Header, Menu, Panel, PropertyGroup, UIList
+from bl_ui.utils import PresetPanel
+
+from bpy.app.translations import pgettext_tip as tip_
 
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -107,54 +110,56 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "collision", text="")
 
-class PHYSARUM_PT_single_render(Panel):
+class RenderOutputButtonsPanel:
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_context = "output"
+    # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
+
+    @classmethod
+    def poll(cls, context):
+        return (context.engine in cls.COMPAT_ENGINES)
+
+class PHYSARUM_PT_output(RenderOutputButtonsPanel, Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Render"
     bl_label = "Physarum Render"
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
+        layout.use_property_split = False
+        layout.use_property_decorate = False  # No animation.
         st = context.space_data
 
-        # render frame
-        col = layout.column(align=False, heading="Rendering")
-        row = col.row(align=True)
-        sub = row.row(align=True)
-        row.operator("physarum.single_render", text="Single Frame Render")   
+        rd = context.scene.render
 
-class PHYSARUM_PT_animation_render(Panel):
-    bl_space_type = 'PHYSARUM_EDITOR'
-    bl_region_type = 'UI'
-    bl_category = "Render"
-    bl_label = "Physarum Animation Render"
+        col = layout.column(align=False, heading="Filepath")
+        layout.prop(st, "filepath", text="")
 
-    def draw(self, context):
-        layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False
-        st = context.space_data
 
-        # render frame
-        col = layout.column(align=False, heading="Rendering")
+        col = layout.column(align=False, heading="Rendering Single Frame")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "number_frame", text="number of frame for animation rendering")
-        
-        col = layout.column(align=False, heading="Rendering")
+        sub.operator("physarum.single_render", text="Single Frame Render")   
+
+        col = layout.column(align=False, heading="Rendering Animation")
         row = col.row(align=True)
         sub = row.row(align=True)
-        row.operator("physarum.animation_render", text="Animation Render")     
+        sub.prop(st, "number_frame", text="")
+
+        col = layout.column(align=False, heading="Rendering")
+        row = col.row(align=True)
+        row.operator("physarum.animation_render", text="Animation Render")    
 
 classes = (
     PHYSARUM_HT_header,
     PHYSARUM_MT_menu_mode,
     PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
-    PHYSARUM_PT_single_render,
-    PHYSARUM_PT_animation_render,
+    PHYSARUM_PT_output,
 )
 
 def register():

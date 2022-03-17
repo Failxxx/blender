@@ -8018,6 +8018,14 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   RNA_def_property_range(prop, 1, 1000);
   RNA_def_property_ui_text(prop, "Number of Frame", "Number of frame for animation rendering");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_IMAGE, NULL);
+
+  prop = RNA_def_property(srna, "filepath", PROP_STRING, PROP_FILEPATH);
+  RNA_def_property_string_sdna(prop, NULL, "filepath");
+  RNA_def_property_ui_text(prop,
+                           "Output Path",
+                           "Directory/name to save animations, # characters defines the position "
+                           "and length of frame numbers");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_IMAGE, NULL);
 }
 
 void RNA_def_space(BlenderRNA *brna)

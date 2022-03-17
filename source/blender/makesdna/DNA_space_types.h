@@ -2111,10 +2111,12 @@ typedef struct SpacePhysarum {
   float center_attraction;
 
   unsigned char *image_data;
+  char *filepath;
+
 
   /* Le flags permet l'implémentation du booléen collision */
   short flags;
-  char _pad1[30];
+  char _pad2[30];
   int number_frame;
   int counter_rendering_frame;
   PRenderingSettings *prs;

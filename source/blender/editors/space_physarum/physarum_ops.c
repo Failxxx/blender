@@ -28,6 +28,7 @@
 #include "BKE_context.h"
 
 #include "ED_screen.h"
+#include "BKE_main.h"
 
 #include "WM_api.h"
 
@@ -108,33 +109,69 @@ unsigned char *createBitmapInfoHeader(int height, int width)
 void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
 {
   int widthInBytes = width * BYTES_PER_PIXEL;
+  printf("\n width OK \n");
 
   unsigned char padding[3] = {0, 0, 0};
-
+  printf("\n Padding ok \n");
+  
   int paddingSize = (4 - (widthInBytes) % 4) % 4;
-
+  printf("\n paddingSize OK \n");
+  
   int stride = (widthInBytes) + paddingSize;
-
+  printf("\n Stride Ok \n");
+  
   FILE *imageFile = fopen(imageFileName, "wb");
-
-  unsigned char *fileHeader = createBitmapFileHeader(height, stride);
-  fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
-
-  unsigned char *infoHeader = createBitmapInfoHeader(height, width);
-  fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
-
-  for (int i = 0; i < height; i++) {
-    fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
-    fwrite(padding, 1, paddingSize, imageFile);
+  if (imageFile == NULL) {
+    perror("Failed: ");
   }
-  fclose(imageFile);
+  else {
+    unsigned char *fileHeader = createBitmapFileHeader(height, stride);
+    fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
+
+    unsigned char *infoHeader = createBitmapInfoHeader(height, width);
+    fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
+
+    for (int i = 0; i < height; i++) {
+      fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
+      fwrite(padding, 1, paddingSize, imageFile);
+    }
+    fclose(imageFile);
+  }
+}
+
+char* Replace_AllOccurrence(char *str)
+{
+  int j = 0;
+
+  char *FilePathReplace[500];
+
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] == '\\' ) {
+      FilePathReplace[j] = '\\\\';
+      j += 2;
+    }
+    else {
+      FilePathReplace[j] = str[i];
+      j += 1;
+    }
+  }
+  FilePathReplace[j + 1] = '.bmp';
+  return FilePathReplace;
 }
 
 static int physarum_single_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
-  char *imageFileName = (char *)"Physarum_Single_Frame.bmp";
+
+  /* Render Data 
+  RenderData *rd = &CTX_data_scene(C)->r;
+  char *imageFileName = (char *)"C:\\Users\\theba\\Documents\\Physarum_Single_Frame.bmp";
+  
+  char *imageFileName = Replace_AllOccurrence(sphys->filepath);
+  */
+
+  char *imageFileName = sphys->filepath; 
   generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
   printf("\n Image Generated ! YOUHOU \n");
 }
@@ -157,14 +194,21 @@ void PHYSARUM_OT_single_render(wmOperatorType *ot)
 static int physarum_animation_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+
   PhysarumRenderingSettings *prs = sphys->prs;
   sphys->counter_rendering_frame = sphys->number_frame;
   for (int i = 0; i < sphys->number_frame;i++) {
-    char *imageFileName = (char *) malloc(256);
-    snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", i);
+    char *imageFileName = (char *) malloc(strlen(sphys->filepath));
+    strcpy(imageFileName, sphys->filepath);
+    char *imageCount = (char *) malloc(256);
+    snprintf(imageCount, 256, "_%d.bmp", i);
+    strcat(imageFileName, imageCount);
     generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
-    printf("Image generated!");
+    printf("Image generated!\n");
+    free(imageCount);
+    printf("Free 1 ok\n");
     free(imageFileName);
+    printf("Free 2 ok\n");
   }
 }
 
