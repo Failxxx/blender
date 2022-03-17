@@ -171,7 +171,7 @@ static int physarum_animation_render_exec(bContext *C, wmOperator *op)
   return OPERATOR_FINISHED;
 }
 
-void PHYSARUM_animation_frame_render(bContext *C)
+void PHYSARUM_animation_frame_render(const bContext *C)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;

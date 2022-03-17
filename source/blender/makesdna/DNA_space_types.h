@@ -2080,15 +2080,21 @@ typedef struct Physarum2D {
 
   /* Simulation parameters */
   struct timespec *start_time;
+  int screen_width;
+  int screen_height;
+  int tex_width;
+  int tex_height;
+
   int nb_particles;
   int max_particles;
   int min_particles;
-  int tex_width;
-  int tex_height;
-  int screen_width;
-  int screen_height;
 
-  char _pad0[4];
+  float sensor_angle;
+  float sensor_distance;
+  float sensor_step;
+  float rotation_angle;
+  float decay;
+
 } Physarum2D;
 
 typedef struct SpacePhysarum {

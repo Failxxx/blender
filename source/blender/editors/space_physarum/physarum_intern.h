@@ -44,15 +44,19 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs);
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
 
-/* Physarum 2D algorithms functions */
-struct GPUVertBuf *make_new_quad_mesh();
-void physarum_2d_draw_view(Physarum2D *p2d);
+/* Physarum 2D functions */
 void initialize_physarum_2d(Physarum2D *p2d);
 void free_physarum_2d(Physarum2D *p2d);
+void physarum_2d_draw_view(Physarum2D *p2d);
+void physarum_2d_handle_events(Physarum2D *p2d,
+                               SpacePhysarum *sphys,
+                               const bContext *C,
+                               ARegion *region);
+struct GPUVertBuf *make_new_quad_mesh();
 
 /* Render Function */
 void PHYSARUM_OT_single_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
-void PHYSARUM_animation_frame_render(bContext *C);
+void PHYSARUM_animation_frame_render(const bContext *C);

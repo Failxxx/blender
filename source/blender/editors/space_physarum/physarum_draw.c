@@ -68,6 +68,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 
   if(physarum_2d) {
     physarum_2d_draw_view(p2d);
+    physarum_2d_handle_events(p2d, sphys, C, region);
   }
 
   // Pixel for frame export
