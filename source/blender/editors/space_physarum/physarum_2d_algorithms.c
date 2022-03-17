@@ -303,10 +303,14 @@ void physarum_2d_gen_batches(Physarum2D *p2d)
   GPUVertBuf *points_vbo = make_new_points_mesh(positions, uvs, p2d->nb_particles);
 
   /* Create batches */
-  p2d->diffuse_decay_batch = GPU_batch_create(GPU_PRIM_TRIS, quad_vbo_1, NULL);
-  p2d->update_agents_batch = GPU_batch_create(GPU_PRIM_TRIS, quad_vbo_2, NULL);
-  p2d->render_agents_batch = GPU_batch_create(GPU_PRIM_POINTS, points_vbo, NULL);
-  p2d->post_process_batch = GPU_batch_create(GPU_PRIM_TRIS, quad_vbo_3, NULL);
+  p2d->diffuse_decay_batch = GPU_batch_create_ex(
+      GPU_PRIM_TRIS, quad_vbo_1, NULL, GPU_BATCH_OWNS_VBO);
+  p2d->update_agents_batch = GPU_batch_create_ex(
+      GPU_PRIM_TRIS, quad_vbo_2, NULL, GPU_BATCH_OWNS_VBO);
+  p2d->render_agents_batch = GPU_batch_create_ex(
+      GPU_PRIM_POINTS, points_vbo, NULL, GPU_BATCH_OWNS_VBO);
+  p2d->post_process_batch = GPU_batch_create_ex(
+      GPU_PRIM_TRIS, quad_vbo_3, NULL, GPU_BATCH_OWNS_VBO);
 
   // Free particles data
   free(positions);
