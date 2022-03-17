@@ -2073,11 +2073,6 @@ typedef struct Physarum2D {
   struct GPUFrameBuffer *update_agents_fb;
   struct GPUFrameBuffer *render_agents_fb;
 
-  /* Simulation data parameters */
-  float *particle_positions;
-  float *particle_uvs;
-  float *particle_texdata;
-
   /* Simulation parameters */
   struct timespec *start_time;
   int screen_width;
@@ -2091,7 +2086,7 @@ typedef struct Physarum2D {
 
   float sensor_angle;
   float sensor_distance;
-  float sensor_step;
+  float move_distance;
   float rotation_angle;
   float decay;
 
@@ -2105,16 +2100,21 @@ typedef struct SpacePhysarum {
   char _pad0[7];
   /* End 'SpaceLink' header. */
 
-  /* Physarum properties */
-  int nb_particles;
+  PRenderingSettings *prs;
+  Physarum2D *p2d;
 
-  float sense_spread;
-  float sense_distance;
-  float turn_angle;
+  int mode; // SP_PHYSARUM_2D or SP_PHYSARUM_3D
+
+  /* Physarum properties */
+  float particles_population_factor;
+
+  float sensor_angle;
+  float sensor_distance;
+  float rotation_angle;
   float move_distance;
+  float decay_factor;
 
   float deposit_value;
-  float decay_factor;
   float spawn_radius;
   float center_attraction;
 
@@ -2125,16 +2125,20 @@ typedef struct SpacePhysarum {
   char _pad1[2];
   int number_frame;
   int counter_rendering_frame;
+  char _pad2[4];
   unsigned char *image_data;
 
-  PRenderingSettings *prs;
-  Physarum2D *p2d;
 } SpacePhysarum;
 
 /* SpacePhysarum flags */
 typedef enum eSpacePhysarum_Flags {
   ST_FLAG_COLLISION = (1 << 0),
 } eSpacePhysarum_Flags;
+
+typedef enum eSpacePhysarum_Mode {
+  SP_PHYSARUM_2D = 0,
+  SP_PHYSARUM_3D = 1,
+} eSpacePhysarum_Mode;
 
 /** \} */
 

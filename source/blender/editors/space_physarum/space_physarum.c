@@ -74,12 +74,14 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->alignment = RGN_ALIGN_RIGHT;
 
   /* Initialize physarum properties */
-  sphys->sense_spread = 0.48;
-  sphys->sense_distance = 23.0;
-  sphys->turn_angle = 0.63;
-  sphys->move_distance = 2.77;
+  sphys->sensor_angle = 2.0f;
+  sphys->sensor_distance = 12.0f;
+  sphys->rotation_angle = 4.0f;
+  sphys->move_distance = 1.1f;
+  sphys->decay_factor = 0.9f;
+  sphys->particles_population_factor = 0.8f;
+
   sphys->deposit_value = 50;
-  sphys->decay_factor = 0.32;
   sphys->spawn_radius = 50.0;
   sphys->center_attraction = 1.0;
 
