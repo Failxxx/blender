@@ -69,36 +69,6 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
 void free_physarum_data_2d(PhysarumData2D *pdata_2d);
 
 /* Physarum 3D algorithms functions */
-struct GPUVertBuf *physarum3D_make_new_quad_mesh();
-void physarum3D_draw_view(float projectionMatrix[4][4],
-                          PhysarumGPUData *debug_data,
-                          PhysarumRenderingSettings *prs);
-void physarum3D_init_data();
-void physarum3D_free_data();
-
-
-//---------------- Physarum 3D
-//---------------------------------------------------------
-//---------------------------------------------------------
-//void PHYS3D_init(Physarum3D *physarum3d, PhysarumRenderingSettings *prs);
-//void PHYS3D_draw_view(Physarum3D *physarum3d, PhysarumRenderingSettings *prs);
-//void PHYS3D_set_particles(Physarum3DParticle *particles[],
-//                          uint particules_count,
-//                          float world_size,
-//                          float spawn_radius);
-//struct GPUVertBuf *PHYS3D_get_VBO();
-//struct GPUVertBuf *PHYS3D_init_GPU();
-//struct GPUVertBuf *PHYS3D_free_GPU();
-//void PHYS3D_exit(Physarum3D *physarum3d, PhysarumRenderingSettings *prs);
-//
-//float PHYS3D_random_uniform(float low, float high);
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-
-/* Physarum 3D TEST algorithms functions */
-void physarum3DTest_draw_view(Physarum3D *physarum3d, PhysarumRenderingSettings *prs);
-
-struct GPUVertBuf *P3T_get_vbo();
-void P3T_init_GPU_data(Physarum3D *physarum3d);
-void P3T_free_GPU_data(Physarum3D *physarum3d);
+void P3D_draw();
+void P3D_init();
+void P3D_free();
