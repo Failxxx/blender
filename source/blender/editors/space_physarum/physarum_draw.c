@@ -52,7 +52,6 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   PhysarumGPUData *pgd = sphys->pgd;
   PhysarumData2D *pdata_2d = sphys->pdata_2d;
 
-
   Physarum3D *physarum3d = sphys->physarum3d;
 
   /* ----- Setup ----- */
@@ -67,7 +66,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
   //Draw physarum 3D
-  P3D_draw();
+  P3D_draw(physarum3d, prs);
 
   GPU_blend(GPU_BLEND_NONE);
 }

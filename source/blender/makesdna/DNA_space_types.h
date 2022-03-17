@@ -2098,25 +2098,15 @@ typedef struct Physarum3DParticle {
   float phi;
   float theta;
   float pair;
-
 } Physarum3DParticle;
 
 typedef struct Physarum3D {
 
-  struct PhysarumRenderingSettings *rendering_settings;
-
   int particules_amount;
+  char _pad0[4];
+  float *particles_position;
+  int texture_size;
   float spawn_radius;
-
-  /* Batches, hold VBOs */
-  struct GPUBatch *batch;
-  /* Shaders */
-  struct GPUShader *shader;
-  /* Textures */
-  struct GPUTexture *texture;
-  /* Frame buffer */
-  struct GPUFrameBuffer *frame_buffer;
-  //struct Physarum3DParticle *particles[];
 
 } Physarum3D;
 

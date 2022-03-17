@@ -54,10 +54,8 @@ extern char datatoc_gpu_shader_physarum_test_vertex_vs_glsl[];
 
 /* Physarum draw functions */
 void initialize_physarum_rendering_settings(PRenderingSettings *prs);
-void initialize_physarum_gpu_data(PhysarumGPUData *pgd);
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
-void free_gpu_data(SpacePhysarum *sphys);
 
 /* Physarum 2D algorithms functions */
 struct GPUVertBuf *make_new_quad_mesh();
@@ -69,6 +67,6 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
 void free_physarum_data_2d(PhysarumData2D *pdata_2d);
 
 /* Physarum 3D algorithms functions */
-void P3D_draw();
-void P3D_init();
+void P3D_init(int particles_amount, int texture_size);
+void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs);
 void P3D_free();

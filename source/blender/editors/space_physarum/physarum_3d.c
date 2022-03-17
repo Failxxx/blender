@@ -30,11 +30,11 @@
 
 #include "physarum_intern.h"
 
-void P3D_init()
+void P3D_init(int particles_amount, int texture_size)
 {
 }
 
-void P3D_draw()
+void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 {
 }
 
