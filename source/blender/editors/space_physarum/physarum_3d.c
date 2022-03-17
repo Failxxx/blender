@@ -54,14 +54,20 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 
   uint vertice_position_stride = 3;
   uint color_stride = 4;
+  uint vertices_length = 3;
 
   GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
+  uint attribute_position = GPU_vertformat_attr_add(
       format, "v_in_f3Position", GPU_COMP_F32, vertice_position_stride, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(
-      format, "v_in_f4Color", GPU_COMP_F32, color_stride, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vertex_buffer_object = GPU_vertbuf_create_with_format(format);
+
+  float vertices[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
+
+  // Fill the vertex buffer with vertices data
+  for (int i = 0; i < vertices_length; i++) {
+    GPU_vertbuf_attr_set(vertex_buffer_object, attribute_position, i, vertices[i]);
+  }
 
   GPUFrameBuffer *frame_buffer = NULL;
   GPU_framebuffer_ensure_config(
