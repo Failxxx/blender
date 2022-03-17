@@ -62,6 +62,8 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 
   GPUVertBuf *vertex_buffer_object = GPU_vertbuf_create_with_format(format);
 
+
+
   float vertices[3][3] = {{-0.5f, -0.5f, 0.0f}, {0.5f, -0.5f, 0.0f}, {0.0f, 0.5f, 0.0f}};
 
   // Fill the vertex buffer with vertices data
@@ -117,3 +119,22 @@ void P3D_particles_generate(Physarum3D *p3d)
 
   BLI_rng_free(rng);
 }
+
+
+//  /* Free old data */
+//GPU_batch_discard(p2d->render_agents_batch);
+//
+///* Generate new particles */
+//int bytes = sizeof(float) * 3 * p2d->nb_particles;
+//float *positions = (float *)malloc(bytes);
+//bytes = sizeof(float) * 2 * p2d->nb_particles;
+//float *uvs = (float *)malloc(bytes);
+//
+//physarum_2d_gen_particles_data(p2d, positions, uvs);
+//GPUVertBuf *particles = make_new_points_mesh(positions, uvs, p2d->nb_particles);
+//p2d->render_agents_batch = GPU_batch_create_ex(
+//    GPU_PRIM_POINTS, particles, NULL, GPU_BATCH_OWNS_VBO);
+//
+//// Free particles data
+//free(positions);
+//free(uvs);
