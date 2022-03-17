@@ -62,35 +62,40 @@ class PHYSARUM_PT_properties(Panel):
         layout.use_property_decorate = False
         st = context.space_data
 
-        col = layout.column(align=False, heading="Sense Spread")
+        col = layout.column(align=False, heading="Particles population factor")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "sense_spread", text="")
+        sub.prop(st, "particles_population_factor", text="Number of particles used for the simulation")
 
-        col = layout.column(align=False, heading="Sense Distance")
+        col = layout.column(align=False, heading="Sensor angle")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "sense_distance", text="")
+        sub.prop(st, "sensor_angle", text="")
+
+        col = layout.column(align=False, heading="Sensor distance")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "sensor_distance", text="")
         
-        col = layout.column(align=False, heading="Turn Angle")
+        col = layout.column(align=False, heading="Rotation angle")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "turn_angle", text="")
+        sub.prop(st, "rotation_angle", text="")
 
-        col = layout.column(align=False, heading="Move Distance")
+        col = layout.column(align=False, heading="Move distance")
         row = col.row(align=True)
         sub = row.row(align=True)
         sub.prop(st, "move_distance", text="")
-
-        col = layout.column(align=False, heading="Deposit Value")
-        row = col.row(align=True)
-        sub = row.row(align=True)
-        sub.prop(st, "deposit_value", text="")
 
         col = layout.column(align=False, heading="Decay Factor")
         row = col.row(align=True)
         sub = row.row(align=True)
         sub.prop(st, "decay_factor", text="")
+
+        col = layout.column(align=False, heading="Deposit Value")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "deposit_value", text="")
 
         col = layout.column(align=False, heading="Spawn Radius")
         row = col.row(align=True)
