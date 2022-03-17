@@ -67,6 +67,7 @@ void initialize_physarum_data_2d(PhysarumData2D *pdata_2d);
 void free_physarum_data_2d(PhysarumData2D *pdata_2d);
 
 /* Physarum 3D algorithms functions */
-void P3D_init(int particles_amount, int texture_size);
+void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size);
 void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs);
-void P3D_free();
+void P3D_free(Physarum3D *p3d);
+void P3D_particles_generate(Physarum3D *p3d);

@@ -30,14 +30,29 @@
 
 #include "physarum_intern.h"
 
-void P3D_init(int particles_amount, int texture_size)
+void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size)
 {
+  P3D_particles_generate(p3d);
 }
 
 void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 {
+  P3D_init(p3d, 1000, 1000);
+
 }
 
-void P3D_free()
+void P3D_free(Physarum3D *p3d)
 {
+}
+
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+void P3D_particles_generate(Physarum3D *p3d)
+{
+  for (size_t i = 0; i < p3d->particules_amount; i++) {
+
+  }
 }
