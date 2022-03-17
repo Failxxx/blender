@@ -47,16 +47,29 @@
 
 #include "physarum_intern.h"
 
+void physarum_handle_events(SpacePhysarum *sphys, const bContext *C, ARegion *region)
+{
+  // Screen resize
+  if (region->winx != sphys->screen_width || region->winy != sphys->screen_height) {
+    sphys->screen_width = region->winx;
+    sphys->screen_height = region->winy;
+
+    // Free old output_image_data
+    if (sphys->output_image_data != NULL)
+      free(sphys->output_image_data);
+    // Reallocate memory for output_image_data
+    int bytes = sizeof(unsigned char) * region->winx * region->winy * 3;
+    sphys->output_image_data = (unsigned char *)malloc(bytes);
+  }
+}
+
 void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
   Physarum2D *p2d = sphys->p2d;
 
-  /* ----- Setup ----- */
-  prs->screen_width  = BLI_rcti_size_x(&region->winrct);
-  prs->screen_height = BLI_rcti_size_y(&region->winrct);
-  adapt_projection_matrix_window_rescale(prs);
+  /* ----- Handle events ----- */
+  physarum_handle_events(sphys, C, region);
 
   /* ----- Draw ----- */
   GPU_blend(GPU_BLEND_ALPHA);
@@ -69,9 +82,14 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     physarum_2d_handle_events(p2d, sphys, C, region);
   }
 
-  // Pixel for frame export
-  sphys->output_image_data = (unsigned char *)malloc((int)(prs->screen_width * prs->screen_height * (3)));
-  glReadPixels(0, 0, prs->screen_width, prs->screen_height, GL_RGB, GL_UNSIGNED_BYTE, sphys->output_image_data);
+  // Store pixels to potential export
+  glReadPixels(0,
+               0,
+               sphys->screen_width,
+               sphys->screen_height,
+               GL_RGB,
+               GL_UNSIGNED_BYTE,
+               sphys->output_image_data);
 
   if (sphys->render_frames_counter > 0) {
     PHYSARUM_animation_frame_render(C);

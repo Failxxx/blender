@@ -87,7 +87,8 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
 
   /* Initialize rendering settings */
   sphys->nb_frames_to_render = 100;
-  strcpy(sphys->output_path, "C:\\tmp\\"); // Default output path
+  sphys->screen_width = -1;
+  sphys->screen_height = -1;
 
   /* main region */
   // WARNING! Keep this here, do not move on top or bottom. Order matters.
@@ -115,6 +116,9 @@ static void physarum_free(SpaceLink *sl)
   /* Free memory for Physarum2D */
   free_physarum_2d(sphys->p2d);
   MEM_freeN(sphys->p2d);
+
+  if (sphys->output_image_data != NULL)
+    free(sphys->output_image_data);
 }
 
 void physarum_operatortypes(void)

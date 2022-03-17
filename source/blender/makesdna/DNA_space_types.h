@@ -2129,6 +2129,8 @@ typedef struct SpacePhysarum {
   unsigned char *output_image_data;
   char *output_path;
   char *file_name;
+  int screen_width;
+  int screen_height;
 
 } SpacePhysarum;
 

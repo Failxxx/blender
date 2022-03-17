@@ -117,7 +117,7 @@ unsigned char *create_bitmap_info_header(int height, int width)
 
 void get_file_name_from_raw_path(char *dest, const char *raw_path)
 {
-  char *path = (char *)malloc(1024);
+  char path[1024] = "";
   strcpy(path, raw_path);
 
   if (path[strlen(path) - 1] != '\\') {
@@ -136,19 +136,17 @@ void get_file_name_from_raw_path(char *dest, const char *raw_path)
   else {
     strcpy(dest, default_output_file_name);
   }
-
-  free(path);
 }
 
 void get_folder_from_raw_path(char *dest, const char *raw_path)
 {
-  char *path = (char *)malloc(1024);
+  char path[1024] = "";
   strcpy(path, raw_path);
 
   if (path[strlen(path) - 1] != '\\') {
     // Get complete file name
     const char delimiter_slash[2] = "\\";
-    char *complete_file_name = (char *)malloc(1024);
+    char complete_file_name[1024] = "";
     char *token = strtok(path, delimiter_slash);
     while (token != NULL) {
       strcpy(complete_file_name, token);
@@ -156,7 +154,7 @@ void get_folder_from_raw_path(char *dest, const char *raw_path)
     }
 
     // Get folder
-    char *folder = (char *)malloc(1024);
+    char folder[1024] = "";
     strcpy(path, raw_path);
     token = strtok(path, delimiter_slash);
     while (token != NULL) {
@@ -168,15 +166,10 @@ void get_folder_from_raw_path(char *dest, const char *raw_path)
     }
 
     strcpy(dest, folder);
-
-    free(folder);
-    free(complete_file_name);
   }
   else {
     strcpy(dest, path);
   }
-
-  free(path);
 }
 
 Path get_path_from_raw_path(const char *raw_path)
@@ -194,13 +187,13 @@ Path get_path_from_raw_path(const char *raw_path)
 
 int path_may_be_ok(const char *raw_path) {
   // Check if given path is empty
-  if (strlen(raw_path) <= 0) {
+  if (raw_path == NULL || strlen(raw_path) <= 0) {
     printf("ERROR::Physarum, the given path is empty!\n");
     return 0;
   }
 
   // Check if folder exists
-  char *path = (char *)malloc(1024);
+  char path[1024] = "";
   get_folder_from_raw_path(path, raw_path);
   printf("Path = %s\n", path);
   struct stat info;
@@ -208,15 +201,12 @@ int path_may_be_ok(const char *raw_path) {
   if (stat(path, &info) != 0) {
     printf("ERROR::Physarum, the given path does not exists!\n");
     printf("Path = %s\n", raw_path);
-    free(path);
     return 0;
   }
-  else if (info.st_mode & S_IFDIR) {
-    free(path);
+  else if ((info.st_mode & S_IFMT) == S_IFDIR) {
     return 1;
   }
 
-  free(path);
   printf("ERROR::Physarum, the given path does not seem correct...\n");
   printf("Path = %s\n", raw_path);
   return 0;
@@ -260,12 +250,11 @@ void export_bitmap_image(unsigned char *image, const int height, const int width
 static int physarum_single_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
 
   if (path_may_be_ok(sphys->output_path)) {
     Path path = get_path_from_raw_path(sphys->output_path);
     export_bitmap_image(
-        sphys->output_image_data, prs->screen_height, prs->screen_width, path.full_path);
+        sphys->output_image_data, sphys->screen_height, sphys->screen_width, path.full_path);
   }
 
   return OPERATOR_FINISHED;
