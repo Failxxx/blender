@@ -51,10 +51,9 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   PhysarumRenderingSettings *prs = sphys->prs;
   PhysarumGPUData *pgd = sphys->pgd;
   PhysarumData2D *pdata_2d = sphys->pdata_2d;
-  Physarum3D *physarum3d = sphys->physarum3d;
-  // physarum3d->rendering_settings = prs;
 
-  int debug = 4;
+
+  Physarum3D *physarum3d = sphys->physarum3d;
 
   /* ----- Setup ----- */
   prs->screen_width = BLI_rcti_size_x(&region->winrct);
@@ -67,29 +66,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Background color
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
-  if (debug == 1) {
-    // Set shaders
-    GPU_batch_set_shader(pgd->batch, pgd->shader);
-
-    // Send uniforms to shaders
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ModelMatrix", prs->modelMatrix);
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ViewMatrix", prs->viewMatrix);
-    GPU_batch_uniform_mat4(pgd->batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
-
-    // Draw vertices
-    GPU_batch_draw(pgd->batch);
-  }
-  else if (debug == 2) {
-    physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
-  }
-  else if (debug == 3) {
-    // physarum3D_draw_view(prs->projectionMatrix, pgd, prs);
-    // PHYS3D_draw_view(physarum3d, prs);
-  }
-  else if (debug == 4) {
-    printf("Physarum3DTest: Draw call\n");
-    physarum3DTest_draw_view(physarum3d, prs);
-  }
+  //Draw physarum 3D
+  P3D_draw();
 
   GPU_blend(GPU_BLEND_NONE);
 }
@@ -142,67 +120,89 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
   translate_m4(prs->viewMatrix, 0.0f, 0.0f, -3.0f);
 }
 
-GPUVertBuf *make_new_triangle_mesh()
-{
-  /* Load geometry */
-  // Colors
-  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-  float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-  float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
 
-  // Geometry data
-  float colors[6][4] = {{UNPACK4(white)},
-                        {UNPACK4(red)},
-                        {UNPACK4(blue)},
-                        {UNPACK4(white)},
-                        {UNPACK4(red)},
-                        {UNPACK4(blue)}};
-  float verts[6][3] = {{-1.0f, -1.0f, 0.0f},
-                       {1.0f, -1.0f, 0.0f},
-                       {-1.0f, 1.0f, 0.0f},  // First triangle
-                       {1.0f, -1.0f, 0.0f},
-                       {-1.0f, 1.0f, 0.0f},
-                       {1.0f, 1.0f, 0.0f}};  // Second triangle
-  uint verts_len = 6;
+//if (debug == 1) {
+//  // Set shaders
+//  GPU_batch_set_shader(pgd->batch, pgd->shader);
+//
+//  // Send uniforms to shaders
+//  GPU_batch_uniform_mat4(pgd->batch, "u_m4ModelMatrix", prs->modelMatrix);
+//  GPU_batch_uniform_mat4(pgd->batch, "u_m4ViewMatrix", prs->viewMatrix);
+//  GPU_batch_uniform_mat4(pgd->batch, "u_m4ProjectionMatrix", prs->projectionMatrix);
+//
+//  // Draw vertices
+//  GPU_batch_draw(pgd->batch);
+//}
+//else if (debug == 2) {
+//  physarum_2d_draw_view(pdata_2d, prs->projectionMatrix, pgd, prs);
+//}
+//else if (debug == 3) {
+//  P3D_draw();
+//}
 
-  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
-  uint pos_comp_len = 3;
-  uint col_comp_len = 4;
 
-  GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
-      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(
-      format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
 
-  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(vbo, verts_len);
+//GPUVertBuf *make_new_triangle_mesh()
+//{
+//  /* Load geometry */
+//  // Colors
+//  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+//  float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+//  float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+//
+//  // Geometry data
+//  float colors[6][4] = {{UNPACK4(white)},
+//                        {UNPACK4(red)},
+//                        {UNPACK4(blue)},
+//                        {UNPACK4(white)},
+//                        {UNPACK4(red)},
+//                        {UNPACK4(blue)}};
+//  float verts[6][3] = {{-1.0f, -1.0f, 0.0f},
+//                       {1.0f, -1.0f, 0.0f},
+//                       {-1.0f, 1.0f, 0.0f},  // First triangle
+//                       {1.0f, -1.0f, 0.0f},
+//                       {-1.0f, 1.0f, 0.0f},
+//                       {1.0f, 1.0f, 0.0f}};  // Second triangle
+//  uint verts_len = 6;
+//
+//  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
+//  uint pos_comp_len = 3;
+//  uint col_comp_len = 4;
+//
+//  GPUVertFormat *format = immVertexFormat();
+//  uint pos = GPU_vertformat_attr_add(
+//      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
+//  uint color = GPU_vertformat_attr_add(
+//      format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
+//
+//  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
+//  GPU_vertbuf_data_alloc(vbo, verts_len);
+//
+//  // Fill the vertex buffer with vertices data
+//  for (int i = 0; i < verts_len; i++) {
+//    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
+//    GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
+//  }
+//
+//  return vbo;
+//}
 
-  // Fill the vertex buffer with vertices data
-  for (int i = 0; i < verts_len; i++) {
-    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-    GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
-  }
-
-  return vbo;
-}
-
-/* Initializes GPU data (VBOs and shaders) */
-void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
-{
-  /* Load shaders */
-  pgd->shader = GPU_shader_create_from_arrays(
-      {.vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
-       .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}});
-
-  GPUVertBuf *vbo = make_new_triangle_mesh();
-  // GPUVertBuf *vbo = make_new_quad_mesh();
-  pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
-}
-
-/* Free memory of the PhysarumGPUData strucure */
-void free_gpu_data(SpacePhysarum *sphys)
-{
-  GPU_shader_free(sphys->pgd->shader);
-  GPU_batch_discard(sphys->pgd->batch);
-}
+///* Initializes GPU data (VBOs and shaders) */
+//void initialize_physarum_gpu_data(PhysarumGPUData *pgd)
+//{
+//  /* Load shaders */
+//  pgd->shader = GPU_shader_create_from_arrays(
+//      {.vert = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_vs_glsl, NULL},
+//       .frag = (const char *[]){datatoc_gpu_shader_3D_debug_physarum_fs_glsl, NULL}});
+//
+//  GPUVertBuf *vbo = make_new_triangle_mesh();
+//  // GPUVertBuf *vbo = make_new_quad_mesh();
+//  pgd->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, vbo, NULL, GPU_BATCH_OWNS_VBO);
+//}
+//
+///* Free memory of the PhysarumGPUData strucure */
+//void free_gpu_data(SpacePhysarum *sphys)
+//{
+//  GPU_shader_free(sphys->pgd->shader);
+//  GPU_batch_discard(sphys->pgd->batch);
+//}
