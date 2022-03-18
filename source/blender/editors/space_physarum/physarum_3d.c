@@ -173,11 +173,11 @@ void P3D_generate_particles_ssbo(Physarum3D *p3d)
 void P3D_load_shaders(Physarum3D *p3d)
 {
   printf("Physarum 3D: load shaders\n");
-  //p3d->shader_particle_3d = GPU_shader_create_compute(
-  //    (const char *[]){datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl, NULL},
-  //    NULL,
-  //    NULL,
-  //    "p3d_gpu_shader_compute_particles_3d");
+  p3d->shader_particle_3d = GPU_shader_create_compute(
+      datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl,
+      NULL,
+      NULL,
+      "p3d_gpu_shader_compute_particles_3d");
 
   p3d->shader_decay = GPU_shader_create_compute(datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl,
                                                 NULL,
@@ -358,15 +358,8 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_batch_set_shader(p3d->batch, p3d->shader_render);
     GPU_framebuffer_clear(GPU_framebuffer_active_get(), GPU_COLOR_BIT, transparent, 0, 0);
 
-    // Send uniforms
-    // Vertex shader
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Projection_matrix", p3d->projection_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4View_matrix", p3d->view_matrix);
-    axis_angle_to_mat4_single(p3d->model_matrix, 'X', M_PI_2);
-    GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
-    GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
-
-    // Fragment shader
     if (p3d->is_trail_A) {
       GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_A);
     }
@@ -374,6 +367,10 @@ void physarum_3d_draw_view(Physarum3D *p3d)
       GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_B);
     }
     GPU_batch_uniform_1i(p3d->batch, "u_s3TrailsData", 0);
+
+    axis_angle_to_mat4_single(p3d->model_matrix, 'X', M_PI_2);
+    GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
+    GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
 
     GPU_batch_draw(p3d->batch); // First pass
 
@@ -388,13 +385,25 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 0);
 
     GPU_batch_draw(p3d->batch);  // Third pass
-
   }
 }
 
 /* Handle events functions */
 
-void physarum_3d_handle_events(Physarum3D *p3d)
+void physarum_3d_handle_events(Physarum3D *p3d, SpacePhysarum *sphys, const bContext *C, ARegion *region)
 {
-  
+  // Update simulation parameters
+  p3d->sensor_spread = sphys->sensor_angle;
+  p3d->sensor_distance = sphys->sensor_distance;
+  p3d->turn_angle = sphys->rotation_angle;
+  p3d->move_distance = sphys->move_distance;
+  p3d->deposit_value = sphys->deposit_value;
+  p3d->decay_factor = sphys->decay_factor;
+  p3d->center_attraction = sphys->center_attraction;
+
+  // Resize event
+  if (region->winx != p3d->screen_width && region->winy != p3d->screen_height) {
+    p3d->screen_width = region->winx;
+    p3d->screen_height = region->winy;
+  }
 }

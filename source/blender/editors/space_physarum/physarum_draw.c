@@ -66,7 +66,7 @@ void physarum_handle_events(SpacePhysarum *sphys, const bContext *C, ARegion *re
 void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  Physarum3D *physarum3d = sphys->physarum3d;
+  Physarum3D *p3d = sphys->physarum3d;
   Physarum2D *p2d = sphys->p2d;
 
   /* ----- Handle events ----- */
@@ -83,7 +83,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     physarum_2d_draw_view(p2d);
   }
   else if (sphys->mode == SP_PHYSARUM_3D) {
-    physarum_3d_draw_view(physarum3d);
+    physarum_3d_handle_events(p3d, sphys, C, region);
+    physarum_3d_draw_view(p3d);
   }
 
   // Store pixels to potential export

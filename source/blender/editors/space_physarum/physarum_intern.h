@@ -62,7 +62,10 @@ void physarum_2d_handle_events(Physarum2D *p2d,
 /* Physarum 3D algorithms functions */
 void initialize_physarum_3d(Physarum3D *p3d);
 void physarum_3d_draw_view(Physarum3D *p3d);
-void physarum_3d_handle_events(Physarum3D *p3d);
+void physarum_3d_handle_events(Physarum3D *p3d,
+                               SpacePhysarum *sphys,
+                               const bContext *C,
+                               ARegion *region);
 void free_physarum_3d(Physarum3D *p3d);
 
 /* Physarum operators */
