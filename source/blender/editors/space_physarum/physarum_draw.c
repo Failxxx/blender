@@ -68,6 +68,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   Physarum3D *physarum3d = sphys->physarum3d;
   Physarum2D *p2d = sphys->p2d;
+  sphys->context = C;
 
   /* ----- Handle events ----- */
   physarum_handle_events(sphys, C, region);

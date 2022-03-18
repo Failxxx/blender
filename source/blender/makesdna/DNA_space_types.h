@@ -34,6 +34,7 @@
 #include "DNA_outliner_types.h"  /* for TreeStoreElem */
 #include "DNA_sequence_types.h"  /* SequencerScopes */
 #include "DNA_vec_types.h"
+#include "DNA_screen_types.h"
 /* Hum ... Not really nice... but needed for spacebuts. */
 #include "DNA_view2d_types.h"
 
@@ -2142,6 +2143,8 @@ typedef struct SpacePhysarum {
   PRenderingSettings *prs;
   Physarum3D *physarum3d;
   Physarum2D *p2d;
+  ARegion *region;
+  struct bContext *context;
 
   int mode; // eSpacePhysarum_Mode
   int rendering_mode; // eSpacePhysarum_Rendering_Mode

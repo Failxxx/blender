@@ -410,3 +410,26 @@ void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
   ot->exec = physarum_3D_drawing_exec;
   ot->poll = physarum_3D_drawing_poll;
 }
+
+/* DRAW FUNCTION */
+
+static int physarum_drawing_exec(bContext *C, wmOperator *op)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  ARegion *ar = sphys->region;
+  bContext *context = sphys->context;
+
+  physarum_draw_view(context, ar);
+  return OPERATOR_FINISHED;
+}
+
+void PHYSARUM_OT_draw(struct wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Physarum 3D";
+  ot->idname = "PHYSARUM_OT_draw";
+  ot->description = "Draw physarum";
+
+  /* api callbacks */
+  ot->exec = physarum_drawing_exec;
+}

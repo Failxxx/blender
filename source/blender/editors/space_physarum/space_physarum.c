@@ -99,6 +99,7 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
 
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
+  sphys->region = ar;
 
   /* Allocate memory for PhysarumRenderingSettings */
   sphys->prs = MEM_callocN(sizeof(PhysarumRenderingSettings), "physarum rendering settings");
@@ -136,6 +137,7 @@ void physarum_operatortypes(void)
   WM_operatortype_append(PHYSARUM_OT_animation_render);
   WM_operatortype_append(PHYSARUM_OT_draw_2D);
   WM_operatortype_append(PHYSARUM_OT_draw_3D);
+  WM_operatortype_append(PHYSARUM_OT_draw);
 }
 
 /****************** Main region ******************/

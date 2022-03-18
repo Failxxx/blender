@@ -52,6 +52,10 @@ class PHYSARUM_PT_mode(Panel):
         row = layout.row()
         row.menu("PHYSARUM_MT_menu_mode")
 
+        col = layout.column(align=False, heading="Start Physarum")
+        row = col.row(align=True)
+        row.operator("physarum.start_operator", text="Start")    
+
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
@@ -114,6 +118,44 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "collision")
 
+class PHYSARUM_OT_start_operator(bpy.types.Operator):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Start Physarum"
+    bl_idname = "physarum.start_operator"
+
+    _updating = False
+    _calcs_done = False
+    _timer = None
+
+    def calcs(self):
+        #Call operator that call draw function
+        bpy.ops.physarum.draw()
+        _calcs_done = True
+
+    def modal(self, context, event):
+        if event.type == 'TIMER' and not self._updating:
+            self._updating = True
+            self.calcs()
+            # Forces to redraw the view (magic trick)
+            bpy.context.scene.frame_set(bpy.data.scenes['Scene'].frame_current)
+            self._updating = False
+        if self._calcs_done:
+            self.cancel(context)
+        
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        self._updating = False
+        self._timer = context.window_manager.event_timer_add(0.001, window = context.window)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        context.window_manager.event_timer_remove(self._timer)
+        self._timer = None
+        return {'CANCELLED'}
+
 class RenderOutputButtonsPanel:
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
@@ -161,6 +203,7 @@ classes = (
     PHYSARUM_MT_menu_mode,
     PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
+    PHYSARUM_OT_start_operator,
     PHYSARUM_PT_output,
 )
 
