@@ -38,17 +38,10 @@ extern char datatoc_gpu_shader_3D_physarum_2d_render_agents_fs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl[];
 
 // Physarum 3D
-extern char datatoc_gpu_shader_physarum_blit_cs_glsl[];
-extern char datatoc_gpu_shader_physarum_decay_3d_cs_glsl[];
-extern char datatoc_gpu_shader_physarum_particle_3d_cs_glsl[];
-extern char datatoc_gpu_shader_physarum_pixel_fs_glsl[];
-extern char datatoc_gpu_shader_physarum_pixel_3d_fs_glsl[];
-extern char datatoc_gpu_shader_physarum_vertex_vs_glsl[];
-extern char datatoc_gpu_shader_physarum_vertex_3d_vs_glsl[];
-
-// Physarum 3D test
-extern char datatoc_gpu_shader_physarum_test_pixel_fs_glsl[];
-extern char datatoc_gpu_shader_physarum_test_vertex_vs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl[];
 
 /* Operators */
 

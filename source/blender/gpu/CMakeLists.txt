@@ -388,16 +388,11 @@ data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_render_agents.vs.gls
 data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_update_agents.fs.glsl SRC)
 
 # Physarum 3d
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_blit.cs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_decay_3d.cs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_particle_3d.cs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_pixel.fs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_pixel_3d.fs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_vertex.vs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_vertex_3d.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_particle.cs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_decay.cs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_pixel.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_vertex.vs.glsl SRC)
 
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_test_pixel.fs.glsl SRC)
-data_to_c_simple(shaders/physarum3d/gpu_shader_physarum_test_vertex.vs.glsl SRC)
 
 if(WITH_MOD_FLUID)
   add_definitions(-DWITH_FLUID)

@@ -39,7 +39,7 @@ void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size)
 
 void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 {
-  P3D_init(p3d, 100, 1000);
+  P3D_init(p3d, 1000, 1000);
   P3D_load_shaders(p3d);
 
   // Clear color framebuffer
@@ -50,65 +50,65 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
   //-----------------------------------------------------------------------------
   //----- COMPUTE
 
-  GPUVertBuf *vertex_buffer_object = P3D_get_display_VBO();
+  //GPUVertBuf *vertex_buffer_object = P3D_get_display_VBO();
 
-  // Create and send particule position and infos to GPU as SSBO
-  GPUVertBuf *ssbo = P3D_get_data_VBO(p3d);
+  //// Create and send particule position and infos to GPU as SSBO
+  //GPUVertBuf *ssbo = P3D_get_data_VBO(p3d);
 
-  // void GPU_vertbuf_bind_as_ssbo(struct GPUVertBuf *verts, int binding)
-  GPU_vertbuf_bind_as_ssbo(ssbo, NULL);
+  //// void GPU_vertbuf_bind_as_ssbo(struct GPUVertBuf *verts, int binding)
+  //GPU_vertbuf_bind_as_ssbo(ssbo, NULL);
 
-  GPUTexture *texture = GPU_texture_create_2d(
-      "MyTexture", p3d->texture_size, p3d->texture_size, 0, GPU_RGBA32F, NULL);
+  //GPUTexture *texture = GPU_texture_create_2d(
+  //    "MyTexture", p3d->texture_size, p3d->texture_size, 0, GPU_RGBA32F, NULL);
 
-  GPUFrameBuffer *frame_buffer = NULL;
-  GPU_framebuffer_ensure_config(
-      &frame_buffer,
-      {
-          GPU_ATTACHMENT_NONE,  // Slot reserved for depth/stencil buffer.
-          GPU_ATTACHMENT_TEXTURE(texture),
-      });
+  //GPUFrameBuffer *frame_buffer = NULL;
+  //GPU_framebuffer_ensure_config(
+  //    &frame_buffer,
+  //    {
+  //        GPU_ATTACHMENT_NONE,  // Slot reserved for depth/stencil buffer.
+  //        GPU_ATTACHMENT_TEXTURE(texture),
+  //    });
 
-  GPUBatch *batch = GPU_batch_create_ex(
-      GPU_PRIM_TRIS, vertex_buffer_object, NULL, GPU_BATCH_OWNS_VBO);
+  //GPUBatch *batch = GPU_batch_create_ex(
+  //    GPU_PRIM_TRIS, vertex_buffer_object, NULL, GPU_BATCH_OWNS_VBO);
 
-  // Loading shader
-  GPUShader *shader = GPU_shader_create_from_arrays({
-      .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
-      .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
-  });
-  GPU_batch_set_shader(batch, shader);
+  //// Loading shader
+  //GPUShader *shader = GPU_shader_create_from_arrays({
+  //    .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
+  //    .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
+  //});
+  //GPU_batch_set_shader(batch, shader);
 
-  GPU_framebuffer_bind(frame_buffer);
-  // Set its viewport to the texture size which we want to draw on
-  GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
-  // Don't forget to clear!
-  GPU_framebuffer_clear(frame_buffer, GPU_COLOR_BIT, transparent, 0, 0);
-  GPU_batch_draw(batch);
+  //GPU_framebuffer_bind(frame_buffer);
+  //// Set its viewport to the texture size which we want to draw on
+  //GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
+  //// Don't forget to clear!
+  //GPU_framebuffer_clear(frame_buffer, GPU_COLOR_BIT, transparent, 0, 0);
+  //GPU_batch_draw(batch);
 
-  //-----------------------------------------------------------------------------
-  //----- RENDER ON VIEWPORT
+  ////-----------------------------------------------------------------------------
+  ////----- RENDER ON VIEWPORT
 
-  GPUShader *shader_render = GPU_shader_create_from_arrays({
-      .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
-      .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
-  });
-  GPU_batch_set_shader(batch, shader_render);
+  //GPUShader *shader_render = GPU_shader_create_from_arrays({
+  //    .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
+  //    .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
+  //});
+  //GPU_batch_set_shader(batch, shader_render);
 
-  GPU_framebuffer_bind(initial_fb);
-  // Set its viewport to the texture size which we want to draw on
-  GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
-  // Don't forget to clear!
-  GPU_framebuffer_clear(initial_fb, GPU_COLOR_BIT, transparent, 0, 0);
-  GPU_batch_draw(batch);
-  // GPU_framebuffer_texture_detach(frame_buffer, texture);
+  //GPU_framebuffer_bind(initial_fb);
+  //// Set its viewport to the texture size which we want to draw on
+  //GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
+  //// Don't forget to clear!
+  //GPU_framebuffer_clear(initial_fb, GPU_COLOR_BIT, transparent, 0, 0);
+  //GPU_batch_draw(batch);
+  //// GPU_framebuffer_texture_detach(frame_buffer, texture);
 
-  //-----------------------------------------------------------------------------
+  ////-----------------------------------------------------------------------------
 
-  GPU_texture_free(texture);
-  GPU_batch_discard(batch);
+  //GPU_texture_free(texture);
+  //GPU_batch_discard(batch);
 
-  GPU_shader_free(shader_render);
+  //GPU_shader_free(shader_render);
 
   P3D_free(p3d);
 }
@@ -213,19 +213,19 @@ void P3D_load_shaders(Physarum3D *p3d)
 {
   printf("--- Loading shaders\n");
   p3d->shader_particle_3d = GPU_shader_create_compute(
-      (const char *[]){datatoc_gpu_shader_physarum_particle_3d_cs_glsl, NULL},
+      (const char *[]){datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl, NULL},
       NULL,
       NULL,
       "gpu_shader_compute_particles_3d");
 
   p3d->shader_decay = GPU_shader_create_compute(
-      (const char *[]){datatoc_gpu_shader_physarum_decay_3d_cs_glsl, NULL},
+      (const char *[]){datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl, NULL},
       NULL,
       NULL,
       "gpu_shader_compute_decay");
 
   p3d->shader_render = GPU_shader_create_from_arrays({
-      .vert = (const char *[]){datatoc_gpu_shader_physarum_vertex_3d_vs_glsl, NULL},
-      .frag = (const char *[]){datatoc_gpu_shader_physarum_pixel_3d_fs_glsl, NULL},
+      .vert = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl, NULL},
+      .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl, NULL},
   });
 }
