@@ -52,9 +52,9 @@ typedef struct Path {
 
 unsigned char *create_bitmap_file_header(const int height, const int stride)
 {
-  int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
+  int file_size = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
-  static unsigned char fileHeader[] = {
+  static unsigned char file_header[] = {
       0,
       0,  /// signature
       0,
@@ -71,20 +71,20 @@ unsigned char *create_bitmap_file_header(const int height, const int stride)
       0,  /// start of pixel array
   };
 
-  fileHeader[0] = (unsigned char)('B');
-  fileHeader[1] = (unsigned char)('M');
-  fileHeader[2] = (unsigned char)(fileSize);
-  fileHeader[3] = (unsigned char)(fileSize >> 8);
-  fileHeader[4] = (unsigned char)(fileSize >> 16);
-  fileHeader[5] = (unsigned char)(fileSize >> 24);
-  fileHeader[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
+  file_header[0] = (unsigned char)('B');
+  file_header[1] = (unsigned char)('M');
+  file_header[2] = (unsigned char)(file_size);
+  file_header[3] = (unsigned char)(file_size >> 8);
+  file_header[4] = (unsigned char)(file_size >> 16);
+  file_header[5] = (unsigned char)(file_size >> 24);
+  file_header[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
 
-  return fileHeader;
+  return file_header;
 }
 
 unsigned char *create_bitmap_info_header(const int height, const int width)
 {
-  static unsigned char infoHeader[] = {
+  static unsigned char info_header[] = {
       0, 0, 0, 0,  /// header size
       0, 0, 0, 0,  /// image width
       0, 0, 0, 0,  /// image height
@@ -98,19 +98,19 @@ unsigned char *create_bitmap_info_header(const int height, const int width)
       0, 0, 0, 0,  /// important color count
   };
 
-  infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
-  infoHeader[4] = (unsigned char)(width);
-  infoHeader[5] = (unsigned char)(width >> 8);
-  infoHeader[6] = (unsigned char)(width >> 16);
-  infoHeader[7] = (unsigned char)(width >> 24);
-  infoHeader[8] = (unsigned char)(height);
-  infoHeader[9] = (unsigned char)(height >> 8);
-  infoHeader[10] = (unsigned char)(height >> 16);
-  infoHeader[11] = (unsigned char)(height >> 24);
-  infoHeader[12] = (unsigned char)(1);
-  infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
+  info_header[0] = (unsigned char)(INFO_HEADER_SIZE);
+  info_header[4] = (unsigned char)(width);
+  info_header[5] = (unsigned char)(width >> 8);
+  info_header[6] = (unsigned char)(width >> 16);
+  info_header[7] = (unsigned char)(width >> 24);
+  info_header[8] = (unsigned char)(height);
+  info_header[9] = (unsigned char)(height >> 8);
+  info_header[10] = (unsigned char)(height >> 16);
+  info_header[11] = (unsigned char)(height >> 24);
+  info_header[12] = (unsigned char)(1);
+  info_header[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
 
-  return infoHeader;
+  return info_header;
 }
 
 void get_file_name_from_raw_path(char *dest, const char *raw_path)

@@ -7963,31 +7963,31 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   prop = RNA_def_property(srna, "particles_population_factor", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "particles_population_factor");
   RNA_def_property_range(prop, 0.0, 1.0);
-  RNA_def_property_ui_text(prop, "Particles population factor", "");
+  RNA_def_property_ui_text(prop, "Particles population factor", "Min = 0.0 (1 particle), max = 1.0 (as many particles as pixels in the texture)");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "sensor_angle", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "sensor_angle");
   RNA_def_property_range(prop, 0.0, 90.0);
-  RNA_def_property_ui_text(prop, "Sensor angle", "");
+  RNA_def_property_ui_text(prop, "Sensor angle", "Angle of each sensor");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "sensor_distance", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "sensor_distance");
   RNA_def_property_range(prop, 0.0, 100.0);
-  RNA_def_property_ui_text(prop, "Sensor distance", "");
+  RNA_def_property_ui_text(prop, "Sensor distance", "Distance at which the sensors will read the trail value");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "rotation_angle", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "rotation_angle");
   RNA_def_property_range(prop, 0.0, 90.0);
-  RNA_def_property_ui_text(prop, "Rotation angle", "");
+  RNA_def_property_ui_text(prop, "Rotation angle", "Heading rotation of the agents");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "move_distance", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "move_distance");
   RNA_def_property_range(prop, 0.0, 20.0);
-  RNA_def_property_ui_text(prop, "Move distance", "");
+  RNA_def_property_ui_text(prop, "Move distance", "Distance traveled by agents at each frame");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "decay_factor", PROP_FLOAT, PROP_NONE);

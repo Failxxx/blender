@@ -52,7 +52,6 @@ class PHYSARUM_PT_mode(Panel):
         row = layout.row()
         row.menu("PHYSARUM_MT_menu_mode")
 
-
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
@@ -65,55 +64,55 @@ class PHYSARUM_PT_properties(Panel):
         layout.use_property_decorate = False
         st = context.space_data
 
-        col = layout.column(align=False, heading="Particles population factor")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "particles_population_factor", text="Number of particles used for the simulation")
+        sub.prop(st, "particles_population_factor", text="Particles")
 
-        col = layout.column(align=False, heading="Sensor angle")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "sensor_angle", text="")
+        sub.prop(st, "sensor_angle", text="SA")
 
-        col = layout.column(align=False, heading="Sensor distance")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "sensor_distance", text="")
+        sub.prop(st, "sensor_distance", text="SD")
         
-        col = layout.column(align=False, heading="Rotation angle")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "rotation_angle", text="")
+        sub.prop(st, "rotation_angle", text="RA")
 
-        col = layout.column(align=False, heading="Move distance")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "move_distance", text="")
+        sub.prop(st, "move_distance", text="MD")
 
-        col = layout.column(align=False, heading="Decay Factor")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "decay_factor", text="")
+        sub.prop(st, "decay_factor", text="Decay")
 
-        col = layout.column(align=False, heading="Deposit Value")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "deposit_value", text="")
+        sub.prop(st, "deposit_value")
 
-        col = layout.column(align=False, heading="Spawn Radius")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "spawn_radius", text="")
+        sub.prop(st, "spawn_radius")
 
-        col = layout.column(align=False, heading="Center Attraction")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "center_attraction", text="")
+        sub.prop(st, "center_attraction")
 
-        col = layout.column(align=False, heading="Collision")
+        col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "collision", text="")
+        sub.prop(st, "collision")
 
 class RenderOutputButtonsPanel:
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -138,8 +137,6 @@ class PHYSARUM_PT_output(RenderOutputButtonsPanel, Panel):
         layout.use_property_decorate = False  # No animation.
         st = context.space_data
 
-        rd = context.scene.render
-
         col = layout.column(align=False, heading="Output path")
         layout.prop(st, "output_path", text="")
 
@@ -153,11 +150,11 @@ class PHYSARUM_PT_output(RenderOutputButtonsPanel, Panel):
         col = layout.column(align=False, heading="Animation length")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.prop(st, "nb_frames_to_render", text="")
+        sub.prop(st, "nb_frames_to_render", text="Animation length, in frames")
 
         col = layout.column(align=False, heading="Render an animation")
         row = col.row(align=True)
-        row.operator("physarum.animation_render", text="Animation Render")    
+        row.operator("physarum.animation_render", text="Render an animation")    
 
 classes = (
     PHYSARUM_HT_header,

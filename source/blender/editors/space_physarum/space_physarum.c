@@ -81,12 +81,13 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->decay_factor = 0.9f;
   sphys->particles_population_factor = 0.8f;
 
+  // Unsued for the moment
   sphys->deposit_value = 50;
   sphys->spawn_radius = 50.0;
   sphys->center_attraction = 1.0;
 
   /* Initialize rendering settings */
-  sphys->nb_frames_to_render = 100;
+  sphys->nb_frames_to_render = 25;
   sphys->screen_width = -1;
   sphys->screen_height = -1;
   sphys->mode = SP_PHYSARUM_2D;
