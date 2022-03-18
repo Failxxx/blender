@@ -35,11 +35,11 @@
 #include "ED_screen.h"
 #include "ED_space_api.h"
 
-#include "GPU_immediate.h"
-#include "GPU_immediate_util.h"
 #include "GPU_capabilities.h"
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
+#include "GPU_immediate.h"
+#include "GPU_immediate_util.h"
 
 #include "WM_api.h"
 
@@ -66,6 +66,7 @@ void physarum_handle_events(SpacePhysarum *sphys, const bContext *C, ARegion *re
 void physarum_draw_view(const bContext *C, ARegion *region)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  Physarum3D *physarum3d = sphys->physarum3d;
   Physarum2D *p2d = sphys->p2d;
 
   /* ----- Handle events ----- */
@@ -77,6 +78,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Background color
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
+  //Draw physarum 3D
+  P3D_draw(physarum3d);
   if(sphys->mode == SP_PHYSARUM_2D) {
     physarum_2d_draw_view(p2d);
     physarum_2d_handle_events(p2d, sphys, C, region);
@@ -103,7 +106,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
 void adapt_projection_matrix_window_rescale(PRenderingSettings *prs)
 {
   /* Adapt projection matrix */
-  //float aspectRatio = prs->screen_width / prs->screen_height;
+  // float aspectRatio = prs->screen_width / prs->screen_height;
   float aspectRatio = 1.0f;
   perspective_m4(
       prs->projectionMatrix, -0.5f * aspectRatio, 0.5f * aspectRatio, -0.5f, 0.5f, 1.0f, 1000.0f);
@@ -117,8 +120,8 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
                                 {0.0f, 0.0f, 1.0f, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-  prs->texcoord_map = 0; // Default value ?
-  prs->show_grid = 0; // Default value ?
+  prs->texcoord_map = 0;  // Default value ?
+  prs->show_grid = 0;     // Default value ?
   prs->dof_size = 0.1f;
   prs->dof_distribution = 1.0f;
 
@@ -135,8 +138,8 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
 
   prs->sample_weight = 1.0f / 32.0f;
 
-  prs->filler1 = 0; // Default value ?
-  prs->filler2 = 1; // Default value ?
+  prs->filler1 = 0;  // Default value ?
+  prs->filler2 = 1;  // Default value ?
 
   // Projection matrix
   adapt_projection_matrix_window_rescale(prs);

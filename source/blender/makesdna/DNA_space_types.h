@@ -2046,7 +2046,46 @@ typedef struct PhysarumRenderingSettings {
   int filler2;
 } PhysarumRenderingSettings, PRenderingSettings;
 
-typedef struct Physarum2D {
+typedef struct Physarum3DParticle {
+  float x;
+  float y;
+  float z;
+  float u;
+  float v;
+  float phi;
+  float theta;
+  float pair;
+} Physarum3DParticle;
+
+typedef struct Physarum3D {
+
+  int particules_amount;
+  char _pad0[4];
+  float spawn_radius;
+  int texture_size;
+
+  // Particules
+  float *particles_position;
+  struct Physarum3DParticle *particles;
+
+  struct GPUTexture *texture_trail_A;
+  struct GPUTexture *texture_trail_B;
+  struct GPUTexture *texture_occ;
+
+  // In order of processing
+
+  // Agents/particles compute
+  struct GPUShader *shader_particle_3d;
+
+  // Decay = decay/diffusion
+  struct GPUShader *shader_decay;
+
+  // Rendering shaders
+  struct GPUShader *shader_render;
+
+} Physarum3D;
+
+typedef struct PhysarumData2D {
   float projection_matrix[4][4]; // Orthographic projection matrix for 2D rendering
 
   /* Batches, hold VBOs */
@@ -2101,6 +2140,7 @@ typedef struct SpacePhysarum {
   /* End 'SpaceLink' header. */
 
   PRenderingSettings *prs;
+  Physarum3D *physarum3d;
   Physarum2D *p2d;
 
   int mode; // eSpacePhysarum_Mode

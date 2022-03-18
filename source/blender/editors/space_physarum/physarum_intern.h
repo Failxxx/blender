@@ -37,6 +37,12 @@ extern char datatoc_gpu_shader_3D_physarum_2d_update_agents_fs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_render_agents_fs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl[];
 
+// Physarum 3D
+extern char datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl[];
+extern char datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl[];
+
 /* Operators */
 
 /* Physarum draw functions */
@@ -60,3 +66,12 @@ void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
 void physarum_render_animation(SpacePhysarum *sphys);
+
+/* Physarum 3D algorithms functions */
+void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size);
+void P3D_draw(Physarum3D *p3d);
+void P3D_free(Physarum3D *p3d);
+void P3D_particles_generate(Physarum3D *p3d);
+struct GPUVertBuf *P3D_get_display_VBO();
+struct GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d);
+void P3D_load_shaders(Physarum3D *p3d);
