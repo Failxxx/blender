@@ -292,6 +292,12 @@ static int physarum_single_render_exec(bContext *C, wmOperator *op)
   return OPERATOR_FINISHED;
 }
 
+static bool physarum_single_render_poll(bContext *C)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION;
+}
+
 void PHYSARUM_OT_single_render(wmOperatorType *ot)
 {
   /* identifiers */
@@ -301,6 +307,7 @@ void PHYSARUM_OT_single_render(wmOperatorType *ot)
 
   /* api callbacks */
   ot->exec = physarum_single_render_exec;
+  ot->poll = physarum_single_render_poll;
 }
 
 // Render an animation
@@ -361,6 +368,12 @@ static int physarum_2D_drawing_exec(bContext *C, wmOperator *op)
   return OPERATOR_FINISHED;
 }
 
+static bool physarum_2D_drawing_poll(bContext *C)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION;
+}
+
 void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
 {
   /* identifiers */
@@ -370,6 +383,7 @@ void PHYSARUM_OT_draw_2D(wmOperatorType *ot)
 
   /* api callbacks */
   ot->exec = physarum_2D_drawing_exec;
+  ot->poll = physarum_2D_drawing_poll;
 }
 
 static int physarum_3D_drawing_exec(bContext *C, wmOperator *op)
@@ -377,6 +391,12 @@ static int physarum_3D_drawing_exec(bContext *C, wmOperator *op)
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   sphys->mode = SP_PHYSARUM_3D;
   return OPERATOR_FINISHED;
+}
+
+static bool physarum_3D_drawing_poll(bContext *C)
+{
+  SpacePhysarum *sphys = CTX_wm_space_physarum(C);
+  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION;
 }
 
 void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
@@ -388,4 +408,5 @@ void PHYSARUM_OT_draw_3D(wmOperatorType *ot)
 
   /* api callbacks */
   ot->exec = physarum_3D_drawing_exec;
+  ot->poll = physarum_3D_drawing_poll;
 }
