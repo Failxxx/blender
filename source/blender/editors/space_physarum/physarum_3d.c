@@ -110,22 +110,21 @@ void P3D_generate_particles_ssbo(Physarum3D *p3d)
 void P3D_load_shaders(Physarum3D *p3d)
 {
   printf("Physarum 3D: load shaders\n");
-  p3d->shader_particle_3d = GPU_shader_create_compute(
-      (const char *[]){datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl, NULL},
-      NULL,
-      NULL,
-      "p3d_gpu_shader_compute_particles_3d");
+  //p3d->shader_particle_3d = GPU_shader_create_compute(
+  //    (const char *[]){datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl, NULL},
+  //    NULL,
+  //    NULL,
+  //    "p3d_gpu_shader_compute_particles_3d");
 
-  p3d->shader_decay = GPU_shader_create_compute(
-      (const char *[]){datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl, NULL},
-      NULL,
-      NULL,
-      "p3d_gpu_shader_compute_diffuse_decay");
+  p3d->shader_decay = GPU_shader_create_compute(datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl,
+                                                NULL,
+                                                NULL,
+                                                "p3d_gpu_shader_compute_diffuse_decay");
 
-  p3d->shader_render = GPU_shader_create_from_arrays({
-      .vert = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl, NULL},
-      .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl, NULL},
-  });
+  //p3d->shader_render = GPU_shader_create_from_arrays({
+  //    .vert = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl, NULL},
+  //    .frag = (const char *[]){datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl, NULL},
+  //});
 }
 
 void P3D_generate_textures(Physarum3D *p3d)
