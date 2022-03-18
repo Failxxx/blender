@@ -2065,17 +2065,22 @@ typedef struct Physarum3D {
   struct GPUTexture *texture_trail_A;
   struct GPUTexture *texture_trail_B;
   struct GPUTexture *texture_occ;
+  int is_trail_A;
 
   /* Shaders */
   // Agents/particles compute
+  char _pad1[4];
   struct GPUShader *shader_particle_3d;
   // Decay = decay/diffusion
   struct GPUShader *shader_decay;
   // Rendering shaders
   struct GPUShader *shader_render;
 
+  /* Batches for rendering */
+  struct GPUBatch *batch;
+
   struct GPUVertBuf *ssbo;
-  char _pad1[4];
+  char _pad2[4];
   int ssbo_binding;
 
 } Physarum3D;

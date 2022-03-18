@@ -25,6 +25,7 @@
 #include "GPU_immediate.h"
 #include "GPU_immediate_util.h"
 #include "GPU_viewport.h"
+#include "GPU_compute.h"
 
 #include "WM_api.h"
 
@@ -68,10 +69,6 @@ void P3D_free_particles(Physarum3D *p3d)
 void free_physarum_3d(Physarum3D *p3d)
 {
   printf("Physarum 3D: free data\n");
-  // Free shaders
-  // GPU_shader_free(p3d->shader_particle_3d);
-  // GPU_shader_free(p3d->shader_decay);
-  //GPU_shader_free(p3d->shader_render);
   P3D_free_particles(p3d);
   P3D_free_particles_ssbo(p3d);
   P3D_free_shaders(p3d);
@@ -179,7 +176,7 @@ void P3D_generate_particles_data(Physarum3D *p3d)
 
   for (int i = 0; i < p3d->nb_particles; ++i) {
     phi = BLI_rng_get_float(rng) * M_2_PI;
-    theta = acos(2.0f * BLI_rng_get_float(rng) - 1.0f);
+    theta = acos(2.0 * BLI_rng_get_float(rng) - 1.0);
     radius = pow(BLI_rng_get_float(rng), 0.333333f) * p3d->spawn_radius;
 
     p3d->particles.x[i] = sin(phi) * sin(theta) * radius + p3d->world_width / 2.0f;
@@ -239,78 +236,32 @@ void initialize_physarum_3d(Physarum3D *p3d)
 
 void physarum_3d_draw_view(Physarum3D *p3d)
 {
-  //initialize_physarum_3d(p3d, 1000, 1000);
-  //P3D_load_shaders(p3d);
-
   // Clear color framebuffer
-  //const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-  //GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
+  /* Compute update particles */
+  {
+    GPU_shader_bind(p3d->shader_particle_3d);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo, p3d->ssbo_binding);
 
-  //-----------------------------------------------------------------------------
-  //----- COMPUTE
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_spread", p3d->sensor_spread);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_distance", p3d->sensor_distance);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "turn_angle", p3d->turn_angle);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_distance", p3d->move_distance);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "deposit_value", p3d->deposit_value);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "decay_factor", p3d->decay_factor);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "collision", p3d->collision);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "center_attraction", p3d->center_attraction);
+    GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_width", (int)p3d->world_width);
+    GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_height", (int)p3d->world_height);
+    GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_depth", (int)p3d->world_depth);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_sense_coef", p3d->move_sensor_coef);
+    GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_sense_offset", p3d->move_sensor_offset);
 
-  //GPUVertBuf *vertex_buffer_object = P3D_get_display_VBO();
+    GPU_compute_dispatch(p3d->shader_particle_3d, 10, 10, 10); // Launch compute
+    GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE); // Check if compute has been done
 
-  //// Create and send particule position and infos to GPU as SSBO
-  //GPUVertBuf *ssbo = P3D_get_data_VBO(p3d);
-
-  //// void GPU_vertbuf_bind_as_ssbo(struct GPUVertBuf *verts, int binding)
-  //GPU_vertbuf_bind_as_ssbo(ssbo, NULL);
-
-  //GPUTexture *texture = GPU_texture_create_2d(
-  //    "MyTexture", p3d->texture_size, p3d->texture_size, 0, GPU_RGBA32F, NULL);
-
-  //GPUFrameBuffer *frame_buffer = NULL;
-  //GPU_framebuffer_ensure_config(
-  //    &frame_buffer,
-  //    {
-  //        GPU_ATTACHMENT_NONE,  // Slot reserved for depth/stencil buffer.
-  //        GPU_ATTACHMENT_TEXTURE(texture),
-  //    });
-
-  //GPUBatch *batch = GPU_batch_create_ex(
-  //    GPU_PRIM_TRIS, vertex_buffer_object, NULL, GPU_BATCH_OWNS_VBO);
-
-  //// Loading shader
-  //GPUShader *shader = GPU_shader_create_from_arrays({
-  //    .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
-  //    .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
-  //});
-  //GPU_batch_set_shader(batch, shader);
-
-  //GPU_framebuffer_bind(frame_buffer);
-  //// Set its viewport to the texture size which we want to draw on
-  //GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
-  //// Don't forget to clear!
-  //GPU_framebuffer_clear(frame_buffer, GPU_COLOR_BIT, transparent, 0, 0);
-  //GPU_batch_draw(batch);
-
-  ////-----------------------------------------------------------------------------
-  ////----- RENDER ON VIEWPORT
-
-  //GPUShader *shader_render = GPU_shader_create_from_arrays({
-  //    .vert = (const char *[]){datatoc_gpu_shader_physarum_test_vertex_vs_glsl, NULL},
-  //    .frag = (const char *[]){datatoc_gpu_shader_physarum_test_pixel_fs_glsl, NULL},
-  //});
-  //GPU_batch_set_shader(batch, shader_render);
-
-  //GPU_framebuffer_bind(initial_fb);
-  //// Set its viewport to the texture size which we want to draw on
-  //GPU_framebuffer_viewport_set(frame_buffer, 0, 0, p3d->texture_size, p3d->texture_size);
-  //// Don't forget to clear!
-  //GPU_framebuffer_clear(initial_fb, GPU_COLOR_BIT, transparent, 0, 0);
-  //GPU_batch_draw(batch);
-  //// GPU_framebuffer_texture_detach(frame_buffer, texture);
-
-  ////-----------------------------------------------------------------------------
-
-  //GPU_texture_free(texture);
-  //GPU_batch_discard(batch);
-
-  //GPU_shader_free(shader_render);
-
-  //free_physarum_3d(p3d);
+  }
 }
 
 /* Handle events functions */
@@ -318,68 +269,4 @@ void physarum_3d_draw_view(Physarum3D *p3d)
 void physarum_3d_handle_events(Physarum3D *p3d)
 {
   
-}
-
-
-// Generate geometry data for a quad mesh
-GPUVertBuf *P3D_get_display_VBO()
-{
-  printf("--- Get Display VBO \n");
-
-  float verts[6][3] = {{-1.0f, -1.0f, 0.0f},  // First triangle
-                       {1.0f, -1.0f, 0.0f},
-                       {-1.0f, 1.0f, 0.0f},
-                       {1.0f, -1.0f, 0.0f},  // Second triangle
-                       {-1.0f, 1.0f, 0.0f},
-                       {1.0f, 1.0f, 0.0f}};
-  float uvs[6][2] = {
-      {0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}};
-  uint verts_len = 6;
-
-  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
-  uint pos_comp_len = 3;
-  uint uvs_comp_len = 2;
-
-  GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
-      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint uv = GPU_vertformat_attr_add(
-      format, "v_in_f2UV", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
-
-  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(vbo, verts_len);
-
-  // Fill the vertex buffer with vertices data
-  for (int i = 0; i < verts_len; i++) {
-    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-    GPU_vertbuf_attr_set(vbo, uv, i, uvs[i]);
-  }
-
-  return vbo;
-}
-
-// Generate VBO with Particles data ; will be send to GPU as a SSBO
-GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d)
-{
-  printf("--- Get Data VBO (SSBO)\n");
-
-  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
-  uint pos_comp_len = 3;
-
-  GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
-      format, "particulePosition", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-
-  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(vbo, p3d->nb_particles);
-
-  // Fill the vertex buffer with vertices data
-  //for (int i = 0; i < p3d->particules_amount; i += 3) {
-  //  float position[3] = {p3d->particles_position[i],
-  //                       p3d->particles_position[i + 1],
-  //                       p3d->particles_position[i + 2]};
-  //  GPU_vertbuf_attr_set(vbo, pos, i, position);
-  //}
-
-  return vbo;
 }
