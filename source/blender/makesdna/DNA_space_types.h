@@ -2019,69 +2019,64 @@ typedef enum eSpreadsheetColumnValueType {
 /** \name Space Physarum
  * \{ */
 
-typedef struct PhysarumRenderingSettings {
-  float projectionMatrix[4][4];
-  float viewMatrix[4][4];
-  float modelMatrix[4][4];
+typedef struct Physarum3DParticles {
+  float *x;
+  float *y;
+  float *z;
+  float *phi;
+  float *theta;
+  float *pair;
+} Physarum3DParticles;
 
-  int texcoord_map;
-  int show_grid;
-  float dof_size;
-  float dof_distribution;
+typedef struct Physarum3D {
+  /* Matrices */
+  float projection_matrix[4][4];
+  float model_matrix[4][4];
+  float view_matrix[4][4];
+  int tex_coord_map;
 
-  float focal_distance;
-  float focal_depth;
-  int iterations;
-  float break_distance;
+  /* Particles */
+  int nb_particles;
+  struct Physarum3DParticles particles;
+
+  int texture_size;
+  float screen_width;
+  float screen_height;
 
   float world_width;
   float world_height;
   float world_depth;
-  float screen_width;
-  float screen_height;
-
-  float sample_weight;
-
-  int filler1;
-  int filler2;
-} PhysarumRenderingSettings, PRenderingSettings;
-
-typedef struct Physarum3DParticle {
-  float x;
-  float y;
-  float z;
-  float u;
-  float v;
-  float phi;
-  float theta;
-  float pair;
-} Physarum3DParticle;
-
-typedef struct Physarum3D {
-
-  int particules_amount;
-  char _pad0[4];
   float spawn_radius;
-  int texture_size;
 
-  // Particules
-  float *particles_position;
-  struct Physarum3DParticle *particles;
+  /* Simulation parameters */
+  float sensor_spread;
+  float sensor_distance;
+  float turn_angle;
+  float move_distance;
+  float deposit_value;
+  float decay_factor;
+  float collision;
+  float center_attraction;
+  float move_sensor_coef;
+  float move_sensor_offset;
 
+  /* Textures */
+  char _pad0[4];
   struct GPUTexture *texture_trail_A;
   struct GPUTexture *texture_trail_B;
   struct GPUTexture *texture_occ;
 
-  // In order of processing
-
+  /* Shaders */
   // Agents/particles compute
   struct GPUShader *shader_particle_3d;
-
   // Decay = decay/diffusion
   struct GPUShader *shader_decay;
-
   // Rendering shaders
   struct GPUShader *shader_render;
+
+  struct GPUVertBuf *ssbo;
+  char _pad1[4];
+  int ssbo_binding;
 
 } Physarum3D;
 
@@ -2139,7 +2134,6 @@ typedef struct SpacePhysarum {
   char _pad0[7];
   /* End 'SpaceLink' header. */
 
-  PRenderingSettings *prs;
   Physarum3D *physarum3d;
   Physarum2D *p2d;
 

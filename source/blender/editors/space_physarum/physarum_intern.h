@@ -46,11 +46,10 @@ extern char datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl[];
 /* Operators */
 
 /* Physarum draw functions */
-void initialize_physarum_rendering_settings(PRenderingSettings *prs);
-void adapt_projection_matrix_window_rescale(PRenderingSettings *prs);
 void physarum_draw_view(const bContext *C, ARegion *region);
 
 /* Physarum 2D functions */
+struct GPUVertBuf *make_new_quad_mesh();
 void initialize_physarum_2d(Physarum2D *p2d);
 void free_physarum_2d(Physarum2D *p2d);
 void physarum_2d_reset_simulation(Physarum2D *p2d, const float particles_population_factor);
@@ -59,9 +58,14 @@ void physarum_2d_handle_events(Physarum2D *p2d,
                                SpacePhysarum *sphys,
                                const bContext *C,
                                ARegion *region);
-struct GPUVertBuf *make_new_quad_mesh();
 
-/* Render Function */
+/* Physarum 3D algorithms functions */
+void initialize_physarum_3d(Physarum3D *p3d);
+void physarum_3d_draw_view(Physarum3D *p3d);
+void physarum_3d_handle_events(Physarum3D *p3d);
+void free_physarum_3d(Physarum3D *p3d);
+
+/* Physarum operators */
 void PHYSARUM_OT_reset_physarum_2d(wmOperatorType *ot);
 void PHYSARUM_OT_single_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
@@ -69,11 +73,4 @@ void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
 void physarum_render_animation(SpacePhysarum *sphys);
 
-/* Physarum 3D algorithms functions */
-void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size);
-void P3D_draw(Physarum3D *p3d);
-void P3D_free(Physarum3D *p3d);
-void P3D_particles_generate(Physarum3D *p3d);
-struct GPUVertBuf *P3D_get_display_VBO();
-struct GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d);
-void P3D_load_shaders(Physarum3D *p3d);
+

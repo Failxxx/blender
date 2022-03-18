@@ -78,11 +78,12 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   // Background color
   GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
 
-  //Draw physarum 3D
-  P3D_draw(physarum3d);
   if(sphys->mode == SP_PHYSARUM_2D) {
     physarum_2d_handle_events(p2d, sphys, C, region);
     physarum_2d_draw_view(p2d);
+  }
+  else if (sphys->mode == SP_PHYSARUM_3D) {
+    physarum_3d_draw_view(physarum3d);
   }
 
   // Store pixels to potential export
@@ -100,52 +101,4 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   }
 
   GPU_blend(GPU_BLEND_NONE);
-}
-
-/* Updates the projection matrix to adapt to the new aspect ration of the screen space */
-void adapt_projection_matrix_window_rescale(PRenderingSettings *prs)
-{
-  /* Adapt projection matrix */
-  // float aspectRatio = prs->screen_width / prs->screen_height;
-  float aspectRatio = 1.0f;
-  perspective_m4(
-      prs->projectionMatrix, -0.5f * aspectRatio, 0.5f * aspectRatio, -0.5f, 0.5f, 1.0f, 1000.0f);
-}
-
-/* Initializes the PhysarumRenderingSettings struct with default values */
-void initialize_physarum_rendering_settings(PRenderingSettings *prs)
-{
-  const float idMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
-                                {0.0f, 1.0f, 0.0f, 0.0f},
-                                {0.0f, 0.0f, 1.0f, 0.0f},
-                                {0.0f, 0.0f, 0.0f, 1.0f}};
-
-  prs->texcoord_map = 0;  // Default value ?
-  prs->show_grid = 0;     // Default value ?
-  prs->dof_size = 0.1f;
-  prs->dof_distribution = 1.0f;
-
-  prs->focal_distance = 2.0f;
-  prs->focal_depth = 1.0f;
-  prs->iterations = 1;
-  prs->break_distance = 10.0f;
-
-  prs->world_width = 480.0f;
-  prs->world_height = 480.0f;
-  prs->world_depth = 480.0f;
-  prs->screen_width = 1280.0f;
-  prs->screen_height = 720.0f;
-
-  prs->sample_weight = 1.0f / 32.0f;
-
-  prs->filler1 = 0;  // Default value ?
-  prs->filler2 = 1;  // Default value ?
-
-  // Projection matrix
-  adapt_projection_matrix_window_rescale(prs);
-  // Model matrix
-  copy_m4_m4(prs->modelMatrix, idMatrix);
-  // View matrix
-  copy_m4_m4(prs->viewMatrix, idMatrix);
-  translate_m4(prs->viewMatrix, 0.0f, 0.0f, -3.0f);
 }
