@@ -74,16 +74,24 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   ar->alignment = RGN_ALIGN_RIGHT;
 
   /* Initialize physarum properties */
-  sphys->sense_spread = 0.48;
-  sphys->sense_distance = 23.0;
-  sphys->turn_angle = 0.63;
-  sphys->move_distance = 2.77;
+  sphys->sensor_angle = 2.0f;
+  sphys->sensor_distance = 12.0f;
+  sphys->rotation_angle = 4.0f;
+  sphys->move_distance = 1.1f;
+  sphys->decay_factor = 0.9f;
+  sphys->particles_population_factor = 0.8f;
+
+  // Unsued for the moment
   sphys->deposit_value = 50;
-  sphys->decay_factor = 0.32;
   sphys->spawn_radius = 50.0;
   sphys->center_attraction = 1.0;
 
-  sphys->number_frame = 50;
+  /* Initialize rendering settings */
+  sphys->nb_frames_to_render = 25;
+  sphys->screen_width = -1;
+  sphys->screen_height = -1;
+  sphys->mode = SP_PHYSARUM_2D;
+  sphys->rendering_mode = SP_PHYSARUM_VIEWPORT;
 
   /* main region */
   // WARNING! Keep this here, do not move on top or bottom. Order matters.
@@ -96,13 +104,12 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->prs = MEM_callocN(sizeof(PhysarumRenderingSettings), "physarum rendering settings");
   initialize_physarum_rendering_settings(sphys->prs);
 
-  /* Allocate memory fo PhysarumGPUData */
-  sphys->pgd = MEM_callocN(sizeof(PhysarumGPUData), "physarum gpu data");
-  initialize_physarum_gpu_data(sphys->pgd);
+  /* Allocate memory fo Physarum2D */
+  sphys->p2d = MEM_callocN(sizeof(Physarum2D), "physarum 2d simulation data");
+  initialize_physarum_2d(sphys->p2d);
 
-  /* Allocate memory fo PhysarumData2D */
-  sphys->pdata_2d = MEM_callocN(sizeof(PhysarumData2D), "physarum 2d simulation data");
-  initialize_physarum_data_2d(sphys->pdata_2d);
+  /* Allocate memory fo Physarum3D */
+  sphys->physarum3d = MEM_callocN(sizeof(Physarum3D), "physarum 3d data");
 
   return (SpaceLink *)sphys;
 }
@@ -112,12 +119,15 @@ static void physarum_free(SpaceLink *sl)
   SpacePhysarum *sphys = (SpacePhysarum *)sl;
   /* Free memory for PhysarumRenderingSettings */
   MEM_freeN(sphys->prs);
-  /* Free memory for PhysarumGPUData */
-  free_gpu_data(sphys);
-  MEM_freeN(sphys->pgd);
-  /* Free memory for PhysarumData2D */
-  free_physarum_data_2d(sphys->pdata_2d);
-  MEM_freeN(sphys->pdata_2d);
+
+  // Free Physarum 3D
+  MEM_freeN(sphys->physarum3d);
+  /* Free memory for Physarum2D */
+  free_physarum_2d(sphys->p2d);
+  MEM_freeN(sphys->p2d);
+
+  if (sphys->output_image_data != NULL)
+    free(sphys->output_image_data);
 }
 
 void physarum_operatortypes(void)

@@ -41,6 +41,8 @@ set(SRC
   physarum_ops.c
   physarum_draw.c
   physarum_2d_algorithms.c
+  physarum_3d.c
+  physarum_3d_test.c
 
   physarum_intern.h
 )
