@@ -2095,6 +2095,8 @@ typedef struct Physarum3DParticle {
   float x;
   float y;
   float z;
+  float u;
+  float v;
   float phi;
   float theta;
   float pair;
@@ -2104,9 +2106,41 @@ typedef struct Physarum3D {
 
   int particules_amount;
   char _pad0[4];
-  float *particles_position;
-  int texture_size;
   float spawn_radius;
+  int texture_size;
+
+  // Particules
+  float *particles_position;
+  struct Physarum3DParticle *particles;
+
+  struct GPUTexture *texture_trail_A;
+  struct GPUTexture *texture_trail_B;
+  struct GPUTexture *texture_occ;
+
+  // In order of processing
+
+  // Agents/particles compute
+  struct GPUShader *shader_particle_3d;
+
+  // Decay = decay/diffusion
+  struct GPUShader *shader_decay;
+
+  // Rendering shaders
+  struct GPUShader *shader_render;
+  //struct GPUShader *shader_pixel_3d;
+  //struct GPUShader *shader_vertex_3d;
+
+  //--- UNSED AND DEV PART
+
+  //struct GPUShader *shader_blit;  // Unsed
+  //// Vertex shader for displaying textures.
+  //struct GPUShader *shader_vertex;  // Unsed
+  //// Pixel shader for displaying textures.
+  //struct GPUShader *shader_pixel;  // Unsed
+
+  // Test ONLY
+  struct GPUShader *shader_test_pixel;
+  struct GPUShader *shader_test_vertex;
 
 } Physarum3D;
 

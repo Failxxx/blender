@@ -37,14 +37,13 @@ void P3D_init(Physarum3D *p3d, int particles_amount, int texture_size)
   P3D_particles_generate(p3d);
 }
 
-// void GPU_vertbuf_bind_as_ssbo(struct GPUVertBuf *verts, int binding)
-
 void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 {
   P3D_init(p3d, 100, 1000);
+  P3D_load_shaders(p3d);
 
   // Clear color framebuffer
-  const float transparent[4] = {0.0f, 1.0f, 0.0f, 1.0f};
+  const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   GPUFrameBuffer *initial_fb = GPU_framebuffer_active_get();
 
@@ -55,6 +54,8 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 
   // Create and send particule position and infos to GPU as SSBO
   GPUVertBuf *ssbo = P3D_get_data_VBO(p3d);
+
+  // void GPU_vertbuf_bind_as_ssbo(struct GPUVertBuf *verts, int binding)
   GPU_vertbuf_bind_as_ssbo(ssbo, NULL);
 
   GPUTexture *texture = GPU_texture_create_2d(
@@ -106,7 +107,7 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 
   GPU_texture_free(texture);
   GPU_batch_discard(batch);
-  GPU_shader_free(shader);
+
   GPU_shader_free(shader_render);
 
   P3D_free(p3d);
@@ -114,7 +115,11 @@ void P3D_draw(Physarum3D *p3d, PhysarumRenderingSettings *prs)
 
 void P3D_free(Physarum3D *p3d)
 {
-  MEM_freeN(p3d->particles_position);
+  // Free shaders
+  // GPU_shader_free(p3d->shader_particle_3d);
+  // GPU_shader_free(p3d->shader_decay);
+  GPU_shader_free(p3d->shader_render);
+  MEM_freeN(p3d->particles);
 }
 
 //--------------------------------------------------------------------------
@@ -123,16 +128,20 @@ void P3D_free(Physarum3D *p3d)
 
 void P3D_particles_generate(Physarum3D *p3d)
 {
-  printf("--- Generate Particule Data --- \n");
+  printf("---Generate Particule Data\n");
 
   RNG *rng = BLI_rng_new_srandom(5831);  // Arbitrary, random values generator
-  int bytes = sizeof(float) * 3 * p3d->particules_amount;
-  p3d->particles_position = MEM_callocN(bytes, "physarum 3d particle position data");
+  int bytes = sizeof(Physarum3DParticle) * p3d->particules_amount;
 
-  for (int i = 0; i < p3d->particules_amount * 3; i++) {
-    p3d->particles_position[i] = BLI_rng_get_float(rng);
-    // p3d->particles_position[i] = 0;
-    printf("Particle %d  / position : %f \n", i, p3d->particles_position[i]);
+  // Physarum3DParticle *particles = malloc(p3d->particules_amount * sizeof(Physarum3DParticle));
+
+  p3d->particles = MEM_callocN(bytes, "physarum 3d particle position data");
+
+  for (int i = 0; i < p3d->particules_amount; i++) {
+    p3d->particles->x = BLI_rng_get_float(rng);
+    p3d->particles->y = BLI_rng_get_float(rng);
+    p3d->particles->z = BLI_rng_get_float(rng);
+    // printf("Particle %d  / position : %f %f %f \n", i, p3d->particles->x,);
   }
   BLI_rng_free(rng);
 }
@@ -140,6 +149,8 @@ void P3D_particles_generate(Physarum3D *p3d)
 // Generate geometry data for a quad mesh
 GPUVertBuf *P3D_get_display_VBO()
 {
+  printf("--- Get Display VBO \n");
+
   float verts[6][3] = {{-1.0f, -1.0f, 0.0f},  // First triangle
                        {1.0f, -1.0f, 0.0f},
                        {-1.0f, 1.0f, 0.0f},
@@ -175,6 +186,7 @@ GPUVertBuf *P3D_get_display_VBO()
 // Generate VBO with Particles data ; will be send to GPU as a SSBO
 GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d)
 {
+  printf("--- Get Data VBO (SSBO)\n");
 
   // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
   uint pos_comp_len = 3;
@@ -187,30 +199,33 @@ GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d)
   GPU_vertbuf_data_alloc(vbo, p3d->particules_amount);
 
   // Fill the vertex buffer with vertices data
-  for (int i = 0; i < p3d->particules_amount; i += 3) {
-    float position[3] = {p3d->particles_position[i],
-                         p3d->particles_position[i + 1],
-                         p3d->particles_position[i + 2]};
-    GPU_vertbuf_attr_set(vbo, pos, i, position);
-  }
+  //for (int i = 0; i < p3d->particules_amount; i += 3) {
+  //  float position[3] = {p3d->particles_position[i],
+  //                       p3d->particles_position[i + 1],
+  //                       p3d->particles_position[i + 2]};
+  //  GPU_vertbuf_attr_set(vbo, pos, i, position);
+  //}
 
   return vbo;
 }
 
-//  /* Free old data */
-// GPU_batch_discard(p2d->render_agents_batch);
-//
-///* Generate new particles */
-// int bytes = sizeof(float) * 3 * p2d->nb_particles;
-// float *positions = (float *)malloc(bytes);
-// bytes = sizeof(float) * 2 * p2d->nb_particles;
-// float *uvs = (float *)malloc(bytes);
-//
-// physarum_2d_gen_particles_data(p2d, positions, uvs);
-// GPUVertBuf *particles = make_new_points_mesh(positions, uvs, p2d->nb_particles);
-// p2d->render_agents_batch = GPU_batch_create_ex(
-//    GPU_PRIM_POINTS, particles, NULL, GPU_BATCH_OWNS_VBO);
-//
-//// Free particles data
-// free(positions);
-// free(uvs);
+void P3D_load_shaders(Physarum3D *p3d)
+{
+  printf("--- Loading shaders\n");
+  p3d->shader_particle_3d = GPU_shader_create_compute(
+      (const char *[]){datatoc_gpu_shader_physarum_particle_3d_cs_glsl, NULL},
+      NULL,
+      NULL,
+      "gpu_shader_compute_particles_3d");
+
+  p3d->shader_decay = GPU_shader_create_compute(
+      (const char *[]){datatoc_gpu_shader_physarum_decay_3d_cs_glsl, NULL},
+      NULL,
+      NULL,
+      "gpu_shader_compute_decay");
+
+  p3d->shader_render = GPU_shader_create_from_arrays({
+      .vert = (const char *[]){datatoc_gpu_shader_physarum_vertex_3d_vs_glsl, NULL},
+      .frag = (const char *[]){datatoc_gpu_shader_physarum_pixel_3d_fs_glsl, NULL},
+  });
+}

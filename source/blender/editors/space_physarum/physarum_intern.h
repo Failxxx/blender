@@ -39,8 +39,8 @@ extern char datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl[];
 
 // Physarum 3D
 extern char datatoc_gpu_shader_physarum_blit_cs_glsl[];
-extern char datatoc_gpu_shader_physarum_decay_cs_glsl[];
-extern char datatoc_gpu_shader_physarum_particle_cs_glsl[];
+extern char datatoc_gpu_shader_physarum_decay_3d_cs_glsl[];
+extern char datatoc_gpu_shader_physarum_particle_3d_cs_glsl[];
 extern char datatoc_gpu_shader_physarum_pixel_fs_glsl[];
 extern char datatoc_gpu_shader_physarum_pixel_3d_fs_glsl[];
 extern char datatoc_gpu_shader_physarum_vertex_vs_glsl[];
@@ -73,3 +73,4 @@ void P3D_free(Physarum3D *p3d);
 void P3D_particles_generate(Physarum3D *p3d);
 struct GPUVertBuf *P3D_get_display_VBO();
 struct GPUVertBuf *P3D_get_data_VBO(Physarum3D *p3d);
+void P3D_load_shaders(Physarum3D *p3d);
