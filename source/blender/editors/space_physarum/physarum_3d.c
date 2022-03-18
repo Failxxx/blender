@@ -70,6 +70,15 @@ GPUVertBuf *make_new_super_quad_mesh()
   return vbo;
 }
 
+void get_m4_identity(float m4_dest[4][4])
+{
+  const float m4_identity[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, 1.0f, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, 1.0f, 0.0f},
+                                   {0.0f, 0.0f, 0.0f, 1.0f}};
+  copy_m4_m4(m4_dest, m4_identity);
+}
+
 /* Free data functions */
 
 void P3D_free_batches(Physarum3D *p3d)
@@ -246,17 +255,11 @@ void P3D_generate_particles_data(Physarum3D *p3d)
 void initialize_physarum_3d(Physarum3D *p3d)
 {
   printf("Physarum 3D: initialize data\n");
-  const float idMatrix[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
-                                {0.0f, 1.0f, 0.0f, 0.0f},
-                                {0.0f, 0.0f, 1.0f, 0.0f},
-                                {0.0f, 0.0f, 0.0f, 1.0f}};
-
   perspective_m4(p3d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1000.0f);
-  copy_m4_m4(p3d->model_matrix, idMatrix);
-  copy_m4_m4(p3d->view_matrix, idMatrix);
+  get_m4_identity(p3d->model_matrix);
+  get_m4_identity(p3d->view_matrix);
   translate_m4(p3d->view_matrix, 0.0f, 0.0f, -3.0f);
   p3d->tex_coord_map = 0;
-
 
   p3d->screen_width = 1024;
   p3d->screen_height = 1024;
@@ -353,12 +356,13 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   /* Render final result */
   {
     GPU_batch_set_shader(p3d->batch, p3d->shader_render);
+    GPU_framebuffer_clear(GPU_framebuffer_active_get(), GPU_COLOR_BIT, transparent, 0, 0);
 
     // Send uniforms
     // Vertex shader
-    axis_angle_to_mat4_single(p3d->model_matrix, 'X', M_PI_2);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Projection_matrix", p3d->projection_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4View_matrix", p3d->view_matrix);
+    axis_angle_to_mat4_single(p3d->model_matrix, 'X', M_PI_2);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
 
@@ -371,8 +375,20 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     }
     GPU_batch_uniform_1i(p3d->batch, "u_s3TrailsData", 0);
 
-    GPU_framebuffer_clear(GPU_framebuffer_active_get(), GPU_COLOR_BIT, transparent, 0, 0);
-    GPU_batch_draw(p3d->batch);
+    GPU_batch_draw(p3d->batch); // First pass
+
+    axis_angle_to_mat4_single(p3d->model_matrix, 'Y', -1.0 * M_PI_2);
+    GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
+    GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 1);
+
+    GPU_batch_draw(p3d->batch); // Second pass
+
+    get_m4_identity(p3d->model_matrix);
+    GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
+    GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 0);
+
+    GPU_batch_draw(p3d->batch);  // Third pass
+
   }
 }
 
