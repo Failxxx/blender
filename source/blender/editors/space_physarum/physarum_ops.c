@@ -139,39 +139,15 @@ void generateBitmapImage(unsigned char *image, int height, int width, char *imag
   }
 }
 
-char* Replace_AllOccurrence(char *str)
-{
-  int j = 0;
-
-  char *FilePathReplace[500];
-
-  for (int i = 0; str[i] != '\0'; i++) {
-    if (str[i] == '\\' ) {
-      FilePathReplace[j] = '\\\\';
-      j += 2;
-    }
-    else {
-      FilePathReplace[j] = str[i];
-      j += 1;
-    }
-  }
-  FilePathReplace[j + 1] = '.bmp';
-  return FilePathReplace;
-}
-
 static int physarum_single_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
   PhysarumRenderingSettings *prs = sphys->prs;
 
-  /* Render Data 
-  RenderData *rd = &CTX_data_scene(C)->r;
-  char *imageFileName = (char *)"C:\\Users\\theba\\Documents\\Physarum_Single_Frame.bmp";
-  
-  char *imageFileName = Replace_AllOccurrence(sphys->filepath);
-  */
-
-  char *imageFileName = sphys->filepath; 
+  char *imageFileName = (char *)malloc(strlen(sphys->filepath) + 200);
+  strcpy(imageFileName, sphys->filepath);
+  char *extension = ".bmp";
+  strcat(imageFileName, extension);
   generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
   printf("\n Image Generated ! YOUHOU \n");
 }
@@ -198,17 +174,14 @@ static int physarum_animation_render_exec(bContext *C, wmOperator *op)
   PhysarumRenderingSettings *prs = sphys->prs;
   sphys->counter_rendering_frame = sphys->number_frame;
   for (int i = 0; i < sphys->number_frame;i++) {
-    char *imageFileName = (char *) malloc(strlen(sphys->filepath));
+    char *imageFileName = (char *) malloc(strlen(sphys->filepath)+200);
     strcpy(imageFileName, sphys->filepath);
     char *imageCount = (char *) malloc(256);
     snprintf(imageCount, 256, "_%d.bmp", i);
     strcat(imageFileName, imageCount);
     generateBitmapImage(sphys->image_data, prs->screen_height, prs->screen_width, imageFileName);
-    printf("Image generated!\n");
-    free(imageCount);
-    printf("Free 1 ok\n");
     free(imageFileName);
-    printf("Free 2 ok\n");
+    free(imageCount);
   }
 }
 
