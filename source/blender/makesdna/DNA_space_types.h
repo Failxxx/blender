@@ -2039,7 +2039,6 @@ typedef struct Physarum3D {
   int nb_particles;
   struct Physarum3DParticles particles;
 
-  int texture_size;
   float screen_width;
   float screen_height;
 
@@ -2061,7 +2060,6 @@ typedef struct Physarum3D {
   float move_sensor_offset;
 
   /* Textures */
-  char _pad0[4];
   struct GPUTexture *texture_trail_A;
   struct GPUTexture *texture_trail_B;
   struct GPUTexture *texture_occ;
@@ -2069,7 +2067,7 @@ typedef struct Physarum3D {
 
   /* Shaders */
   // Agents/particles compute
-  char _pad1[4];
+  char _pad0[4];
   struct GPUShader *shader_particle_3d;
   // Decay = decay/diffusion
   struct GPUShader *shader_decay;
