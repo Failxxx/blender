@@ -53,6 +53,7 @@ void physarum_draw_view(const bContext *C, ARegion *region);
 /* Physarum 2D functions */
 void initialize_physarum_2d(Physarum2D *p2d);
 void free_physarum_2d(Physarum2D *p2d);
+void physarum_2d_reset_simulation(Physarum2D *p2d, const float particles_population_factor);
 void physarum_2d_draw_view(Physarum2D *p2d);
 void physarum_2d_handle_events(Physarum2D *p2d,
                                SpacePhysarum *sphys,
@@ -61,6 +62,7 @@ void physarum_2d_handle_events(Physarum2D *p2d,
 struct GPUVertBuf *make_new_quad_mesh();
 
 /* Render Function */
+void PHYSARUM_OT_reset_physarum_2d(wmOperatorType *ot);
 void PHYSARUM_OT_single_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);

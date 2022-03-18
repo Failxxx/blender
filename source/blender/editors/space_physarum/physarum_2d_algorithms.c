@@ -226,7 +226,7 @@ void physarum_2d_gen_textures(Physarum2D *p2d)
 {
   printf("Physarum2D: gen textures\n");
   /* Generate textures */
-  int bytes = sizeof(float) * 4 * p2d->nb_particles;
+  int bytes = sizeof(float) * 4 * p2d->tex_width * p2d->tex_height;
   float *agents_data = (float *)malloc(bytes);
   physarum_2d_gen_texture_data(p2d, agents_data);
 
@@ -518,9 +518,24 @@ void physarum_2d_draw_view(Physarum2D *p2d)
 
 /* Handle events functions */
 
+int get_new_nb_particles(Physarum2D *p2d, const float particles_population_factor)
+{
+  int new_nb_particles = 0;
+  if (particles_population_factor > 0.0f) {
+    float max_particles = p2d->max_particles - p2d->min_particles;
+    new_nb_particles = p2d->min_particles + particles_population_factor * max_particles;
+  }
+  else {
+    new_nb_particles = p2d->min_particles;
+  }
+
+  return new_nb_particles;
+}
+
 void physarum_2d_update_particles(Physarum2D *p2d)
 {
   /* Free old data */
+  printf("Physarum2D: update particles\n");
   GPU_batch_discard(p2d->render_agents_batch);
 
   /* Generate new particles */
@@ -539,6 +554,38 @@ void physarum_2d_update_particles(Physarum2D *p2d)
   free(uvs);
 }
 
+void physarum_2d_reset_textures(Physarum2D *p2d)
+{
+  // Free old textures
+  physarum_2d_free_textures(p2d);
+
+  // Update texture size
+  p2d->tex_width = p2d->screen_width;
+  p2d->tex_height = p2d->screen_height;
+  p2d->max_particles = p2d->tex_width * p2d->tex_height;
+  p2d->nb_particles = p2d->max_particles;
+
+  // Generate new textures
+  physarum_2d_gen_textures(p2d);
+
+  // Attach textures to frame buffers
+  physarum_2d_gen_frame_buffers(p2d);
+}
+
+void physarum_2d_reset_simulation(Physarum2D *p2d, const float particles_population_factor)
+{
+  printf("Physarum2D: reset simulation\n");
+  physarum_2d_reset_textures(p2d);
+  // Compute new number of particles
+  int new_nb_particles = get_new_nb_particles(p2d, particles_population_factor);
+
+  // If number of particles has changed, update particles
+  if (p2d->nb_particles != new_nb_particles) {
+    p2d->nb_particles = new_nb_particles;
+    physarum_2d_update_particles(p2d);
+  }
+}
+
 void physarum_2d_handle_events(Physarum2D *p2d,
                                SpacePhysarum *sphys,
                                const bContext *C,
@@ -555,13 +602,7 @@ void physarum_2d_handle_events(Physarum2D *p2d,
   p2d->screen_width = region->winy;
 
   // Compute new number of particles
-  int new_nb_particles = 0;
-  if (sphys->particles_population_factor > 0.0f) {
-    float max_particles = p2d->max_particles - p2d->min_particles;
-    new_nb_particles = p2d->min_particles + sphys->particles_population_factor * max_particles;
-  } else {
-    new_nb_particles = p2d->min_particles;
-  }
+  int new_nb_particles = get_new_nb_particles(p2d, sphys->particles_population_factor);
 
   // If number of particles has changed, update
   if (p2d->nb_particles != new_nb_particles) {

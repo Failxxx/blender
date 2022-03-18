@@ -114,6 +114,11 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "collision")
 
+        col = layout.column(align=False, heading="Reset physarum 2d")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.operator("physarum.reset_physarum_2d", text="Reset physarum 2d")
+
 class RenderOutputButtonsPanel:
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'

@@ -81,8 +81,8 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   //Draw physarum 3D
   P3D_draw(physarum3d);
   if(sphys->mode == SP_PHYSARUM_2D) {
-    physarum_2d_draw_view(p2d);
     physarum_2d_handle_events(p2d, sphys, C, region);
+    physarum_2d_draw_view(p2d);
   }
 
   // Store pixels to potential export
