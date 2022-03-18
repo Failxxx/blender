@@ -2103,7 +2103,8 @@ typedef struct SpacePhysarum {
   PRenderingSettings *prs;
   Physarum2D *p2d;
 
-  int mode; // SP_PHYSARUM_2D or SP_PHYSARUM_3D
+  int mode; // eSpacePhysarum_Mode
+  int rendering_mode; // eSpacePhysarum_Rendering_Mode
 
   /* Physarum properties */
   float particles_population_factor;
@@ -2125,7 +2126,6 @@ typedef struct SpacePhysarum {
   char _pad1[2];
   int nb_frames_to_render;
   int render_frames_counter;
-  char _pad2[4];
   unsigned char *output_image_data;
   char *output_path;
   char *file_name;
@@ -2143,6 +2143,11 @@ typedef enum eSpacePhysarum_Mode {
   SP_PHYSARUM_2D = 0,
   SP_PHYSARUM_3D = 1,
 } eSpacePhysarum_Mode;
+
+typedef enum eSpacePhysarum_Rendering_Mode {
+  SP_PHYSARUM_VIEWPORT = 0, // Only render to the viewport
+  SP_PHYSARUM_RENDER_ANIMATION = 1, // Render to the viewport and export images
+} eSpacePhysarum_Rendering_Mode;
 
 /** \} */
 

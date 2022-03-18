@@ -39,20 +39,18 @@ static const char default_output_file_name[64] = "physarum_output";
 static const int BYTES_PER_PIXEL = 3;
 static const int FILE_HEADER_SIZE = 14;
 static const int INFO_HEADER_SIZE = 40;
-static const int DEFAULT_BYTES_STIRNG = 1024;
+#define DEFAULT_BYTES_STIRNG 1024
 
 typedef struct Path {
-  char folder[1024];
-  char file_name[1024];
-  char full_path[2048];
-  char extension[128];
+  char folder[DEFAULT_BYTES_STIRNG];
+  char file_name[DEFAULT_BYTES_STIRNG];
+  char full_path[DEFAULT_BYTES_STIRNG * 2];
+  char extension[DEFAULT_BYTES_STIRNG];
 } Path;
 
-/* -------------------------------------------------------------------- */
-/** \Render Single Frame
- * \{ */
+// Utils functions
 
-unsigned char *create_bitmap_file_header(int height, int stride)
+unsigned char *create_bitmap_file_header(const int height, const int stride)
 {
   int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
@@ -84,7 +82,7 @@ unsigned char *create_bitmap_file_header(int height, int stride)
   return fileHeader;
 }
 
-unsigned char *create_bitmap_info_header(int height, int width)
+unsigned char *create_bitmap_info_header(const int height, const int width)
 {
   static unsigned char infoHeader[] = {
       0, 0, 0, 0,  /// header size
@@ -117,7 +115,7 @@ unsigned char *create_bitmap_info_header(int height, int width)
 
 void get_file_name_from_raw_path(char *dest, const char *raw_path)
 {
-  char path[1024] = "";
+  char path[DEFAULT_BYTES_STIRNG] = "";
   strcpy(path, raw_path);
 
   if (path[strlen(path) - 1] != '\\') {
@@ -140,13 +138,13 @@ void get_file_name_from_raw_path(char *dest, const char *raw_path)
 
 void get_folder_from_raw_path(char *dest, const char *raw_path)
 {
-  char path[1024] = "";
+  char path[DEFAULT_BYTES_STIRNG] = "";
   strcpy(path, raw_path);
 
   if (path[strlen(path) - 1] != '\\') {
     // Get complete file name
     const char delimiter_slash[2] = "\\";
-    char complete_file_name[1024] = "";
+    char complete_file_name[DEFAULT_BYTES_STIRNG] = "";
     char *token = strtok(path, delimiter_slash);
     while (token != NULL) {
       strcpy(complete_file_name, token);
@@ -154,7 +152,7 @@ void get_folder_from_raw_path(char *dest, const char *raw_path)
     }
 
     // Get folder
-    char folder[1024] = "";
+    char folder[DEFAULT_BYTES_STIRNG] = "";
     strcpy(path, raw_path);
     token = strtok(path, delimiter_slash);
     while (token != NULL) {
@@ -170,6 +168,16 @@ void get_folder_from_raw_path(char *dest, const char *raw_path)
   else {
     strcpy(dest, path);
   }
+}
+
+void get_full_path_for_animation_rendering(Path *path, const int nb_frame)
+{
+  char nb_frame_str[DEFAULT_BYTES_STIRNG] = "";
+  strcpy(path->full_path, path->folder);
+  strcat(path->full_path, path->file_name);
+  snprintf(nb_frame_str, DEFAULT_BYTES_STIRNG, "_%d", nb_frame);
+  strcat(path->full_path, nb_frame_str);
+  strcat(path->full_path, path->extension);
 }
 
 Path get_path_from_raw_path(const char *raw_path)
@@ -193,9 +201,8 @@ int path_may_be_ok(const char *raw_path) {
   }
 
   // Check if folder exists
-  char path[1024] = "";
+  char path[DEFAULT_BYTES_STIRNG] = "";
   get_folder_from_raw_path(path, raw_path);
-  printf("Path = %s\n", path);
   struct stat info;
 
   if (stat(path, &info) != 0) {
@@ -212,17 +219,25 @@ int path_may_be_ok(const char *raw_path) {
   return 0;
 }
 
-void export_bitmap_image(unsigned char *image, const int height, const int width, const char *output_path)
+int export_bitmap_image(unsigned char *image, const int height, const int width, const char *output_path)
 {
+  int error = 0;
   int width_in_bytes = width * BYTES_PER_PIXEL;
   unsigned char padding[3] = {0, 0, 0};
   int padding_size = (4 - (width_in_bytes) % 4) % 4;
   int stride = (width_in_bytes) + padding_size;
+
+  if (image == NULL) {
+    printf("ERROR::Physarum::export_bitmap_image, the given image is null, can't write it to a file.\n");
+    error = 1;
+    return error;
+  }
   
   FILE *output_file = fopen(output_path, "wb");
   if (output_file == NULL) {
     printf("ERROR::Physarum::export_bitmap_image, error when creating the output_file.\n");
     printf("Path = %s\n", output_path);
+    error = 1;
   }
   else {
     unsigned char *file_header = create_bitmap_file_header(height, stride);
@@ -245,17 +260,34 @@ void export_bitmap_image(unsigned char *image, const int height, const int width
     printf("Image saved at: %s\n", output_path);
     fclose(output_file);
   }
+
+  return error;
+}
+
+// Render a single frame
+
+int physarum_render_single_frame(SpacePhysarum *sphys)
+{
+  int error = 0;
+  if (path_may_be_ok(sphys->output_path)) {
+    Path path = get_path_from_raw_path(sphys->output_path);
+    if (sphys->rendering_mode == SP_PHYSARUM_RENDER_ANIMATION) {
+      get_full_path_for_animation_rendering(&path, sphys->render_frames_counter);
+    }
+    error = export_bitmap_image(
+        sphys->output_image_data, sphys->screen_height, sphys->screen_width, path.full_path);
+  }
+  else {
+    error = 1;  // Path is not ok, there is an error
+  }
+
+  return error;
 }
 
 static int physarum_single_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-
-  if (path_may_be_ok(sphys->output_path)) {
-    Path path = get_path_from_raw_path(sphys->output_path);
-    export_bitmap_image(
-        sphys->output_image_data, sphys->screen_height, sphys->screen_width, path.full_path);
-  }
+  physarum_render_single_frame(sphys);
 
   return OPERATOR_FINISHED;
 }
@@ -271,44 +303,21 @@ void PHYSARUM_OT_single_render(wmOperatorType *ot)
   ot->exec = physarum_single_render_exec;
 }
 
-/* -------------------------------------------------------------------- */
-/** \Render Animation
- * \{ */
+// Render an animation
 
 static int physarum_animation_render_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
-  sphys->render_frames_counter = sphys->nb_frames_to_render;
-
-
-  for (int i = 0; i < sphys->nb_frames_to_render; ++i) {
-    char *output_path = (char *) malloc(strlen(sphys->output_path) + 200);
-    strcpy(output_path, sphys->output_path);
-    char *imageCount = (char *) malloc(256);
-    snprintf(imageCount, 256, "_%d.bmp", i);
-    strcat(output_path, imageCount);
-    export_bitmap_image(sphys->output_image_data, prs->screen_height, prs->screen_width, output_path);
-    printf("Image generated!\n");
-    free(imageCount);
-    printf("Free 1 ok\n");
-    free(output_path);
-    printf("Free 2 ok\n");
-  }
+  sphys->render_frames_counter = 0;
+  sphys->rendering_mode = SP_PHYSARUM_RENDER_ANIMATION;
 
   return OPERATOR_FINISHED;
 }
 
-void PHYSARUM_animation_frame_render(const bContext *C)
+static bool physarum_animation_render_poll(bContext *C)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  PhysarumRenderingSettings *prs = sphys->prs;
-
-  char *imageFileName = (char *)malloc(256);
-  snprintf(imageFileName, 256, "Physarum_Animation_Render_%d.bmp", sphys->nb_frames_to_render - sphys->render_frames_counter);
-  export_bitmap_image(sphys->output_image_data, prs->screen_height, prs->screen_width, imageFileName);
-  printf("Image generated!");
-  free(imageFileName);
+  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION;
 }
 
 void PHYSARUM_OT_animation_render(wmOperatorType *ot)
@@ -320,11 +329,30 @@ void PHYSARUM_OT_animation_render(wmOperatorType *ot)
 
   /* api callbacks */
   ot->exec = physarum_animation_render_exec;
+  ot->poll = physarum_animation_render_poll;
 }
 
-/* -------------------------------------------------------------------- */
-/** \Choice of Physarum Mode
- * \{ */
+void physarum_render_animation(SpacePhysarum *sphys)
+{
+  if (sphys->render_frames_counter < sphys->nb_frames_to_render) {
+    int error = physarum_render_single_frame(sphys);
+    if (error == 1) { // If there is an error, stop the rendering
+      sphys->rendering_mode = SP_PHYSARUM_VIEWPORT;
+      sphys->render_frames_counter = sphys->nb_frames_to_render;
+      printf("ERROR:Physarum::render_animation, error detected rendering the animation, stop.\n");
+      return;
+    }
+  }
+  else { // End of the rendering, stop it
+    sphys->rendering_mode = SP_PHYSARUM_VIEWPORT;
+    sphys->render_frames_counter = sphys->nb_frames_to_render;
+    return;
+  }
+
+  sphys->render_frames_counter++;
+}
+
+// Switch between physarum 2D and physarum 3D
 
 static int physarum_2D_drawing_exec(bContext *C, wmOperator *op)
 {

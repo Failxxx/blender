@@ -91,8 +91,9 @@ void physarum_draw_view(const bContext *C, ARegion *region)
                GL_UNSIGNED_BYTE,
                sphys->output_image_data);
 
-  if (sphys->render_frames_counter > 0) {
-    PHYSARUM_animation_frame_render(C);
+  // Render animation
+  if (sphys->rendering_mode == SP_PHYSARUM_RENDER_ANIMATION) {
+    physarum_render_animation(sphys);
   }
 
   GPU_blend(GPU_BLEND_NONE);
@@ -144,49 +145,4 @@ void initialize_physarum_rendering_settings(PRenderingSettings *prs)
   // View matrix
   copy_m4_m4(prs->viewMatrix, idMatrix);
   translate_m4(prs->viewMatrix, 0.0f, 0.0f, -3.0f);
-}
-
-GPUVertBuf *make_new_triangle_mesh()
-{
-  /* Load geometry */
-  // Colors
-  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-  float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-  float blue[4] = {0.0f, 0.0f, 1.0f, 1.0f};
-
-  // Geometry data
-  float colors[6][4] = {{UNPACK4(white)},
-                        {UNPACK4(red)},
-                        {UNPACK4(blue)},
-                        {UNPACK4(white)},
-                        {UNPACK4(red)},
-                        {UNPACK4(blue)}};
-  float verts[6][3] = {{-1.0f, -1.0f, 0.0f},
-                       {1.0f, -1.0f, 0.0f},
-                       {-1.0f, 1.0f, 0.0f},  // First triangle
-                       {1.0f, -1.0f, 0.0f},
-                       {-1.0f, 1.0f, 0.0f},
-                       {1.0f, 1.0f, 0.0f}};  // Second triangle
-  uint verts_len = 6;
-
-  // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
-  uint pos_comp_len = 3;
-  uint col_comp_len = 4;
-
-  GPUVertFormat *format = immVertexFormat();
-  uint pos = GPU_vertformat_attr_add(
-      format, "v_in_f3Position", GPU_COMP_F32, pos_comp_len, GPU_FETCH_FLOAT);
-  uint color = GPU_vertformat_attr_add(
-      format, "v_in_f4Color", GPU_COMP_F32, col_comp_len, GPU_FETCH_FLOAT);
-
-  GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(vbo, verts_len);
-
-  // Fill the vertex buffer with vertices data
-  for (int i = 0; i < verts_len; i++) {
-    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-    GPU_vertbuf_attr_set(vbo, color, i, colors[i]);
-  }
-
-  return vbo;
 }

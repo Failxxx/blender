@@ -89,6 +89,8 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->nb_frames_to_render = 100;
   sphys->screen_width = -1;
   sphys->screen_height = -1;
+  sphys->mode = SP_PHYSARUM_2D;
+  sphys->rendering_mode = SP_PHYSARUM_VIEWPORT;
 
   /* main region */
   // WARNING! Keep this here, do not move on top or bottom. Order matters.
