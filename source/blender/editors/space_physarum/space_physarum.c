@@ -137,7 +137,6 @@ void physarum_operatortypes(void)
   WM_operatortype_append(PHYSARUM_OT_animation_render);
   WM_operatortype_append(PHYSARUM_OT_draw_2D);
   WM_operatortype_append(PHYSARUM_OT_draw_3D);
-  WM_operatortype_append(PHYSARUM_OT_draw);
 }
 
 /****************** Main region ******************/

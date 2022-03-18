@@ -23,6 +23,12 @@ from bl_ui.utils import PresetPanel
 
 from bpy.app.translations import pgettext_tip as tip_
 
+bpy.types.Scene.cancel_run_bool = bpy.props.BoolProperty(
+    name = "running",
+    description ="fnj",
+    default = False,
+)
+
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
 
@@ -55,6 +61,10 @@ class PHYSARUM_PT_mode(Panel):
         col = layout.column(align=False, heading="Start Physarum")
         row = col.row(align=True)
         row.operator("physarum.start_operator", text="Start")    
+
+        col = layout.column(align=False, heading="Start Physarum")
+        row = col.row(align=True)
+        row.operator("physarum.stop_operator", text="Stop")   
 
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -130,31 +140,43 @@ class PHYSARUM_OT_start_operator(bpy.types.Operator):
 
     def calcs(self):
         #Call operator that call draw function
-        bpy.ops.physarum.draw()
+        bpy.context.scene.frame_set(bpy.data.scenes['Scene'].frame_current)
         _calcs_done = True
 
     def modal(self, context, event):
         if event.type == 'TIMER' and not self._updating:
             self._updating = True
             self.calcs()
-            # Forces to redraw the view (magic trick)
-            bpy.context.scene.frame_set(bpy.data.scenes['Scene'].frame_current)
             self._updating = False
-        if self._calcs_done:
+        if context.scene.cancel_run_bool==True:
             self.cancel(context)
-        
+            context.scene.cancel_run_bool==True
+            return {'CANCELLED'}
         return {'PASS_THROUGH'}
 
     def execute(self, context):
         context.window_manager.modal_handler_add(self)
         self._updating = False
+        context.scene.cancel_run_bool==False
         self._timer = context.window_manager.event_timer_add(0.001, window = context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
+        print('ok')
         context.window_manager.event_timer_remove(self._timer)
         self._timer = None
         return {'CANCELLED'}
+
+class PHYSARUM_OT_stop_operator(bpy.types.Operator):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Start Physarum"
+    bl_idname = "physarum.stop_operator"
+
+    def execute(self, context):
+        print('cancel')
+        context.scene.cancel_run_bool = True
+        return {'FINISHED'}
 
 class RenderOutputButtonsPanel:
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -204,6 +226,7 @@ classes = (
     PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
     PHYSARUM_OT_start_operator,
+    PHYSARUM_OT_stop_operator,
     PHYSARUM_PT_output,
 )
 
