@@ -12,7 +12,7 @@ uniform float u_fTurn_angle;
 uniform float u_fMove_distance;
 uniform float u_fDeposit_value;
 uniform float u_fDecay_factor;
-uniform float u_fCollision;
+//uniform float u_fCollision;
 uniform float u_fCenter_attraction;
 uniform float u_fMove_sense_coef;
 uniform float u_fMove_sense_offset;

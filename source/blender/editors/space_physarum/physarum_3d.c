@@ -332,7 +332,7 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_distance", p3d->move_distance);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "deposit_value", p3d->deposit_value);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "decay_factor", p3d->decay_factor);
-    GPU_shader_uniform_1f(p3d->shader_particle_3d, "collision", p3d->collision);
+    //GPU_shader_uniform_1f(p3d->shader_particle_3d, "collision", p3d->collision);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "center_attraction", p3d->center_attraction);
     GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_width", (int)p3d->world_width);
     GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_height", (int)p3d->world_height);
