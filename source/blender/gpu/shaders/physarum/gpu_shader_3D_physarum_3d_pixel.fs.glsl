@@ -28,5 +28,5 @@ void main()
   float grid_color = grid(p, dx, dy) * GRID_OPACITY;
   v = max(grid_color, v);
 
-  FragColor = vec4(1.0f, 1.0f, 1.0f, v);
+  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
