@@ -4,7 +4,7 @@
 
 layout(local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 layout(rgba32f, binding = 0) uniform image3D u_in_s3TrailTexture;
-layout(rgba32f, binding = 1) uniform image3D u_out_s3TextureOCC;
+//layout(rgba32f, binding = 1) uniform image3D u_out_s3TextureOCC;
 
 uniform float u_fSense_spread;
 uniform float u_fSense_distance;

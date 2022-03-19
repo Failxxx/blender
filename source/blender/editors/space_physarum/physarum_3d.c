@@ -318,13 +318,39 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /* Compute update particles */
-  if (0) {
+  if (1) {
+
+    // Switch trails map
+    p3d->is_trail_A = (p3d->is_trail_A) ? 0 : 1;
+
     GPU_shader_bind(p3d->shader_particle_3d);
+
+    p3d->ssbo_binding_particles_x = GPU_shader_get_ssbo(p3d->shader_particle_3d,
+                                                        "ssbo_particles_x");
+    p3d->ssbo_binding_particles_y = GPU_shader_get_ssbo(p3d->shader_particle_3d,
+                                                        "ssbo_particles_y");
+    p3d->ssbo_binding_particles_z = GPU_shader_get_ssbo(p3d->shader_particle_3d,
+                                                        "ssbo_particles_z");
+    p3d->ssbo_binding_particles_phi = GPU_shader_get_ssbo(p3d->shader_particle_3d,
+                                                          "ssbo_particles_phi");
+    p3d->ssbo_binding_particles_theta = GPU_shader_get_ssbo(p3d->shader_particle_3d,
+                                                            "ssbo_particles_theta");
+
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_x, p3d->ssbo_binding_particles_x);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_y, p3d->ssbo_binding_particles_y);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_z, p3d->ssbo_binding_particles_z);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_phi, p3d->ssbo_binding_particles_phi);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_theta, p3d->ssbo_binding_particles_theta);
+
+    int texture_binding;
+    if (p3d->is_trail_A) {
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3TrailTexture");
+      GPU_texture_image_bind(p3d->texture_trail_A, texture_binding);
+    }
+    else {
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3TrailTexture");
+      GPU_texture_image_bind(p3d->texture_trail_B, texture_binding);
+    }
 
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_spread", p3d->sensor_spread);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_distance", p3d->sensor_distance);
@@ -332,7 +358,7 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_distance", p3d->move_distance);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "deposit_value", p3d->deposit_value);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "decay_factor", p3d->decay_factor);
-    //GPU_shader_uniform_1f(p3d->shader_particle_3d, "collision", p3d->collision);
+    // GPU_shader_uniform_1f(p3d->shader_particle_3d, "collision", p3d->collision);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "center_attraction", p3d->center_attraction);
     GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_width", (int)p3d->world_width);
     GPU_shader_uniform_1i(p3d->shader_particle_3d, "world_height", (int)p3d->world_height);
@@ -342,6 +368,11 @@ void physarum_3d_draw_view(Physarum3D *p3d)
 
     GPU_compute_dispatch(p3d->shader_particle_3d, 10, 10, 10);  // Launch compute
     GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);             // Check if compute has been done
+
+    if (p3d->is_trail_A)
+      GPU_texture_image_unbind(p3d->texture_trail_A);
+    else
+      GPU_texture_image_unbind(p3d->texture_trail_B);
   }
 
   /* Compute diffuse / decay */
@@ -351,15 +382,15 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     // Bind trails data textures
     int texture_binding;
     if (p3d->is_trail_A) {
-      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_out_s3TextureOCC");
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3TextureTrail");
       GPU_texture_image_bind(p3d->texture_trail_A, texture_binding);
-      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3Texture");
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_out_s3TextureTrail");
       GPU_texture_bind(p3d->texture_trail_B, texture_binding);
     }
     else {
-      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_out_s3TextureOCC");
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3TextureTrail");
       GPU_texture_image_bind(p3d->texture_trail_B, texture_binding);
-      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_in_s3Texture");
+      texture_binding = GPU_shader_get_texture_binding(p3d->shader_decay, "u_out_s3TextureTrail");
       GPU_texture_bind(p3d->texture_trail_A, texture_binding);
     }
 

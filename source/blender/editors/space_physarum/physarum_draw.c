@@ -83,7 +83,7 @@ void physarum_draw_view(const bContext *C, ARegion *region)
     physarum_2d_draw_view(p2d);
   }
   else if (sphys->mode == SP_PHYSARUM_3D) {
-    physarum_3d_handle_events(p3d, sphys, C, region);
+    //physarum_3d_handle_events(p3d, sphys, C, region);
     physarum_3d_draw_view(p3d);
   }
 
