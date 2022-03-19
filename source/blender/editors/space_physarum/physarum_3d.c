@@ -20,12 +20,12 @@
 #include "ED_space_api.h"
 
 #include "GPU_capabilities.h"
+#include "GPU_compute.h"
 #include "GPU_context.h"
 #include "GPU_framebuffer.h"
 #include "GPU_immediate.h"
 #include "GPU_immediate_util.h"
 #include "GPU_viewport.h"
-#include "GPU_compute.h"
 
 #include "WM_api.h"
 
@@ -90,7 +90,12 @@ void P3D_free_batches(Physarum3D *p3d)
 void P3D_free_particles_ssbo(Physarum3D *p3d)
 {
   printf("Physarum 3D: free particles ssbo\n");
-  GPU_vertbuf_discard(p3d->ssbo);
+  //GPU_vertbuf_discard(p3d->ssbo);
+  GPU_vertbuf_discard(p3d->ssbo_particles_x);
+  GPU_vertbuf_discard(p3d->ssbo_particles_y);
+  GPU_vertbuf_discard(p3d->ssbo_particles_z);
+  GPU_vertbuf_discard(p3d->ssbo_particles_phi);
+  GPU_vertbuf_discard(p3d->ssbo_particles_theta);
 }
 
 void P3D_free_shaders(Physarum3D *p3d)
@@ -144,17 +149,60 @@ void P3D_generate_batches(Physarum3D *p3d)
 void P3D_generate_particles_ssbo(Physarum3D *p3d)
 {
   printf("Physarum 3D: generate particles ssbo\n");
-  GPUVertFormat *format = immVertexFormat();
-  uint x_pos = GPU_vertformat_attr_add(format, "particles_x", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  uint y_pos = GPU_vertformat_attr_add(format, "particles_y", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  uint z_pos = GPU_vertformat_attr_add(format, "particles_z", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  uint phi_pos = GPU_vertformat_attr_add(format, "particles_phi", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  uint theta_pos = GPU_vertformat_attr_add(format, "particles_theta", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
 
-  p3d->ssbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(p3d->ssbo, p3d->nb_particles);
+  // GPUVertFormat *format = immVertexFormat();
+  // uint x_pos = GPU_vertformat_attr_add(format, "particles_x", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  // uint y_pos = GPU_vertformat_attr_add(format, "particles_y", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  // uint z_pos = GPU_vertformat_attr_add(format, "particles_z", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  // uint phi_pos = GPU_vertformat_attr_add(format, "particles_phi", GPU_COMP_F32, 1,
+  // GPU_FETCH_FLOAT); uint theta_pos = GPU_vertformat_attr_add(format, "particles_theta",
+  // GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
 
-  // Fill the vertex buffer with vertices data
+  // p3d->ssbo = GPU_vertbuf_create_with_format(format);
+  // GPU_vertbuf_data_alloc(p3d->ssbo, p3d->nb_particles);
+
+  //// Fill the vertex buffer with vertices data
+  // for (int i = 0; i < p3d->nb_particles; i++) {
+  //  float x_val[1] = {p3d->particles.x[i]};
+  //  float y_val[1] = {p3d->particles.y[i]};
+  //  float z_val[1] = {p3d->particles.z[i]};
+  //  float phi_val[1] = {p3d->particles.phi[i]};
+  //  float theta_val[1] = {p3d->particles.theta[i]};
+
+  //  GPU_vertbuf_attr_set(p3d->ssbo, x_pos, i, x_val);
+  //  GPU_vertbuf_attr_set(p3d->ssbo, y_pos, i, y_val);
+  //  GPU_vertbuf_attr_set(p3d->ssbo, z_pos, i, z_val);
+  //  GPU_vertbuf_attr_set(p3d->ssbo, phi_pos, i, phi_val);
+  //  GPU_vertbuf_attr_set(p3d->ssbo, theta_pos, i, theta_val);
+  //}
+
+  GPUVertFormat *format_x = immVertexFormat();
+  GPUVertFormat *format_y = immVertexFormat();
+  GPUVertFormat *format_z = immVertexFormat();
+  GPUVertFormat *format_phi = immVertexFormat();
+  GPUVertFormat *format_theta = immVertexFormat();
+
+  uint x_pos = GPU_vertformat_attr_add(format_x, "particles_x", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  uint y_pos = GPU_vertformat_attr_add(format_y, "particles_y", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  uint z_pos = GPU_vertformat_attr_add(format_z, "particles_z", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  uint phi_pos = GPU_vertformat_attr_add(
+      format_phi, "particles_phi", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+  uint theta_pos = GPU_vertformat_attr_add(
+      format_theta, "particles_theta", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
+
+  p3d->ssbo_particles_x = GPU_vertbuf_create_with_format(format_x);
+  p3d->ssbo_particles_y = GPU_vertbuf_create_with_format(format_y);
+  p3d->ssbo_particles_z = GPU_vertbuf_create_with_format(format_z);
+  p3d->ssbo_particles_phi = GPU_vertbuf_create_with_format(format_phi);
+  p3d->ssbo_particles_theta = GPU_vertbuf_create_with_format(format_theta);
+
+  GPU_vertbuf_data_alloc(p3d->ssbo_particles_x, p3d->nb_particles);
+  GPU_vertbuf_data_alloc(p3d->ssbo_particles_y, p3d->nb_particles);
+  GPU_vertbuf_data_alloc(p3d->ssbo_particles_z, p3d->nb_particles);
+  GPU_vertbuf_data_alloc(p3d->ssbo_particles_phi, p3d->nb_particles);
+  GPU_vertbuf_data_alloc(p3d->ssbo_particles_theta, p3d->nb_particles);
+
+  //// Fill the vertex buffer with vertices data
   for (int i = 0; i < p3d->nb_particles; i++) {
     float x_val[1] = {p3d->particles.x[i]};
     float y_val[1] = {p3d->particles.y[i]};
@@ -162,11 +210,11 @@ void P3D_generate_particles_ssbo(Physarum3D *p3d)
     float phi_val[1] = {p3d->particles.phi[i]};
     float theta_val[1] = {p3d->particles.theta[i]};
 
-    GPU_vertbuf_attr_set(p3d->ssbo, x_pos, i, x_val);
-    GPU_vertbuf_attr_set(p3d->ssbo, y_pos, i, y_val);
-    GPU_vertbuf_attr_set(p3d->ssbo, z_pos, i, z_val);
-    GPU_vertbuf_attr_set(p3d->ssbo, phi_pos, i, phi_val);
-    GPU_vertbuf_attr_set(p3d->ssbo, theta_pos, i, theta_val);
+    GPU_vertbuf_attr_set(p3d->ssbo_particles_x, x_pos, i, x_val);
+    GPU_vertbuf_attr_set(p3d->ssbo_particles_y, y_pos, i, y_val);
+    GPU_vertbuf_attr_set(p3d->ssbo_particles_z, z_pos, i, z_val);
+    GPU_vertbuf_attr_set(p3d->ssbo_particles_phi, phi_pos, i, phi_val);
+    GPU_vertbuf_attr_set(p3d->ssbo_particles_theta, theta_pos, i, theta_val);
   }
 }
 
@@ -212,13 +260,13 @@ void P3D_generate_textures(Physarum3D *p3d)
                                                NULL);
 
   p3d->texture_occ = GPU_texture_create_3d("physarum 3d occ tex",
-                                               p3d->world_width,
-                                               p3d->world_height,
-                                               p3d->world_depth,
-                                               0,
-                                               GPU_RGBA32UI,
-                                               GPU_DATA_UINT,
-                                               NULL);
+                                           p3d->world_width,
+                                           p3d->world_height,
+                                           p3d->world_depth,
+                                           0,
+                                           GPU_RGBA32UI,
+                                           GPU_DATA_UINT,
+                                           NULL);
 }
 
 void P3D_generate_particles_data(Physarum3D *p3d)
@@ -297,9 +345,14 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /* Compute update particles */
-  if(0){
+  if (0) {
     GPU_shader_bind(p3d->shader_particle_3d);
-    GPU_vertbuf_bind_as_ssbo(p3d->ssbo, p3d->ssbo_binding);
+    //GPU_vertbuf_bind_as_ssbo(p3d->ssbo, p3d->ssbo_binding);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_x, p3d->ssbo_binding_particles_x);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_y, p3d->ssbo_binding_particles_y);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_z, p3d->ssbo_binding_particles_z);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_phi, p3d->ssbo_binding_particles_phi);
+    GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_theta, p3d->ssbo_binding_particles_theta);
 
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_spread", p3d->sensor_spread);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "sense_distance", p3d->sensor_distance);
@@ -315,9 +368,8 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_sense_coef", p3d->move_sensor_coef);
     GPU_shader_uniform_1f(p3d->shader_particle_3d, "move_sense_offset", p3d->move_sensor_offset);
 
-    GPU_compute_dispatch(p3d->shader_particle_3d, 10, 10, 10); // Launch compute
-    GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE); // Check if compute has been done
-
+    GPU_compute_dispatch(p3d->shader_particle_3d, 10, 10, 10);  // Launch compute
+    GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);             // Check if compute has been done
   }
 
   /* Compute diffuse / decay */
@@ -372,13 +424,13 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
 
-    GPU_batch_draw(p3d->batch); // First pass
+    GPU_batch_draw(p3d->batch);  // First pass
 
     axis_angle_to_mat4_single(p3d->model_matrix, 'Y', -1.0 * M_PI_2);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 1);
 
-    GPU_batch_draw(p3d->batch); // Second pass
+    GPU_batch_draw(p3d->batch);  // Second pass
 
     get_m4_identity(p3d->model_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
@@ -390,7 +442,10 @@ void physarum_3d_draw_view(Physarum3D *p3d)
 
 /* Handle events functions */
 
-void physarum_3d_handle_events(Physarum3D *p3d, SpacePhysarum *sphys, const bContext *C, ARegion *region)
+void physarum_3d_handle_events(Physarum3D *p3d,
+                               SpacePhysarum *sphys,
+                               const bContext *C,
+                               ARegion *region)
 {
   // Update simulation parameters
   p3d->sensor_spread = sphys->sensor_angle;
