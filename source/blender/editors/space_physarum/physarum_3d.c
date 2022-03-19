@@ -32,21 +32,21 @@
 #include "physarum_intern.h"
 
 /* Generate geometry data for a super quad mesh */
-GPUVertBuf *make_new_super_quad_mesh()
+GPUVertBuf *make_new_super_quad_mesh(const float world_depth)
 {
-  float verts[6][4] = {{-1.0f, -1.0f, 0.0f, 1.0f},  // First triangle
-                       {1.0f, 1.0f, 0.0f, 1.0f},
-                       {-1.0f, 1.0f, 0.0f, 1.0f},
-                       {-1.0f, -1.0f, 0.0f, 1.0f},  // Second triangle
-                       {1.0f, -1.0f, 0.0f, 1.0f},
-                       {1.0f, 1.0f, 0.0f, 1.0f}};
-  float uvs[6][3] = {{0.0f, 1.0f, 0.0f},
-                     {1.0f, 0.0f, 0.0f},
-                     {0.0f, 0.0f, 0.0f},
-                     {0.0f, 1.0f, 0.0f},
-                     {1.0f, 1.0f, 0.0f},
-                     {1.0f, 0.0f, 0.0f}};
-  uint verts_len = 6;
+  float positions_template[6][4] = {{-1.0f, -1.0f, 0.0f, 1.0f},  // First triangle
+                                    {1.0f, 1.0f, 0.0f, 1.0f},
+                                    {-1.0f, 1.0f, 0.0f, 1.0f},
+                                    {-1.0f, -1.0f, 0.0f, 1.0f},  // Second triangle
+                                    {1.0f, -1.0f, 0.0f, 1.0f},
+                                    {1.0f, 1.0f, 0.0f, 1.0f}};
+  float uvs_template[6][3] = {{0.0f, 1.0f, 0.0f},
+                              {1.0f, 0.0f, 0.0f},
+                              {0.0f, 0.0f, 0.0f},
+                              {0.0f, 1.0f, 0.0f},
+                              {1.0f, 1.0f, 0.0f},
+                              {1.0f, 0.0f, 0.0f}};
+  uint verts_len_template = 6;
 
   // Also known as "stride" (OpenGL), specifies the space between consecutive vertex attributes
   uint pos_comp_len = 4;
@@ -59,12 +59,38 @@ GPUVertBuf *make_new_super_quad_mesh()
       format, "v_in_f3Texcoord", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  GPU_vertbuf_data_alloc(vbo, verts_len);
+  const int vertices_len_super_quad = verts_len_template * (pos_comp_len + uvs_comp_len);
+  const int vertices_len = (int)world_depth * vertices_len_super_quad;
+  GPU_vertbuf_data_alloc(vbo, vertices_len);
 
   // Fill the vertex buffer with vertices data
-  for (int i = 0; i < verts_len; i++) {
-    GPU_vertbuf_attr_set(vbo, pos, i, verts[i]);
-    GPU_vertbuf_attr_set(vbo, uv, i, uvs[i]);
+  int id_vertex = 0;
+  int z_step = 2.0f / world_depth;
+  for (int z = 0; z < (int)world_depth; ++z) {
+    float positions[6][4];
+    memcpy(positions, positions_template, verts_len_template * pos_comp_len);
+    float uvs[6][4];
+    memcpy(uvs, uvs_template, verts_len_template * uvs_comp_len);
+
+    positions[0][2] = -1.0f * z_step * z;
+    positions[1][2] = -1.0f * z_step * z;
+    positions[2][2] = -1.0f * z_step * z;
+    positions[3][2] = -1.0f * z_step * z;
+    positions[4][2] = -1.0f * z_step * z;
+    positions[5][2] = -1.0f * z_step * z;
+
+    uvs[0][1] = 1.0f - z_step * z * 0.5f;
+    uvs[1][1] = 1.0f - z_step * z * 0.5f;
+    uvs[2][1] = 1.0f - z_step * z * 0.5f;
+    uvs[3][1] = 1.0f - z_step * z * 0.5f;
+    uvs[4][1] = 1.0f - z_step * z * 0.5f;
+    uvs[5][1] = 1.0f - z_step * z * 0.5f;
+
+    for (int i = 0; i < vertices_len_super_quad; ++i) {
+      id_vertex = i + z * vertices_len_super_quad;
+      GPU_vertbuf_attr_set(vbo, pos, id_vertex, positions[i]);
+      GPU_vertbuf_attr_set(vbo, uv, id_vertex, uvs[i]);
+    }
   }
 
   return vbo;
@@ -181,7 +207,7 @@ void free_physarum_3d(Physarum3D *p3d)
 void P3D_generate_batches(Physarum3D *p3d)
 {
   printf("Physarum 3D: generate batches\n");
-  GPUVertBuf *super_quad_mesh = make_new_super_quad_mesh();
+  GPUVertBuf *super_quad_mesh = make_new_super_quad_mesh(p3d->world_depth);
 
   p3d->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, super_quad_mesh, NULL, GPU_BATCH_OWNS_VBO);
 }
@@ -367,11 +393,10 @@ void initialize_physarum_3d(Physarum3D *p3d)
 void physarum_3d_draw_view(Physarum3D *p3d)
 {
   // Clear color framebuffer
-  const float transparent[4] = {0.0f, 0.2f, 0.0f, 1.0f};
+  const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /* Compute update particles */
-  if (1) {
-
+  {
     // Switch trails map
     p3d->is_trail_A = (p3d->is_trail_A) ? 0 : 1;
 
@@ -468,20 +493,20 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Projection_matrix", p3d->projection_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4View_matrix", p3d->view_matrix);
     if (p3d->is_trail_A) {
-      GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_A);
+      GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_B);
     }
     else {
-      GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_B);
+      GPU_batch_texture_bind(p3d->batch, "u_s3TrailsData", p3d->texture_trail_A);
     }
     GPU_batch_uniform_1i(p3d->batch, "u_s3TrailsData", 0);
 
-    axis_angle_to_mat4_single(p3d->model_matrix, 'X', M_PI_2);
+    axis_angle_to_mat4_single(p3d->model_matrix, 'Y', M_PI_2);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
 
     GPU_batch_draw(p3d->batch);  // First pass
 
-    axis_angle_to_mat4_single(p3d->model_matrix, 'Y', -1.0 * M_PI_2);
+    axis_angle_to_mat4_single(p3d->model_matrix, 'X', -1.0 * M_PI_2);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 1);
 
