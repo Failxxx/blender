@@ -111,6 +111,7 @@ void main()
     vec3 sense_position = rotate(off_center_base_dir, center_axis, angle) * u_fSense_distance;
     // float stuff = u_in_s3TrailTexture[ivec3(sense_position) + p];
     float stuff = imageLoad(u_in_s3TrailTexture, ivec3(sense_position) + p).r;
+    // WHAT IS STUFF BRO ?
 
     if (stuff > max_value) {
       max_value_count = 1;
@@ -134,7 +135,7 @@ void main()
                                  center_axis,
                                  direction * PI * 2.0 / float(SAMPLE_POINTS) + start_angle);
 
-    // ph = atan2(best_direction.z, best_direction.x);
+    // ph = atan2(best_direction.z, best_direction.x); HLSL atan2 => GLSL atant = diff
     ph = atan(best_direction.x, best_direction.z);
     t = acos(best_direction.y / length(best_direction));
   }
