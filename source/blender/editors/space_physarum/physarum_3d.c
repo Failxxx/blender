@@ -79,6 +79,47 @@ void get_m4_identity(float m4_dest[4][4])
   copy_m4_m4(m4_dest, m4_identity);
 }
 
+void get_perspective_projection(
+    float dest[4][4], const float fov, const float aspect_ratio, const float near, const float far)
+{
+  const float cot_fov = 1.0f / tan(fov / 2.0f);
+  dest[0][0] = cot_fov / aspect_ratio;
+  dest[1][1] = cot_fov;
+  dest[2][2] = -1.0f * far / (far - near);
+  dest[3][2] = -1.0f;
+  dest[2][3] = -1.0f * near * far / (far - near);
+}
+
+void get_look_at(float dest[4][4], const float eye[3], const float target[3], const float up[3])
+{
+  float z[3];
+  sub_v3_v3v3(z, eye, target);
+  normalize_v3(z);
+  float x[3];
+  cross_v3_v3v3(x, up, z);
+  normalize_v3(x);
+  float y[3];
+  cross_v3_v3v3(y, z, x);
+  normalize_v3(y);
+
+  dest[0][0] = x[0];
+  dest[1][0] = y[0];
+  dest[2][0] = z[0];
+  dest[3][0] = 0.0f;
+  dest[0][1] = x[1];
+  dest[1][1] = y[1];
+  dest[2][1] = z[1];
+  dest[3][1] = 0.0f;
+  dest[0][2] = x[2];
+  dest[1][2] = y[2];
+  dest[2][2] = z[2];
+  dest[3][2] = 0.0f;
+  dest[0][3] = -1.0f * dot_v3v3(x, eye);
+  dest[1][3] = -1.0f * dot_v3v3(y, eye);
+  dest[2][3] = -1.0f * dot_v3v3(z, eye);
+  dest[3][3] = 1.0f;
+}
+
 /* Free data functions */
 
 void P3D_free_batches(Physarum3D *p3d)
@@ -110,7 +151,7 @@ void P3D_free_textures(Physarum3D *p3d)
   printf("Physarum 3D: free textures\n");
   GPU_texture_free(p3d->texture_trail_A);
   GPU_texture_free(p3d->texture_trail_B);
-  GPU_texture_free(p3d->texture_occ);
+  //GPU_texture_free(p3d->texture_occ);
 }
 
 void P3D_free_particles(Physarum3D *p3d)
@@ -232,14 +273,14 @@ void P3D_generate_textures(Physarum3D *p3d)
                                                GPU_DATA_FLOAT,
                                                NULL);
 
-  p3d->texture_occ = GPU_texture_create_3d("physarum 3d occ tex",
-                                           p3d->world_width,
-                                           p3d->world_height,
-                                           p3d->world_depth,
-                                           0,
-                                           GPU_RGBA32UI,
-                                           GPU_DATA_UINT,
-                                           NULL);
+  //p3d->texture_occ = GPU_texture_create_3d("physarum 3d occ tex",
+  //                                         p3d->world_width,
+  //                                         p3d->world_height,
+  //                                         p3d->world_depth,
+  //                                         0,
+  //                                         GPU_RGBA32UI,
+  //                                         GPU_DATA_UINT,
+  //                                         NULL);
 }
 
 void P3D_generate_particles_data(Physarum3D *p3d)
@@ -276,10 +317,19 @@ void P3D_generate_particles_data(Physarum3D *p3d)
 void initialize_physarum_3d(Physarum3D *p3d)
 {
   printf("Physarum 3D: initialize data\n");
-  perspective_m4(p3d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1000.0f);
+  /* Setup matrices */
+  zero_m4(p3d->projection_matrix);
+  get_perspective_projection(p3d->projection_matrix, DEG2RAD(60.0f), 16.0f / 9.0f, 0.01f, 10.0f);
   get_m4_identity(p3d->model_matrix);
-  get_m4_identity(p3d->view_matrix);
-  translate_m4(p3d->view_matrix, 0.0f, 0.0f, -3.0f);
+  float azimuth = 0.0f;
+  float polar = M_PI_2;
+  float radius = 2.0f;
+  float eye_pos[3] = {
+      cos(azimuth) * sin(polar) * radius, cos(polar) * radius, sin(azimuth) * sin(polar) * radius};
+  float target[3] = {0.0f, 0.0f, 0.0f};
+  float up[3] = {0.0f, 1.0f, 0.0f};
+  get_look_at(p3d->view_matrix, eye_pos, target, up);
+
   p3d->tex_coord_map = 0;
 
   p3d->screen_width = 1024;

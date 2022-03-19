@@ -7,7 +7,7 @@ uniform sampler3D u_s3TrailsData;
 
 const float N = 30.0f;
 const float GRID_SIZE = 5.0f;
-const float GRID_OPACITY = 0.3f;
+const float GRID_OPACITY = 0.5f;
 
 // https://www.iquilezles.org/www/articles/filterableprocedurals/filterableprocedurals.htm
 float grid(vec3 p, vec3 dpdx, vec3 dpdy)
