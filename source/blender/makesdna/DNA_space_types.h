@@ -2081,10 +2081,23 @@ typedef struct Physarum3D {
   char _pad2[4];
   int ssbo_binding;
 
+  struct GPUVertBuf *ssbo_particles_x;
+  struct GPUVertBuf *ssbo_particles_y;
+  struct GPUVertBuf *ssbo_particles_z;
+  struct GPUVertBuf *ssbo_particles_phi;
+  struct GPUVertBuf *ssbo_particles_theta;
+
+  int ssbo_binding_particles_x;
+  int ssbo_binding_particles_y;
+  int ssbo_binding_particles_z;
+  int ssbo_binding_particles_phi;
+  int ssbo_binding_particles_theta;
+  char _pad3[4];
+
 } Physarum3D;
 
 typedef struct PhysarumData2D {
-  float projection_matrix[4][4]; // Orthographic projection matrix for 2D rendering
+  float projection_matrix[4][4];  // Orthographic projection matrix for 2D rendering
 
   /* Batches, hold VBOs */
   struct GPUBatch *diffuse_decay_batch;
@@ -2140,8 +2153,8 @@ typedef struct SpacePhysarum {
   Physarum3D *physarum3d;
   Physarum2D *p2d;
 
-  int mode; // eSpacePhysarum_Mode
-  int rendering_mode; // eSpacePhysarum_Rendering_Mode
+  int mode;            // eSpacePhysarum_Mode
+  int rendering_mode;  // eSpacePhysarum_Rendering_Mode
 
   /* Physarum properties */
   float particles_population_factor;
@@ -2182,8 +2195,8 @@ typedef enum eSpacePhysarum_Mode {
 } eSpacePhysarum_Mode;
 
 typedef enum eSpacePhysarum_Rendering_Mode {
-  SP_PHYSARUM_VIEWPORT = 0, // Only render to the viewport
-  SP_PHYSARUM_RENDER_ANIMATION = 1, // Render to the viewport and export images
+  SP_PHYSARUM_VIEWPORT = 0,          // Only render to the viewport
+  SP_PHYSARUM_RENDER_ANIMATION = 1,  // Render to the viewport and export images
 } eSpacePhysarum_Rendering_Mode;
 
 /** \} */
