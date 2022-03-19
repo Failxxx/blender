@@ -21,12 +21,28 @@ uniform int u_iWorld_width;
 uniform int u_iWorld_height;
 uniform int u_iWorld_depth;
 
-layout(std430, binding = 2) buffer particles
+layout(std430, binding = 2) buffer ssbo_particles_x
 {
   float particles_x[];
+};
+
+layout(std430, binding = 3) buffer ssbo_particles_y
+{
   float particles_y[];
+};
+
+layout(std430, binding = 4) buffer ssbo_particles_z
+{
   float particles_z[];
+};
+
+layout(std430, binding = 5) buffer ssbo_particles_phi
+{
   float particles_phi[];
+};
+
+layout(std430, binding = 6) buffer ssbo_particles_theta
+{
   float particles_theta[];
 };
 
