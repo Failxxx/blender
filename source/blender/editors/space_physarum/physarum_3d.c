@@ -258,15 +258,15 @@ void P3D_generate_particles_data(Physarum3D *p3d)
   p3d->particles.pair = (float *)malloc(bytes);
 
   for (int i = 0; i < p3d->nb_particles; ++i) {
-    phi = BLI_rng_get_float(rng) * M_2_PI;
+    phi = BLI_rng_get_float(rng) * 2.0 * M_PI;
     theta = acos(2.0 * BLI_rng_get_float(rng) - 1.0);
     radius = pow(BLI_rng_get_float(rng), 0.333333f) * p3d->spawn_radius;
 
     p3d->particles.x[i] = sin(phi) * sin(theta) * radius + p3d->world_width / 2.0f;
     p3d->particles.y[i] = cos(theta) * radius + p3d->world_height / 2.0f;
     p3d->particles.z[i] = cos(phi) * sin(theta) * radius + p3d->world_depth / 2.0f;
-    p3d->particles.phi[i] = BLI_rng_get_float(rng) * M_2_PI;
-    p3d->particles.theta[i] = acos(2.0f * BLI_rng_get_float(rng) - 1.0f);
+    p3d->particles.phi[i] = acos(2.0 * BLI_rng_get_float(rng) - 1.0);
+    p3d->particles.theta[i] = BLI_rng_get_float(rng) * 2.0 * M_PI;
     p3d->particles.pair[i] = 1e8;  // 100 000 000 means no pair
   }
 
@@ -284,7 +284,7 @@ void initialize_physarum_3d(Physarum3D *p3d)
 
   p3d->screen_width = 1024;
   p3d->screen_height = 1024;
-  p3d->nb_particles = 1e5;
+  p3d->nb_particles = 100;
 
   p3d->world_width = 480.0f;
   p3d->world_height = 480.0f;
@@ -315,7 +315,7 @@ void initialize_physarum_3d(Physarum3D *p3d)
 void physarum_3d_draw_view(Physarum3D *p3d)
 {
   // Clear color framebuffer
-  const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  const float transparent[4] = {0.0f, 0.2f, 0.0f, 1.0f};
 
   /* Compute update particles */
   if (1) {
