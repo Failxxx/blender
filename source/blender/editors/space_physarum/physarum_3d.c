@@ -263,6 +263,7 @@ void P3D_generate_textures(Physarum3D *p3d)
                                                GPU_RGBA32F,
                                                GPU_DATA_FLOAT,
                                                NULL);
+  GPU_texture_filter_mode(p3d->texture_trail_A, false);
 
   p3d->texture_trail_B = GPU_texture_create_3d("physarum 3d trail B tex",
                                                p3d->world_width,
@@ -272,6 +273,7 @@ void P3D_generate_textures(Physarum3D *p3d)
                                                GPU_RGBA32F,
                                                GPU_DATA_FLOAT,
                                                NULL);
+  GPU_texture_filter_mode(p3d->texture_trail_B, false);
 
   //p3d->texture_occ = GPU_texture_create_3d("physarum 3d occ tex",
   //                                         p3d->world_width,
