@@ -90,7 +90,6 @@ void P3D_free_batches(Physarum3D *p3d)
 void P3D_free_particles_ssbo(Physarum3D *p3d)
 {
   printf("Physarum 3D: free particles ssbo\n");
-  //GPU_vertbuf_discard(p3d->ssbo);
   GPU_vertbuf_discard(p3d->ssbo_particles_x);
   GPU_vertbuf_discard(p3d->ssbo_particles_y);
   GPU_vertbuf_discard(p3d->ssbo_particles_z);
@@ -149,32 +148,6 @@ void P3D_generate_batches(Physarum3D *p3d)
 void P3D_generate_particles_ssbo(Physarum3D *p3d)
 {
   printf("Physarum 3D: generate particles ssbo\n");
-
-  // GPUVertFormat *format = immVertexFormat();
-  // uint x_pos = GPU_vertformat_attr_add(format, "particles_x", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  // uint y_pos = GPU_vertformat_attr_add(format, "particles_y", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  // uint z_pos = GPU_vertformat_attr_add(format, "particles_z", GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-  // uint phi_pos = GPU_vertformat_attr_add(format, "particles_phi", GPU_COMP_F32, 1,
-  // GPU_FETCH_FLOAT); uint theta_pos = GPU_vertformat_attr_add(format, "particles_theta",
-  // GPU_COMP_F32, 1, GPU_FETCH_FLOAT);
-
-  // p3d->ssbo = GPU_vertbuf_create_with_format(format);
-  // GPU_vertbuf_data_alloc(p3d->ssbo, p3d->nb_particles);
-
-  //// Fill the vertex buffer with vertices data
-  // for (int i = 0; i < p3d->nb_particles; i++) {
-  //  float x_val[1] = {p3d->particles.x[i]};
-  //  float y_val[1] = {p3d->particles.y[i]};
-  //  float z_val[1] = {p3d->particles.z[i]};
-  //  float phi_val[1] = {p3d->particles.phi[i]};
-  //  float theta_val[1] = {p3d->particles.theta[i]};
-
-  //  GPU_vertbuf_attr_set(p3d->ssbo, x_pos, i, x_val);
-  //  GPU_vertbuf_attr_set(p3d->ssbo, y_pos, i, y_val);
-  //  GPU_vertbuf_attr_set(p3d->ssbo, z_pos, i, z_val);
-  //  GPU_vertbuf_attr_set(p3d->ssbo, phi_pos, i, phi_val);
-  //  GPU_vertbuf_attr_set(p3d->ssbo, theta_pos, i, theta_val);
-  //}
 
   GPUVertFormat *format_x = immVertexFormat();
   GPUVertFormat *format_y = immVertexFormat();
@@ -347,7 +320,6 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   /* Compute update particles */
   if (0) {
     GPU_shader_bind(p3d->shader_particle_3d);
-    //GPU_vertbuf_bind_as_ssbo(p3d->ssbo, p3d->ssbo_binding);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_x, p3d->ssbo_binding_particles_x);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_y, p3d->ssbo_binding_particles_y);
     GPU_vertbuf_bind_as_ssbo(p3d->ssbo_particles_z, p3d->ssbo_binding_particles_z);
