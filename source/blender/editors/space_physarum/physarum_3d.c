@@ -31,6 +31,25 @@
 
 #include "physarum_intern.h"
 
+void print_debug_super_quad_mesh(const float positions[6][4], const float uvs[6][3])
+{
+  printf("START POS ---------- \n");
+  for (int i = 0; i < 6; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      printf("Val = %f\n", positions[i][j]);
+    }
+  }
+  printf("STOP POS ---------- \n");
+
+  printf("START UVS ---------- \n");
+  for (int i = 0; i < 6; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      printf("Val = %f\n", uvs[i][j]);
+    }
+  }
+  printf("STOP UVS ---------- \n");
+}
+
 /* Generate geometry data for a super quad mesh */
 GPUVertBuf *make_new_super_quad_mesh(const float world_depth)
 {
@@ -59,35 +78,34 @@ GPUVertBuf *make_new_super_quad_mesh(const float world_depth)
       format, "v_in_f3Texcoord", GPU_COMP_F32, uvs_comp_len, GPU_FETCH_FLOAT);
 
   GPUVertBuf *vbo = GPU_vertbuf_create_with_format(format);
-  const int vertices_len_super_quad = verts_len_template * (pos_comp_len + uvs_comp_len);
-  const int vertices_len = (int)world_depth * vertices_len_super_quad;
+  const uint vertices_len = (int)world_depth * verts_len_template;
   GPU_vertbuf_data_alloc(vbo, vertices_len);
 
   // Fill the vertex buffer with vertices data
   int id_vertex = 0;
-  int z_step = 2.0f / world_depth;
+  float z_step = 2.0f / world_depth;
   for (int z = 0; z < (int)world_depth; ++z) {
     float positions[6][4];
-    memcpy(positions, positions_template, verts_len_template * pos_comp_len);
-    float uvs[6][4];
-    memcpy(uvs, uvs_template, verts_len_template * uvs_comp_len);
+    memcpy(positions, positions_template, (size_t)verts_len_template * pos_comp_len * sizeof(float));
+    float uvs[6][3];
+    memcpy(uvs, uvs_template, (size_t)verts_len_template * uvs_comp_len * sizeof(float));
 
-    positions[0][2] = -1.0f * z_step * z;
-    positions[1][2] = -1.0f * z_step * z;
-    positions[2][2] = -1.0f * z_step * z;
-    positions[3][2] = -1.0f * z_step * z;
-    positions[4][2] = -1.0f * z_step * z;
-    positions[5][2] = -1.0f * z_step * z;
+    positions[0][2] = -1.0f + z_step * z;
+    positions[1][2] = -1.0f + z_step * z;
+    positions[2][2] = -1.0f + z_step * z;
+    positions[3][2] = -1.0f + z_step * z;
+    positions[4][2] = -1.0f + z_step * z;
+    positions[5][2] = -1.0f + z_step * z;
 
-    uvs[0][1] = 1.0f - z_step * z * 0.5f;
-    uvs[1][1] = 1.0f - z_step * z * 0.5f;
-    uvs[2][1] = 1.0f - z_step * z * 0.5f;
-    uvs[3][1] = 1.0f - z_step * z * 0.5f;
-    uvs[4][1] = 1.0f - z_step * z * 0.5f;
-    uvs[5][1] = 1.0f - z_step * z * 0.5f;
+    uvs[0][2] = 1.0f - z_step * z * 0.5f;
+    uvs[1][2] = 1.0f - z_step * z * 0.5f;
+    uvs[2][2] = 1.0f - z_step * z * 0.5f;
+    uvs[3][2] = 1.0f - z_step * z * 0.5f;
+    uvs[4][2] = 1.0f - z_step * z * 0.5f;
+    uvs[5][2] = 1.0f - z_step * z * 0.5f;
 
-    for (int i = 0; i < vertices_len_super_quad; ++i) {
-      id_vertex = i + z * vertices_len_super_quad;
+    for (int i = 0; i < verts_len_template; ++i) {
+      id_vertex = i + z * verts_len_template;
       GPU_vertbuf_attr_set(vbo, pos, id_vertex, positions[i]);
       GPU_vertbuf_attr_set(vbo, uv, id_vertex, uvs[i]);
     }
@@ -346,9 +364,12 @@ void initialize_physarum_3d(Physarum3D *p3d)
 {
   printf("Physarum 3D: initialize data\n");
   /* Setup matrices */
+  // Perspective
   zero_m4(p3d->projection_matrix);
   get_perspective_projection(p3d->projection_matrix, DEG2RAD(60.0f), 16.0f / 9.0f, 0.01f, 10.0f);
+  // Model
   get_m4_identity(p3d->model_matrix);
+  // View
   float azimuth = 0.0f;
   float polar = M_PI_2;
   float radius = 2.0f;
@@ -396,7 +417,7 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /* Compute update particles */
-  {
+  if(0){
     // Switch trails map
     p3d->is_trail_A = (p3d->is_trail_A) ? 0 : 1;
 
@@ -453,7 +474,7 @@ void physarum_3d_draw_view(Physarum3D *p3d)
   }
 
   /* Compute diffuse / decay */
-  {
+  if(0){
     GPU_shader_bind(p3d->shader_decay);
 
     // Bind trails data textures
