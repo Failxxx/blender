@@ -148,24 +148,25 @@ class PHYSARUM_OT_start_operator(bpy.types.Operator):
             self._updating = True
             self.calcs()
             self._updating = False
-        if context.scene.cancel_run_bool==True:
+            print(context.scene.cancel_run_bool)
+        if event.type == 'TIMER' and context.scene.cancel_run_bool==True:
             self.cancel(context)
-            context.scene.cancel_run_bool==True
-            return {'CANCELLED'}
         return {'PASS_THROUGH'}
 
     def execute(self, context):
         context.window_manager.modal_handler_add(self)
         self._updating = False
-        context.scene.cancel_run_bool==False
         self._timer = context.window_manager.event_timer_add(0.001, window = context.window)
+        context.scene.cancel_run_bool=False
+        print(context.scene.cancel_run_bool)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
-        print('ok')
-        context.window_manager.event_timer_remove(self._timer)
-        self._timer = None
-        return {'CANCELLED'}
+        if context.scene.cancel_run_bool==True:
+            context.window_manager.event_timer_remove(self._timer)
+            self._timer = None
+            context.scene.cancel_run_bool==False
+        return {'FINISHED'}
 
 class PHYSARUM_OT_stop_operator(bpy.types.Operator):
     bl_space_type = 'PHYSARUM_EDITOR'
