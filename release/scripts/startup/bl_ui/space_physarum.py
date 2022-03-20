@@ -105,6 +105,20 @@ class PHYSARUM_PT_properties(Panel):
         col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
+        sub.prop(st, "background_color", text="Background color")
+
+        col = layout.column(align=False)
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.prop(st, "particles_color", text="Particles color")
+
+        layout.row()
+        layout.row()
+        layout.row()
+
+        col = layout.column(align=False)
+        row = col.row(align=True)
+        sub = row.row(align=True)
         sub.prop(st, "particles_population_factor", text="Particles")
 
         col = layout.column(align=False)

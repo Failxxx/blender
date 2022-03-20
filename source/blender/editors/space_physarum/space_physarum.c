@@ -80,8 +80,17 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
   sphys->move_distance = 1.1f;
   sphys->decay_factor = 0.9f;
   sphys->particles_population_factor = 0.8f;
+  // Colors
+  sphys->background_color[0] = 0.0f;
+  sphys->background_color[1] = 0.0f;
+  sphys->background_color[2] = 0.0f;
+  sphys->background_color[3] = 1.0f;
+  sphys->particles_color[0] = 1.0f;
+  sphys->particles_color[1] = 1.0f;
+  sphys->particles_color[2] = 1.0f;
+  sphys->particles_color[3] = 1.0f;
 
-  // Unsued for the moment
+  // Unsued for the moment (for physarum 3d)
   sphys->deposit_value = 50;
   sphys->spawn_radius = 50.0;
   sphys->center_attraction = 1.0;

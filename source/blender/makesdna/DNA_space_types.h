@@ -2097,7 +2097,7 @@ typedef struct Physarum3D {
 
 } Physarum3D;
 
-typedef struct PhysarumData2D {
+typedef struct Physarum2D {
   float projection_matrix[4][4];  // Orthographic projection matrix for 2D rendering
 
   /* Batches, hold VBOs */
@@ -2141,6 +2141,9 @@ typedef struct PhysarumData2D {
   float rotation_angle;
   float decay;
 
+  float *background_color;
+  float *particles_color;
+
 } Physarum2D;
 
 typedef struct SpacePhysarum {
@@ -2159,6 +2162,8 @@ typedef struct SpacePhysarum {
   int simulation_is_running;
 
   /* Physarum properties */
+  float background_color[4];
+  float particles_color[4];
   float particles_population_factor;
 
   float sensor_angle;
@@ -2184,6 +2189,7 @@ typedef struct SpacePhysarum {
   char *file_name;
   int screen_width;
   int screen_height;
+
 
 } SpacePhysarum;
 

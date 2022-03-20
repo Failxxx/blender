@@ -183,6 +183,8 @@ void free_physarum_2d(Physarum2D *p2d)
   physarum_2d_free_shaders(p2d);
   //physarum_2d_free_frame_buffers(p2d); TODO: fix free error
   MEM_freeN(p2d->start_time);
+  MEM_freeN(p2d->background_color);
+  MEM_freeN(p2d->particles_color);
 #ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free complete\n");
 #endif
@@ -382,6 +384,9 @@ void initialize_physarum_2d(Physarum2D *p2d)
   p2d->move_distance = 1.1f;
   p2d->rotation_angle = 4.0f;
 
+  p2d->background_color = MEM_callocN(4 * sizeof(float), "physarum 2d background color");
+  p2d->particles_color = MEM_callocN(4 * sizeof(float), "physarum 2d particles color");
+
   orthographic_m4(p2d->projection_matrix, -1.0f, 1.0f, -1.0f, 1.0f, -0.1f, 100.0f);
 
   physarum_2d_gen_textures(p2d);
@@ -436,7 +441,7 @@ void physarum_2d_draw_view(Physarum2D *p2d)
 
   // Elapsed time since the beginning of the simulation
   float time = get_elapsed_time(p2d->start_time);
-  // Clear color framebuffer
+  // Clear color framebuffer (for custom framebuffers)
   const float transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /* ----- Compute trails ----- */
@@ -533,10 +538,11 @@ void physarum_2d_draw_view(Physarum2D *p2d)
     // Pixel / Fragment shader
     GPU_batch_texture_bind(batch, "u_s2TrailsData", p2d->trails_tex_current);
     GPU_batch_uniform_1i(batch, "u_s2TrailsData", 0);
+    GPU_batch_uniform_4fv(batch, "u_f4ParticlesColor", p2d->particles_color);
 
     // Draw final result
     GPU_framebuffer_bind(frameBuffer);
-    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, transparent, 0, 0);
+    GPU_framebuffer_clear(frameBuffer, GPU_COLOR_BIT, p2d->background_color, 0, 0);
     GPU_batch_draw(batch);
   }
 
@@ -629,6 +635,8 @@ void physarum_2d_handle_events(Physarum2D *p2d,
   p2d->sensor_distance = sphys->sensor_distance;
   p2d->sensor_angle = sphys->sensor_angle;
   p2d->decay = sphys->decay_factor;
+  copy_v4_v4(p2d->background_color, sphys->background_color);
+  copy_v4_v4(p2d->particles_color, sphys->particles_color);
 
   p2d->screen_height = region->winx;
   p2d->screen_width = region->winy;

@@ -75,9 +75,6 @@ void physarum_draw_view(const bContext *C, ARegion *region)
   /* ----- Draw ----- */
   GPU_blend(GPU_BLEND_ALPHA);
 
-  // Background color
-  GPU_clear_color(0.227f, 0.227f, 0.227f, 1.0f);
-
   if(sphys->mode == SP_PHYSARUM_2D) {
     physarum_2d_handle_events(p2d, sphys, C, region);
     physarum_2d_draw_view(p2d);
