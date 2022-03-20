@@ -7,7 +7,7 @@ uniform sampler3D u_s3TrailsData;
 
 const float N = 30.0f;
 const float GRID_SIZE = 5.0f;
-const float GRID_OPACITY = 0.5f;
+const float GRID_OPACITY = 1.0f;
 
 // https://www.iquilezles.org/www/articles/filterableprocedurals/filterableprocedurals.htm
 float grid(vec3 p, vec3 dpdx, vec3 dpdy)
@@ -28,5 +28,5 @@ void main()
   float grid_color = grid(p, dx, dy) * GRID_OPACITY;
   v = max(grid_color, v);
 
-  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  FragColor = vec4(1.0f, 1.0f, 1.0f, v);
 }

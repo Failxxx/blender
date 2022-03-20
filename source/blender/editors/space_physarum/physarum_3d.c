@@ -522,12 +522,14 @@ void physarum_3d_draw_view(Physarum3D *p3d)
     GPU_batch_uniform_1i(p3d->batch, "u_s3TrailsData", 0);
 
     axis_angle_to_mat4_single(p3d->model_matrix, 'Y', M_PI_2);
+    transpose_m4(p3d->model_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 2);
 
     GPU_batch_draw(p3d->batch);  // First pass
 
     axis_angle_to_mat4_single(p3d->model_matrix, 'X', -1.0 * M_PI_2);
+    transpose_m4(p3d->model_matrix);
     GPU_batch_uniform_mat4(p3d->batch, "u_m4Model_matrix", p3d->model_matrix);
     GPU_batch_uniform_1i(p3d->batch, "u_iTexcoord_map", 1);
 
