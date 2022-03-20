@@ -168,13 +168,17 @@ void get_look_at(float dest[4][4], const float eye[3], const float target[3], co
 
 void P3D_free_batches(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free batches\n");
+#endif
   GPU_batch_discard(p3d->batch);
 }
 
 void P3D_free_particles_ssbo(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free particles ssbo\n");
+#endif
   GPU_vertbuf_discard(p3d->ssbo_particles_x);
   GPU_vertbuf_discard(p3d->ssbo_particles_y);
   GPU_vertbuf_discard(p3d->ssbo_particles_z);
@@ -184,7 +188,9 @@ void P3D_free_particles_ssbo(Physarum3D *p3d)
 
 void P3D_free_shaders(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free shaders\n");
+#endif
   GPU_shader_free(p3d->shader_decay);
   GPU_shader_free(p3d->shader_particle_3d);
   GPU_shader_free(p3d->shader_render);
@@ -192,7 +198,9 @@ void P3D_free_shaders(Physarum3D *p3d)
 
 void P3D_free_textures(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free textures\n");
+#endif
   GPU_texture_free(p3d->texture_trail_A);
   GPU_texture_free(p3d->texture_trail_B);
   //GPU_texture_free(p3d->texture_occ);
@@ -200,7 +208,9 @@ void P3D_free_textures(Physarum3D *p3d)
 
 void P3D_free_particles(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free particles\n");
+#endif
   free(p3d->particles.x);
   free(p3d->particles.y);
   free(p3d->particles.z);
@@ -211,20 +221,26 @@ void P3D_free_particles(Physarum3D *p3d)
 
 void free_physarum_3d(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free data\n");
+#endif
   P3D_free_particles(p3d);
   P3D_free_particles_ssbo(p3d);
   P3D_free_shaders(p3d);
   P3D_free_textures(p3d);
   P3D_free_batches(p3d);
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: free complete\n");
+#endif
 }
 
 /* Generate data functions */
 
 void P3D_generate_batches(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: generate batches\n");
+#endif
   GPUVertBuf *super_quad_mesh = make_new_super_quad_mesh(p3d->world_depth);
 
   p3d->batch = GPU_batch_create_ex(GPU_PRIM_TRIS, super_quad_mesh, NULL, GPU_BATCH_OWNS_VBO);
@@ -232,7 +248,9 @@ void P3D_generate_batches(Physarum3D *p3d)
 
 void P3D_generate_particles_ssbo(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: generate particles ssbo\n");
+#endif
 
   GPUVertFormat *format_x = immVertexFormat();
   GPUVertFormat *format_y = immVertexFormat();
@@ -278,7 +296,9 @@ void P3D_generate_particles_ssbo(Physarum3D *p3d)
 
 void P3D_load_shaders(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: load shaders\n");
+#endif
   p3d->shader_particle_3d = GPU_shader_create_compute(
       datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl,
       NULL,
@@ -298,7 +318,9 @@ void P3D_load_shaders(Physarum3D *p3d)
 
 void P3D_generate_textures(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: generate textures\n");
+#endif
   p3d->texture_trail_A = GPU_texture_create_3d("physarum 3d trail A tex",
                                                p3d->world_width,
                                                p3d->world_height,
@@ -331,7 +353,9 @@ void P3D_generate_textures(Physarum3D *p3d)
 
 void P3D_generate_particles_data(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: generate particles data\n");
+#endif
   RNG *rng = BLI_rng_new_srandom(5831);  // Arbitrary, random values generator
   float phi, theta, radius;
 
@@ -362,7 +386,9 @@ void P3D_generate_particles_data(Physarum3D *p3d)
 
 void initialize_physarum_3d(Physarum3D *p3d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: initialize data\n");
+#endif
   /* Setup matrices */
   // Perspective
   zero_m4(p3d->projection_matrix);
@@ -406,7 +432,9 @@ void initialize_physarum_3d(Physarum3D *p3d)
   P3D_load_shaders(p3d);
   P3D_generate_textures(p3d);
   P3D_generate_batches(p3d);
+#ifdef PHYSARUM_DEBUG
   printf("Physarum 3D: initialization complete\n");
+#endif
 }
 
 /* Draw functions */

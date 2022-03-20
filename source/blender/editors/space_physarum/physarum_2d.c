@@ -129,7 +129,9 @@ GPUVertBuf *make_new_points_mesh(float *positions, float *uvs, int nb_points)
 
 void physarum_2d_free_textures(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free textures\n");
+#endif
   /* Free textures */
   GPU_texture_free(p2d->trails_tex_current);
   GPU_texture_free(p2d->trails_tex_next);
@@ -140,7 +142,9 @@ void physarum_2d_free_textures(Physarum2D *p2d)
 
 void physarum_2d_free_shaders(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free shaders\n");
+#endif
   /* Free shaders */
   GPU_shader_free(p2d->diffuse_decay_shader);
   GPU_shader_free(p2d->update_agents_shader);
@@ -150,7 +154,9 @@ void physarum_2d_free_shaders(Physarum2D *p2d)
 
 void physarum_2d_free_batches(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free batches\n");
+#endif
   GPU_batch_discard(p2d->diffuse_decay_batch);
   GPU_batch_discard(p2d->update_agents_batch);
   GPU_batch_discard(p2d->render_agents_batch);
@@ -159,7 +165,9 @@ void physarum_2d_free_batches(Physarum2D *p2d)
 
 void physarum_2d_free_frame_buffers(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free frame buffers\n");
+#endif
   GPU_FRAMEBUFFER_FREE_SAFE(p2d->diffuse_decay_fb);
   GPU_FRAMEBUFFER_FREE_SAFE(p2d->update_agents_fb);
   GPU_FRAMEBUFFER_FREE_SAFE(p2d->render_agents_fb);
@@ -167,20 +175,26 @@ void physarum_2d_free_frame_buffers(Physarum2D *p2d)
 
 void free_physarum_2d(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free data\n");
+#endif
   physarum_2d_free_textures(p2d);
   physarum_2d_free_batches(p2d);
   physarum_2d_free_shaders(p2d);
   //physarum_2d_free_frame_buffers(p2d); TODO: fix free error
   MEM_freeN(p2d->start_time);
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: free complete\n");
+#endif
 }
 
 /* Generate data functions */
 
 void physarum_2d_gen_particles_data(Physarum2D *p2d, float *pos, float *uvs)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: gen particles data\n");
+#endif
   RNG *rng = BLI_rng_new_srandom(5831); // Arbitrary, random values generator
 
   /* Fill buffers */
@@ -206,7 +220,9 @@ void physarum_2d_gen_particles_data(Physarum2D *p2d, float *pos, float *uvs)
 }
 
 void physarum_2d_gen_texture_data(Physarum2D* p2d, float *texture_data) {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: gen particles texture data\n");
+#endif
   RNG *rng = BLI_rng_new_srandom(2236);  // Arbitrary, random values generator
 
   /* Fill buffer */
@@ -224,7 +240,9 @@ void physarum_2d_gen_texture_data(Physarum2D* p2d, float *texture_data) {
 
 void physarum_2d_gen_textures(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: gen textures\n");
+#endif
   /* Generate textures */
   int bytes = sizeof(float) * 4 * p2d->tex_width * p2d->tex_height;
   float *agents_data = (float *)malloc(bytes);
@@ -265,7 +283,9 @@ void physarum_2d_gen_textures(Physarum2D *p2d)
 
 void physarum_2d_gen_shaders(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: load shaders\n");
+#endif
   /* Load shaders */
   p2d->diffuse_decay_shader = GPU_shader_create_from_arrays(
       {.vert = (const char *[]){datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl, NULL},
@@ -286,7 +306,9 @@ void physarum_2d_gen_shaders(Physarum2D *p2d)
 
 void physarum_2d_gen_batches(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: gen batches\n");
+#endif
   /* Generate geometry data (3d render targets) */
   GPUVertBuf *quad_vbo_1 = make_new_quad_mesh();
   GPUVertBuf *quad_vbo_2 = make_new_quad_mesh();
@@ -319,7 +341,9 @@ void physarum_2d_gen_batches(Physarum2D *p2d)
 
 void physarum_2d_gen_frame_buffers(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: gen frame buffers\n");
+#endif
   /* Generate frame buffers */
   GPU_framebuffer_ensure_config(&p2d->diffuse_decay_fb,
                                 {
@@ -340,7 +364,9 @@ void physarum_2d_gen_frame_buffers(Physarum2D *p2d)
 
 void initialize_physarum_2d(Physarum2D *p2d)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: initialize data\n");
+#endif
   /* Default values */
   p2d->screen_width = 1024;
   p2d->screen_height = 1024;
@@ -366,7 +392,9 @@ void initialize_physarum_2d(Physarum2D *p2d)
   // timespec struct : time_t tv_sec, long tv_nsec
   p2d->start_time = MEM_callocN(sizeof(time_t) + sizeof(long), "pysarum 2d start time");
   timespec_get(p2d->start_time, TIME_UTC);
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: initialization complete\n");
+#endif
 }
 
 /* Draw functions */
@@ -535,7 +563,9 @@ int get_new_nb_particles(Physarum2D *p2d, const float particles_population_facto
 void physarum_2d_update_particles(Physarum2D *p2d)
 {
   /* Free old data */
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: update particles\n");
+#endif
   GPU_batch_discard(p2d->render_agents_batch);
 
   /* Generate new particles */
@@ -574,7 +604,9 @@ void physarum_2d_reset_textures(Physarum2D *p2d)
 
 void physarum_2d_reset_simulation(Physarum2D *p2d, const float particles_population_factor)
 {
+#ifdef PHYSARUM_DEBUG
   printf("Physarum2D: reset simulation\n");
+#endif
   physarum_2d_reset_textures(p2d);
   // Compute new number of particles
   int new_nb_particles = get_new_nb_particles(p2d, particles_population_factor);

@@ -2151,9 +2151,8 @@ typedef struct SpacePhysarum {
   char _pad0[7];
   /* End 'SpaceLink' header. */
 
-  Physarum3D *physarum3d;
+  Physarum3D *p3d;
   Physarum2D *p2d;
-  ARegion *region;
 
   int mode;            // eSpacePhysarum_Mode
   int rendering_mode;  // eSpacePhysarum_Rendering_Mode

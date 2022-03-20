@@ -23,13 +23,17 @@
 
 #pragma once
 
+// Print debug messages
+//#define PHYSARUM_DEBUG
+
 /* internal exports only */
 
-/* Physarum custom shaders */
+/* Custom shaders */
 // Debug
 extern char datatoc_gpu_shader_3D_debug_physarum_vs_glsl[];
 extern char datatoc_gpu_shader_3D_debug_physarum_fs_glsl[];
-// Physarum 2D
+
+// 2D
 extern char datatoc_gpu_shader_3D_physarum_2d_quad_vs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_render_agents_vs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_diffuse_decay_fs_glsl[];
@@ -37,15 +41,13 @@ extern char datatoc_gpu_shader_3D_physarum_2d_update_agents_fs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_render_agents_fs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_2d_post_process_fs_glsl[];
 
-// Physarum 3D
+// 3D
 extern char datatoc_gpu_shader_3D_physarum_3d_particle_cs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_3d_decay_cs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_3d_vertex_vs_glsl[];
 extern char datatoc_gpu_shader_3D_physarum_3d_pixel_fs_glsl[];
 
-/* Operators */
-
-/* Physarum draw functions */
+/* Draw functions */
 void physarum_draw_view(const bContext *C, ARegion *region);
 
 /* Physarum 2D functions */
@@ -59,7 +61,7 @@ void physarum_2d_handle_events(Physarum2D *p2d,
                                const bContext *C,
                                ARegion *region);
 
-/* Physarum 3D algorithms functions */
+/* Physarum 3D functions */
 void initialize_physarum_3d(Physarum3D *p3d);
 void physarum_3d_draw_view(Physarum3D *p3d);
 void physarum_3d_handle_events(Physarum3D *p3d,
@@ -75,6 +77,3 @@ void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
 void physarum_render_animation(SpacePhysarum *sphys);
-void PHYSARUM_OT_draw(struct wmOperatorType *ot);
-
-
