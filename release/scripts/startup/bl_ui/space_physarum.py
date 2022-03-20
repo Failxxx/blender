@@ -29,6 +29,12 @@ bpy.types.Scene.user_stop_physarum_simulation = bpy.props.BoolProperty(
     default = False,
 )
 
+bpy.types.Scene.physarum_simulation_is_running = bpy.props.BoolProperty(
+    name = "Physarum simulation state",
+    description ="Describes the physarum simulation state",
+    default = False,
+)
+
 bpy.types.Scene.physarum_frame_rate = bpy.props.IntProperty(
     name = "Physarum frame rate",
     description = "Choose a custom frame rate for the physarum simulation",
@@ -71,7 +77,7 @@ class PHYSARUM_PT_mode(Panel):
         col = layout.column(align=False, heading="Frame rate")
         row = col.row(align=True)
         sub = row.row(align=True)
-        row.prop(context.scene, "physarum_frame_rate", text="Frame rate")
+        row.prop(context.scene, "physarum_frame_rate", text="")
 
         col = layout.column(align=False, heading="Start physarum simulation")
         row = col.row(align=True)
@@ -158,29 +164,36 @@ class PHYSARUM_OT_start_simulation(bpy.types.Operator):
     timer = None
 
     def modal(self, context, event):
-        if event.type == 'TIMER' and not self.updating:
-            self.updating = True
+        if event.type == 'TIMER':
+
+            if context.scene.user_stop_physarum_simulation==True:
+                self.cancel(context)
+                return {'CANCELLED'}
+
             # Forces to redraw the view (magic trick)
             bpy.context.scene.frame_set(bpy.data.scenes['Scene'].frame_current)
-            self.updating = False
-        if event.type == 'TIMER' and context.scene.user_stop_physarum_simulation==True:
-            self.cancel(context)
+
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        context.window_manager.modal_handler_add(self)
+        time_step = 1 / context.scene.physarum_frame_rate
+        self.timer = context.window_manager.event_timer_add(time_step, window = context.window)
         self.updating = False
-        time = 1 / context.scene.physarum_frame_rate
-        self.timer = context.window_manager.event_timer_add(time, window = context.window)
         context.scene.user_stop_physarum_simulation=False
+        context.scene.physarum_simulation_is_running=True
+        context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
-        if context.scene.user_stop_physarum_simulation==True:
-            context.window_manager.event_timer_remove(self.timer)
-            self.timer = None
-            context.scene.user_stop_physarum_simulation==False
-        return {'FINISHED'}
+        context.window_manager.event_timer_remove(self.timer)
+        context.scene.physarum_simulation_is_running=False
+        context.scene.user_stop_physarum_simulation=False
+        self.timer = None
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.physarum_simulation_is_running == False
+        
 
 class PHYSARUM_OT_stop_simulation(bpy.types.Operator):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -191,6 +204,10 @@ class PHYSARUM_OT_stop_simulation(bpy.types.Operator):
     def execute(self, context):
         context.scene.user_stop_physarum_simulation = True
         return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.physarum_simulation_is_running == True
 
 class PHYSARUM_PT_output(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
