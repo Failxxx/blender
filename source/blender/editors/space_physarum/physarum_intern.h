@@ -75,5 +75,6 @@ void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_2D(struct wmOperatorType *ot);
 void physarum_render_animation(SpacePhysarum *sphys);
+void PHYSARUM_OT_draw(struct wmOperatorType *ot);
 
 

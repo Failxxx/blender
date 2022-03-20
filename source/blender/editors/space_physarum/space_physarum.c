@@ -99,6 +99,7 @@ static SpaceLink *physarum_create(const ScrArea *UNUSED(area), const Scene *UNUS
 
   BLI_addtail(&sphys->regionbase, ar);
   ar->regiontype = RGN_TYPE_WINDOW;
+  sphys->region = ar;
 
   /* Allocate memory fo Physarum2D */
   sphys->p2d = MEM_callocN(sizeof(Physarum2D), "physarum 2d simulation data");

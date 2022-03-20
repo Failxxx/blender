@@ -23,6 +23,12 @@ from bl_ui.utils import PresetPanel
 
 from bpy.app.translations import pgettext_tip as tip_
 
+bpy.types.Scene.cancel_run_bool = bpy.props.BoolProperty(
+    name = "running",
+    description ="fnj",
+    default = False,
+)
+
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
 
@@ -51,6 +57,19 @@ class PHYSARUM_PT_mode(Panel):
         layout = self.layout
         row = layout.row()
         row.menu("PHYSARUM_MT_menu_mode")
+
+        col = layout.column(align=False, heading="Start Physarum")
+        row = col.row(align=True)
+        row.operator("physarum.start_operator", text="Start")    
+
+        col = layout.column(align=False, heading="Start Physarum")
+        row = col.row(align=True)
+        row.operator("physarum.stop_operator", text="Stop")
+
+        col = layout.column(align=False, heading="Reset physarum 2d")
+        row = col.row(align=True)
+        sub = row.row(align=True)
+        sub.operator("physarum.reset_physarum_2d", text="Reset physarum 2d")
 
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -114,10 +133,56 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "collision")
 
-        col = layout.column(align=False, heading="Reset physarum 2d")
-        row = col.row(align=True)
-        sub = row.row(align=True)
-        sub.operator("physarum.reset_physarum_2d", text="Reset physarum 2d")
+class PHYSARUM_OT_start_operator(bpy.types.Operator):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Start Physarum"
+    bl_idname = "physarum.start_operator"
+
+    _updating = False
+    _calcs_done = False
+    _timer = None
+
+    def calcs(self):
+        #Call operator that call draw function
+        bpy.context.scene.frame_set(bpy.data.scenes['Scene'].frame_current)
+        _calcs_done = True
+
+    def modal(self, context, event):
+        if event.type == 'TIMER' and not self._updating:
+            self._updating = True
+            self.calcs()
+            self._updating = False
+            print(context.scene.cancel_run_bool)
+        if event.type == 'TIMER' and context.scene.cancel_run_bool==True:
+            self.cancel(context)
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        self._updating = False
+        self._timer = context.window_manager.event_timer_add(0.001, window = context.window)
+        context.scene.cancel_run_bool=False
+        print(context.scene.cancel_run_bool)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        if context.scene.cancel_run_bool==True:
+            context.window_manager.event_timer_remove(self._timer)
+            self._timer = None
+            context.scene.cancel_run_bool==False
+        return {'FINISHED'}
+
+class PHYSARUM_OT_stop_operator(bpy.types.Operator):
+    bl_space_type = 'PHYSARUM_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Start Physarum"
+    bl_idname = "physarum.stop_operator"
+
+    def execute(self, context):
+        print('cancel')
+        context.scene.cancel_run_bool = True
+        return {'FINISHED'}
 
 class RenderOutputButtonsPanel:
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -166,6 +231,8 @@ classes = (
     PHYSARUM_MT_menu_mode,
     PHYSARUM_PT_mode,
     PHYSARUM_PT_properties,
+    PHYSARUM_OT_start_operator,
+    PHYSARUM_OT_stop_operator,
     PHYSARUM_PT_output,
 )
 
