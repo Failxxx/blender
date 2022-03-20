@@ -7999,19 +7999,19 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   prop = RNA_def_property(srna, "deposit_value", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "deposit_value");
   RNA_def_property_range(prop, 0.0, 5.0);
-  RNA_def_property_ui_text(prop, "Deposit Value", "");
+  RNA_def_property_ui_text(prop, "Deposit Value", "Deposit values of the agents");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "spawn_radius", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "spawn_radius");
   RNA_def_property_range(prop, 0.0, 240.0);
-  RNA_def_property_ui_text(prop, "Spawn Radius", "");
+  RNA_def_property_ui_text(prop, "Spawn Radius", "Radius of the spawning sphere");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "center_attraction", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "center_attraction");
   RNA_def_property_range(prop, 0.0, 5.0);
-  RNA_def_property_ui_text(prop, "Center Attraction", "");
+  RNA_def_property_ui_text(prop, "Center Attraction", "Center of the attraction");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "collision", PROP_BOOLEAN, PROP_NONE);
@@ -8022,7 +8022,7 @@ static void rna_def_space_physarum(BlenderRNA *brna)
   prop = RNA_def_property(srna, "nb_frames_to_render", PROP_INT, PROP_NONE);
   RNA_def_property_int_sdna(prop, NULL, "nb_frames_to_render");
   RNA_def_property_range(prop, 1, 1000);
-  RNA_def_property_ui_text(prop, "Animation length", "");
+  RNA_def_property_ui_text(prop, "Animation length", "Animation length, in frames");
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
 
   prop = RNA_def_property(srna, "output_path", PROP_STRING, PROP_FILEPATH);

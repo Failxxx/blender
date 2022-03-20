@@ -69,7 +69,7 @@ void physarum_3d_handle_events(Physarum3D *p3d,
 void free_physarum_3d(Physarum3D *p3d);
 
 /* Physarum operators */
-void PHYSARUM_OT_reset_physarum_2d(wmOperatorType *ot);
+void PHYSARUM_OT_reset_physarum(wmOperatorType *ot);
 void PHYSARUM_OT_single_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_animation_render(struct wmOperatorType *ot);
 void PHYSARUM_OT_draw_3D(struct wmOperatorType *ot);

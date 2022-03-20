@@ -264,32 +264,34 @@ int export_bitmap_image(unsigned char *image, const int height, const int width,
   return error;
 }
 
-// Reset physarum 2d
+// Reset physarum
 
-static int physarum_2d_reset_exec(bContext *C, wmOperator *op)
+static int physarum_reset_exec(bContext *C, wmOperator *op)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  physarum_2d_reset_simulation(sphys->p2d, sphys->particles_population_factor);
+  if (sphys->mode == SP_PHYSARUM_2D) {
+    physarum_2d_reset_simulation(sphys->p2d, sphys->particles_population_factor);
+  }
 
   return OPERATOR_FINISHED;
 }
 
-static bool physarum_2d_reset_poll(bContext *C)
+static bool physarum_reset_poll(bContext *C)
 {
   SpacePhysarum *sphys = CTX_wm_space_physarum(C);
-  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION && sphys->mode == SP_PHYSARUM_2D;
+  return sphys->rendering_mode != SP_PHYSARUM_RENDER_ANIMATION;
 }
 
-void PHYSARUM_OT_reset_physarum_2d(wmOperatorType *ot)
+void PHYSARUM_OT_reset_physarum(wmOperatorType *ot)
 {
   /* identifiers */
-  ot->name = "Reset physarum 2d";
-  ot->idname = "PHYSARUM_OT_reset_physarum_2d";
-  ot->description = "Reset the physarum 2d simulation (generate random particles)";
+  ot->name = "Reset physarum simulation";
+  ot->idname = "PHYSARUM_OT_reset_physarum";
+  ot->description = "Reset the physarum simulation (regenerates random particles)";
 
   /* api callbacks */
-  ot->exec = physarum_2d_reset_exec;
-  ot->poll = physarum_2d_reset_poll;
+  ot->exec = physarum_reset_exec;
+  ot->poll = physarum_reset_poll;
 }
 
 // Render a single frame
