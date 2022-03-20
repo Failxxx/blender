@@ -18,24 +18,22 @@
 
 # <pep8 compliant>
 import bpy
-from bpy.types import Header, Menu, Panel, PropertyGroup, UIList
-from bl_ui.utils import PresetPanel
+from bpy.types import Header, Menu, Panel, Operator, Scene
+from bpy.props import BoolProperty, IntProperty
 
-from bpy.app.translations import pgettext_tip as tip_
-
-bpy.types.Scene.user_stop_physarum_simulation = bpy.props.BoolProperty(
+Scene.user_stop_physarum_simulation = BoolProperty(
     name = "Stop physarum simulation",
     description ="Let the user to stop the currently running physarum simulation",
     default = False,
 )
 
-bpy.types.Scene.physarum_simulation_is_running = bpy.props.BoolProperty(
+Scene.physarum_simulation_is_running = BoolProperty(
     name = "Physarum simulation state",
     description ="Describes the physarum simulation state",
     default = False,
 )
 
-bpy.types.Scene.physarum_frame_rate = bpy.props.IntProperty(
+Scene.physarum_frame_rate = IntProperty(
     name = "Physarum frame rate",
     description = "Choose a custom frame rate for the physarum simulation",
     default = 60,
@@ -43,7 +41,6 @@ bpy.types.Scene.physarum_frame_rate = bpy.props.IntProperty(
     min = 1,
     step = 1,
 )
-
 
 class PHYSARUM_HT_header(Header):
     bl_space_type = 'PHYSARUM_EDITOR'
@@ -53,7 +50,7 @@ class PHYSARUM_HT_header(Header):
 
         layout.template_header()
 
-class PHYSARUM_MT_menu_mode(bpy.types.Menu):
+class PHYSARUM_MT_menu_mode(Menu):
     bl_label = "Mode"
     bl_idname = "PHYSARUM_MT_menu_mode"
 
@@ -63,40 +60,41 @@ class PHYSARUM_MT_menu_mode(bpy.types.Menu):
         layout.operator("physarum.draw_2d")
         layout.operator("physarum.draw_3d")
 
-class PHYSARUM_PT_mode(Panel):
+class PHYSARUM_PT_simulation(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Properties"
-    bl_label = "Physarum simulation mode"
+    bl_label = "Simulation"
 
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         row.menu("PHYSARUM_MT_menu_mode")
 
-        col = layout.column(align=False, heading="Frame rate")
+        col = layout.column(align=False, heading="")
         row = col.row(align=True)
         sub = row.row(align=True)
-        row.prop(context.scene, "physarum_frame_rate", text="")
+        sub.label(text="Frame rate")
+        sub.prop(context.scene, "physarum_frame_rate", text="")
 
         col = layout.column(align=False, heading="Start physarum simulation")
         row = col.row(align=True)
-        row.operator("physarum.start_simulation", text="Start")
+        row.operator("physarum.start_simulation", text="Play", icon="PLAY")
 
-        col = layout.column(align=False, heading="Start physarum simulation")
+        col = layout.column(align=False, heading="Pause physarum simulation")
         row = col.row(align=True)
-        row.operator("physarum.stop_simulation", text="Stop")
+        row.operator("physarum.stop_simulation", text="Pause", icon="PAUSE")
 
         col = layout.column(align=False, heading="Reset physarum simulation")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.operator("physarum.reset_physarum", text="Reset")
+        sub.operator("physarum.reset_physarum", text="Reset", icon="FILE_REFRESH")
 
 class PHYSARUM_PT_properties(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Properties"
-    bl_label = "Physarum simulation properties"
+    bl_label = "Properties"
 
     def draw(self, context):
         layout = self.layout
@@ -134,6 +132,10 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "decay_factor", text="Decay")
 
+        layout.row()
+        layout.row()
+        layout.row()
+
         col = layout.column(align=False)
         row = col.row(align=True)
         sub = row.row(align=True)
@@ -154,11 +156,12 @@ class PHYSARUM_PT_properties(Panel):
         sub = row.row(align=True)
         sub.prop(st, "collision", text="Use collisions")
 
-class PHYSARUM_OT_start_simulation(bpy.types.Operator):
+class PHYSARUM_OT_start_simulation(Operator):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_label = "Start Physarum"
     bl_idname = "physarum.start_simulation"
+    bl_description = "Start the physarum simulation"
 
     updating = False
     timer = None
@@ -192,14 +195,14 @@ class PHYSARUM_OT_start_simulation(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.scene.physarum_simulation_is_running == False
-        
+        return context.scene.physarum_simulation_is_running == False    
 
-class PHYSARUM_OT_stop_simulation(bpy.types.Operator):
+class PHYSARUM_OT_stop_simulation(Operator):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_label = "Stop physarum simulation"
     bl_idname = "physarum.stop_simulation"
+    bl_description = "Stop the physarum simulation"
 
     def execute(self, context):
         context.scene.user_stop_physarum_simulation = True
@@ -213,7 +216,7 @@ class PHYSARUM_PT_output(Panel):
     bl_space_type = 'PHYSARUM_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Render"
-    bl_label = "Physarum Render"
+    bl_label = "Render"
 
     def draw(self, context):
         layout = self.layout
@@ -229,7 +232,7 @@ class PHYSARUM_PT_output(Panel):
         col = layout.column(align=False, heading="Render one frame")
         row = col.row(align=True)
         sub = row.row(align=True)
-        sub.operator("physarum.single_render", text="Render one frame")
+        sub.operator("physarum.single_render", text="Render one frame", icon="RENDER_STILL")
 
         col = layout.column(align=False, heading="Duration")
         row = col.row(align=True)
@@ -238,12 +241,12 @@ class PHYSARUM_PT_output(Panel):
 
         col = layout.column(align=False, heading="Render an animation")
         row = col.row(align=True)
-        row.operator("physarum.animation_render", text="Render an animation")    
+        row.operator("physarum.animation_render", text="Render an animation", icon="RENDER_ANIMATION")
 
 classes = (
     PHYSARUM_HT_header,
     PHYSARUM_MT_menu_mode,
-    PHYSARUM_PT_mode,
+    PHYSARUM_PT_simulation,
     PHYSARUM_PT_properties,
     PHYSARUM_OT_start_simulation,
     PHYSARUM_OT_stop_simulation,
@@ -254,7 +257,6 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         bpy.utils.register_class(cls)
-        
                     
 def unregister():
     from bpy.utils import unregister_class
