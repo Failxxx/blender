@@ -14,49 +14,49 @@ Physarum editor
 - `Physarum 2D (Javascript with Three.js) by Nicolas Barradeau <https://github.com/nicoptere/physarum>`__
 - `Physarum 3D (C++ with HLSL) by Jan Ivanecky <https://github.com/janivanecky/Physarum>`__
 |  Here are some screenshots and gifs:
-
-.. figure:: https://felixolart.xyz/Physarum/physarum_editor_a.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/physarum_editor_a.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/physarum_editor_b.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/physarum_editor_b.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/Export_A.gif
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/physarum_gif_a.gif
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/Export_B.gif
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/physarum_gif_b.gif
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_a.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_a.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_b.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_b.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_c.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_c.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_d.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_d.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_e.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_e.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_f.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_f.png
+   :width: 100%
    :align: center
-
-.. figure:: https://felixolart.xyz/Physarum/screenshot_g.png
-   :scale: 100 %
+|  
+.. figure:: https://raw.githubusercontent.com/Failxxx/blender/master/physarum_images/screenshot_g.png
+   :width: 100%
    :align: center
 
 Blender
