@@ -34,6 +34,7 @@
 #include "DNA_outliner_types.h"  /* for TreeStoreElem */
 #include "DNA_sequence_types.h"  /* SequencerScopes */
 #include "DNA_vec_types.h"
+#include "DNA_screen_types.h"
 /* Hum ... Not really nice... but needed for spacebuts. */
 #include "DNA_view2d_types.h"
 
@@ -1452,8 +1453,6 @@ typedef enum eSpaceText_Flags {
 /* SpaceText.findstr/replacestr */
 #define ST_MAX_FIND_STR 256
 
-/** \} */
-
 /* -------------------------------------------------------------------- */
 /** \name Script View (Obsolete)
  * \{ */
@@ -2036,6 +2035,200 @@ typedef enum eSpreadsheetColumnValueType {
 /** \} */
 
 /* -------------------------------------------------------------------- */
+/** \name Space Physarum
+ * \{ */
+
+typedef struct Physarum3DParticles {
+  float *x;
+  float *y;
+  float *z;
+  float *phi;
+  float *theta;
+  float *pair;
+} Physarum3DParticles;
+
+typedef struct Physarum3D {
+  /* Matrices */
+  float projection_matrix[4][4];
+  float model_matrix[4][4];
+  float view_matrix[4][4];
+  int tex_coord_map;
+
+  /* Particles */
+  int nb_particles;
+  struct Physarum3DParticles particles;
+
+  float screen_width;
+  float screen_height;
+
+  float world_width;
+  float world_height;
+  float world_depth;
+  float spawn_radius;
+
+  /* Simulation parameters */
+  float sensor_spread;
+  float sensor_distance;
+  float turn_angle;
+  float move_distance;
+  float deposit_value;
+  float decay_factor;
+  float collision;
+  float center_attraction;
+  float move_sensor_coef;
+  float move_sensor_offset;
+
+  /* Textures */
+  struct GPUTexture *texture_trail_A;
+  struct GPUTexture *texture_trail_B;
+  struct GPUTexture *texture_occ;
+  int is_trail_A;
+
+  /* Shaders */
+  // Agents/particles compute
+  char _pad0[4];
+  struct GPUShader *shader_particle_3d;
+  // Decay = decay/diffusion
+  struct GPUShader *shader_decay;
+  // Rendering shaders
+  struct GPUShader *shader_render;
+
+  /* Batches for rendering */
+  struct GPUBatch *batch;
+
+  struct GPUVertBuf *ssbo;
+  char _pad2[4];
+  int ssbo_binding;
+
+  struct GPUVertBuf *ssbo_particles_x;
+  struct GPUVertBuf *ssbo_particles_y;
+  struct GPUVertBuf *ssbo_particles_z;
+  struct GPUVertBuf *ssbo_particles_phi;
+  struct GPUVertBuf *ssbo_particles_theta;
+
+  int ssbo_binding_particles_x;
+  int ssbo_binding_particles_y;
+  int ssbo_binding_particles_z;
+  int ssbo_binding_particles_phi;
+  int ssbo_binding_particles_theta;
+  char _pad3[4];
+
+} Physarum3D;
+
+typedef struct Physarum2D {
+  float projection_matrix[4][4];  // Orthographic projection matrix for 2D rendering
+
+  /* Batches, hold VBOs */
+  struct GPUBatch *diffuse_decay_batch;
+  struct GPUBatch *update_agents_batch;
+  struct GPUBatch *render_agents_batch;
+  struct GPUBatch *post_process_batch;
+
+  /* Shaders */
+  struct GPUShader *diffuse_decay_shader;
+  struct GPUShader *update_agents_shader;
+  struct GPUShader *render_agents_shader;
+  struct GPUShader *post_process_shader;
+
+  /* Textures */
+  struct GPUTexture *trails_tex_current;
+  struct GPUTexture *trails_tex_next;
+  struct GPUTexture *agents_data_tex_current;
+  struct GPUTexture *agents_data_tex_next;
+  struct GPUTexture *agents_tex;
+
+  /* Frame buffers, one for each texture type */
+  struct GPUFrameBuffer *diffuse_decay_fb;
+  struct GPUFrameBuffer *update_agents_fb;
+  struct GPUFrameBuffer *render_agents_fb;
+
+  /* Simulation parameters */
+  struct timespec *start_time;
+  int screen_width;
+  int screen_height;
+  int tex_width;
+  int tex_height;
+
+  int nb_particles;
+  int max_particles;
+  int min_particles;
+
+  float sensor_angle;
+  float sensor_distance;
+  float move_distance;
+  float rotation_angle;
+  float decay;
+
+  float *background_color;
+  float *particles_color;
+
+} Physarum2D;
+
+typedef struct SpacePhysarum {
+  SpaceLink *next, *prev;
+  /* Storage of regions for inactive spaces. */
+  ListBase regionbase;
+  char spacetype;
+  char _pad0[7];
+  /* End 'SpaceLink' header. */
+
+  Physarum3D *p3d;
+  Physarum2D *p2d;
+
+  int mode;            // eSpacePhysarum_Mode
+  int rendering_mode;  // eSpacePhysarum_Rendering_Mode
+  int simulation_is_running;
+
+  /* Physarum properties */
+  float background_color[4];
+  float particles_color[4];
+  float particles_population_factor;
+
+  float sensor_angle;
+  float sensor_distance;
+  float rotation_angle;
+  float move_distance;
+  float decay_factor;
+
+  float deposit_value;
+  float spawn_radius;
+  float center_attraction;
+
+  /* Le flags permet l'implémentation du booléen collision */
+  short flags;
+
+  /* Rendering */
+  char _pad1[2];
+  int nb_frames_to_render;
+  int render_frames_counter;
+  char _pad2[4];
+  unsigned char *output_image_data;
+  char *output_path;
+  char *file_name;
+  int screen_width;
+  int screen_height;
+
+
+} SpacePhysarum;
+
+/* SpacePhysarum flags */
+typedef enum eSpacePhysarum_Flags {
+  ST_FLAG_COLLISION = (1 << 0),
+} eSpacePhysarum_Flags;
+
+typedef enum eSpacePhysarum_Mode {
+  SP_PHYSARUM_2D = 0,
+  SP_PHYSARUM_3D = 1,
+} eSpacePhysarum_Mode;
+
+typedef enum eSpacePhysarum_Rendering_Mode {
+  SP_PHYSARUM_VIEWPORT = 0,          // Only render to the viewport
+  SP_PHYSARUM_RENDER_ANIMATION = 1,  // Render to the viewport and export images
+} eSpacePhysarum_Rendering_Mode;
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
 /** \name Space Defines (eSpace_Type)
  * \{ */
 
@@ -2074,9 +2267,10 @@ typedef enum eSpace_Type {
   SPACE_CLIP = 20,
   SPACE_TOPBAR = 21,
   SPACE_STATUSBAR = 22,
-  SPACE_SPREADSHEET = 23
+  SPACE_SPREADSHEET = 23,
+  SPACE_PHYSARUM = 24
 
-#define SPACE_TYPE_LAST SPACE_SPREADSHEET
+#define SPACE_TYPE_LAST SPACE_PHYSARUM
 } eSpace_Type;
 
 /* use for function args */

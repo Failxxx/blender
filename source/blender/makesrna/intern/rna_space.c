@@ -108,6 +108,7 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_VIEW3D,
      "3D Viewport",
      "Manipulate objects in a 3D environment"},
+    {SPACE_PHYSARUM, "PHYSARUM_EDITOR", ICON_PHYSARUM, "Physarum editor", "Create and edit physarum shapes"},
     {SPACE_IMAGE,
      "IMAGE_EDITOR",
      ICON_IMAGE,
@@ -619,6 +620,8 @@ static StructRNA *rna_Space_refine(struct PointerRNA *ptr)
       return &RNA_SpaceClipEditor;
     case SPACE_SPREADSHEET:
       return &RNA_SpaceSpreadsheet;
+    case SPACE_PHYSARUM:
+      return &RNA_SpacePhysarumEditor;
 
       /* Currently no type info. */
     case SPACE_SCRIPT:
@@ -7968,6 +7971,103 @@ static void rna_def_space_spreadsheet(BlenderRNA *brna)
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_SPREADSHEET, NULL);
 }
 
+static void rna_def_space_physarum(BlenderRNA *brna)
+{
+  StructRNA *srna;
+  PropertyRNA *prop;
+
+  srna = RNA_def_struct(brna, "SpacePhysarumEditor", "Space");
+  RNA_def_struct_sdna(srna, "SpacePhysarum");
+  RNA_def_struct_ui_text(srna, "Space Physarum Editor", "Physarum editor space data");
+
+  rna_def_space_generic_show_region_toggles(srna,
+                                          ((1 << RGN_TYPE_TOOL_HEADER) | (1 << RGN_TYPE_TOOLS) |
+                                            (1 << RGN_TYPE_UI) | (1 << RGN_TYPE_HUD)));
+
+  /* Physarum Properties */
+  prop = RNA_def_property(srna, "background_color", PROP_FLOAT, PROP_COLOR);
+  RNA_def_property_array(prop, 4);
+  RNA_def_property_range(prop, 0.0f, 1.0f);
+  RNA_def_property_ui_text(prop, "Background Color", "Color for custom background color");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "particles_color", PROP_FLOAT, PROP_COLOR);
+  RNA_def_property_array(prop, 4);
+  RNA_def_property_range(prop, 0.0f, 1.0f);
+  RNA_def_property_ui_text(prop, "Particles Color", "Color for custom particles color");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "particles_population_factor", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "particles_population_factor");
+  RNA_def_property_range(prop, 0.0, 1.0);
+  RNA_def_property_ui_text(prop, "Particles population factor", "Min = 0.0 (1 particle), max = 1.0 (as many particles as pixels in the texture)");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "sensor_angle", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "sensor_angle");
+  RNA_def_property_range(prop, 0.0, 180.0);
+  RNA_def_property_ui_text(prop, "Sensor angle", "Angle of each sensor");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "sensor_distance", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "sensor_distance");
+  RNA_def_property_range(prop, 0.0, 1000.0);
+  RNA_def_property_ui_text(prop, "Sensor distance", "Distance at which the sensors will read the trail value");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "rotation_angle", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "rotation_angle");
+  RNA_def_property_range(prop, 0.0, 180.0);
+  RNA_def_property_ui_text(prop, "Rotation angle", "Heading rotation of the agents");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "move_distance", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "move_distance");
+  RNA_def_property_range(prop, 0.0, 100.0);
+  RNA_def_property_ui_text(prop, "Move distance", "Distance traveled by agents at each frame");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "decay_factor", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "decay_factor");
+  RNA_def_property_range(prop, 0.0, 1.0);
+  RNA_def_property_ui_text(prop, "Decay Factor", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "deposit_value", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "deposit_value");
+  RNA_def_property_range(prop, 0.0, 5.0);
+  RNA_def_property_ui_text(prop, "Deposit Value", "Deposit values of the agents");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "spawn_radius", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "spawn_radius");
+  RNA_def_property_range(prop, 0.0, 240.0);
+  RNA_def_property_ui_text(prop, "Spawn Radius", "Radius of the spawning sphere");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "center_attraction", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "center_attraction");
+  RNA_def_property_range(prop, 0.0, 5.0);
+  RNA_def_property_ui_text(prop, "Center Attraction", "Center of the attraction");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "collision", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "flags", ST_FLAG_COLLISION);
+  RNA_def_property_ui_text(prop, "collision", "collision");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "nb_frames_to_render", PROP_INT, PROP_NONE);
+  RNA_def_property_int_sdna(prop, NULL, "nb_frames_to_render");
+  RNA_def_property_range(prop, 1, 1000);
+  RNA_def_property_ui_text(prop, "Animation length", "Animation length, in frames");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+
+  prop = RNA_def_property(srna, "output_path", PROP_STRING, PROP_FILEPATH);
+  RNA_def_property_string_sdna(prop, NULL, "output_path");
+  RNA_def_property_ui_text(prop, "Output path", "");
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_PHYSARUM, NULL);
+}
+
 void RNA_def_space(BlenderRNA *brna)
 {
   rna_def_space(brna);
@@ -7995,6 +8095,7 @@ void RNA_def_space(BlenderRNA *brna)
   rna_def_space_node(brna);
   rna_def_space_clip(brna);
   rna_def_space_spreadsheet(brna);
+  rna_def_space_physarum(brna);
 }
 
 #endif

@@ -458,6 +458,22 @@ endforeach()
 
 set(shader_create_info_list_file "${CMAKE_CURRENT_BINARY_DIR}/gpu_shader_create_info_list.hh")
 file(GENERATE OUTPUT ${shader_create_info_list_file} CONTENT "${SHADER_CREATE_INFOS_CONTENT}")
+# Physarum
+data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_debug_physarum.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_quad.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_post_process.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_diffuse_decay.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_render_agents.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_render_agents.vs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_2d_update_agents.fs.glsl SRC)
+
+# Physarum 3d
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_particle.cs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_decay.cs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_pixel.fs.glsl SRC)
+data_to_c_simple(shaders/physarum/gpu_shader_3D_physarum_3d_vertex.vs.glsl SRC)
+
 
 if(WITH_MOD_FLUID)
   add_definitions(-DWITH_FLUID)

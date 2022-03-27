@@ -17,46 +17,47 @@
 
 set(INC
   ../include
-  ../io
+  ../../blenfont
   ../../blenkernel
   ../../blenlib
+  ../../blentranslation
+  ../../bmesh
+  ../../depsgraph
+  ../../draw
   ../../gpu
+  ../../imbuf
   ../../makesdna
   ../../makesrna
+  ../../render
   ../../windowmanager
+  ../../../../intern/clog
+  ../../../../intern/glew-mx
   ../../../../intern/guardedalloc
 )
 
-set(INC_SYS
-
-)
 
 set(SRC
-  spacetypes.c
+  space_physarum.c
+  physarum_ops.c
+  physarum_draw.c
+  physarum_2d.c
+  physarum_3d.c
+
+  physarum_intern.h
+)
+
+set(INC_SYS
+  ${GLEW_INCLUDE_PATH}
 )
 
 set(LIB
-  bf_editor_geometry
-  bf_editor_space_action
-  bf_editor_space_buttons
-  bf_editor_space_clip
-  bf_editor_space_console
-  bf_editor_space_file
-  bf_editor_space_graph
-  bf_editor_space_image
-  bf_editor_space_info
-  bf_editor_space_nla
-  bf_editor_space_node
-  bf_editor_space_outliner
-  bf_editor_space_physarum
-  bf_editor_space_script
-  bf_editor_space_sequencer
-  bf_editor_space_spreadsheet
-  bf_editor_space_statusbar
-  bf_editor_space_text
-  bf_editor_space_topbar
-  bf_editor_space_userpref
-  bf_editor_space_view3d
 )
 
-blender_add_lib(bf_editor_space_api "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")
+if(WITH_INTERNATIONAL)
+  add_definitions(-DWITH_INTERNATIONAL)
+endif()
+
+add_definitions(${GL_DEFINITIONS})
+
+
+blender_add_lib(bf_editor_space_physarum "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")
