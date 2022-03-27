@@ -3,6 +3,61 @@
    linking to external resources instead of including content in-line.
    See 'release/text/readme.html' for the end user read-me.
 
+Physarum editor
+===============
+
+|  The physarum editor allows you to play with the physarum simulation.
+|  This work is inspired by the following articles:
+- `Characteristics of pattern formation and evolution in approximations of physarum transport networks, Jeff Jones <https://uwe-repository.worktribe.com/output/980579>`__
+- `Physarum, Sage Jenson <https://cargocollective.com/sagejenson/physarum>`__
+|  We used the following implementations to code our versions inside Blender:
+- `Physarum 2D (Javascript with Three.js) by Nicolas Barradeau <https://github.com/nicoptere/physarum>`__
+- `Physarum 3D (C++ with HLSL) by Jan Ivanecky <https://github.com/janivanecky/Physarum>`__
+|  Here are some screenshots and gifs:
+
+.. figure:: https://felixolart.xyz/Physarum/physarum_editor_a.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/physarum_editor_b.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/Export_A.gif
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/Export_B.gif
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_a.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_b.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_c.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_d.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_e.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_f.png
+   :scale: 100 %
+   :align: center
+
+.. figure:: https://felixolart.xyz/Physarum/screenshot_g.png
+   :scale: 100 %
+   :align: center
 
 Blender
 =======
